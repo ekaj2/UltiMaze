@@ -1,3 +1,13 @@
+"""
+Tile-based maze generation.
+
+Available Functions:
+    console_prog - Displays progress in the console
+    add_tile - Adds a tile object to the scene at certain transform
+    choose_tile - Chooses what tile to add based on surrounding spaces in maze
+    make_tile_maze - Makes tile-based maze
+"""
+
 import math
 import sys
 from time import time
@@ -8,6 +18,14 @@ from maze_gen import auto_layout_gen
 
 
 def console_prog(job, progress, total_time="?"):
+    """Displays progress in the console.
+    
+    Args:
+        job - name of the job
+        progress - progress as a decimal number
+        total_time (optional) - the total amt of time the job 
+                                took for final display
+    """
     length = 20
     block = int(round(length*progress))
     message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#"*block, "-"*(length-block), progress)
@@ -19,6 +37,13 @@ def console_prog(job, progress, total_time="?"):
 
 
 def add_tile(tile, location, rotation):
+    """Adds a tile object to the scene at certain transform.
+    
+    Args:
+        tile - tile to add
+        location - location component of desired transform
+        rotation - rotation component of desired transform
+    """
     x_transform = location[0]
     y_transform = location[1]
     
@@ -108,6 +133,17 @@ def add_tile(tile, location, rotation):
 
 
 def choose_tile(maze, space_index):
+    """Chooses what tile to add based on surrounding spaces in maze.
+
+    Args:
+        maze - python list in the format:
+            [[(space in maze - x, y), is path, is walkable, active path], 
+            [(space in maze - x, y), is path, is walkable, active path], ...]
+        space_index - index of space to find tile for
+    
+    Returns:
+        tile name, rotation tile should have
+    """
     tile = ''
     rotation = 0
 
@@ -249,6 +285,13 @@ def choose_tile(maze, space_index):
 
 
 def make_tile_maze(maze):
+    """Makes tile-based maze.
+    
+    Args:
+        maze - python list in the format:
+            [[(space in maze - x, y), is path, is walkable, active path], 
+            [(space in maze - x, y), is path, is walkable, active path], ...]
+    """
     s_time = time()
     
     bpy.context.window_manager.progress_begin(1, 100)

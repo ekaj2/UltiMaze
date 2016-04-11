@@ -1,10 +1,24 @@
+"""
+Module for logging time to file for use by the time estimator.
+
+Availiable Functions:
+    log_time - Logs time it took to create maze to file
+    
+"""
+
 import os
 
 import bpy
 
 
 def log_time(elapsed_time):
-    
+    """Logs time it took to create maze to file.
+
+    Args:
+        elapsed_time - time it took to create maze
+        read_log_file - Reads log file and returns list of logs 
+                        for time estimation
+    """
     # get text from file
     my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
     time_log_file = os.path.join(my_settings_dir, "estimate_time_log.txt")
@@ -55,6 +69,7 @@ def log_time(elapsed_time):
 
  
 def read_log_file():
+    """Reads log file and returns list of logs for time estimation."""
     # get text from file
     my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
     time_log_file = os.path.join(my_settings_dir, "estimate_time_log.txt")

@@ -1,3 +1,16 @@
+"""
+Converts back and forth between image and text mazes.
+
+Available Functions:
+    console_prog - Displays progress in the console
+    write_to_text - Writes text to Blender text file with current width and 
+                    height settings
+    write_to_text_img - Writes text to Blender text file with given width and 
+                        height
+    str_list_maze - Converts a python maze into a text block
+    convert_list_maze - Convert text maze into a Python list maze
+"""
+
 from time import time
 import sys
 
@@ -8,6 +21,14 @@ from maze_gen import prep_manager
 
 
 def console_prog(job, progress, total_time="?"):
+    """Displays progress in the console.
+    
+    Args:
+        job - name of the job
+        progress - progress as a decimal number
+        total_time (optional) - the total amt of time the job 
+                                took for final display
+    """
     length = 20
     block = int(round(length*progress))
     message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#"*block, "-"*(length-block), progress)
@@ -19,6 +40,14 @@ def console_prog(job, progress, total_time="?"):
 
 
 def write_to_text(text):
+    """Writes text to Blender text file with current width and height settings.
+    
+    Args:
+        text - text to write
+    
+    Returns:
+        actual name of text block it wrote to
+    """
     width = bpy.context.scene.mg_width
     height = bpy.context.scene.mg_height
     
@@ -28,7 +57,7 @@ def write_to_text(text):
     text_data_block = bpy.data.texts.new(name=attempted_name)
     text_block[0] = text_data_block
     
-    text_block[0].from_string(text)
+    text_block[0].from_string(str(text))
 
     text_block_name = text_block[0].name
 
@@ -36,7 +65,16 @@ def write_to_text(text):
 
 
 def write_to_text_img(text, width, height):
+    """Writes text to Blender text file with given width and height.
     
+    Args:
+        text - text to write
+        width - width of 'maze'
+        height - height of 'maze'
+    
+    Returns:
+        actual name of text block it wrote to
+    """
     attempted_name = (str(width)+"x"+str(height)+"_maze_list")
     
     text_block = [""]
@@ -51,6 +89,16 @@ def write_to_text_img(text, width, height):
 
 
 def str_list_maze(maze):
+    """Converts a python maze into a text block.
+    
+    Args:
+        maze - python list in the format:
+            [[(space in maze - x, y), is path, is walkable, active path], 
+            [(space in maze - x, y), is path, is walkable, active path], ...]
+    
+    Returns:
+        actual name of text block it wrote to
+    """
     str_maze = ""
     index = 0
     for space in maze:
@@ -71,7 +119,13 @@ def str_list_maze(maze):
 
 
 def convert_list_maze():
-
+    """Convert text maze into a Python list maze.
+    
+    Returns:
+        maze - python list in the format:
+            [[(space in maze - x, y), is path, is walkable, active path], 
+            [(space in maze - x, y), is path, is walkable, active path], ...]
+    """
     list_maze = bpy.context.scene.list_maze
     str_list_maze = bpy.data.texts[list_maze].as_string()
     

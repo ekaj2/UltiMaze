@@ -1,3 +1,10 @@
+"""
+Batch tools for mazes
+
+Available Functions:
+    refresh_batch_max - Refreshes number of batch mazes by checking txt file
+"""
+
 import random
 import time
 import math
@@ -13,6 +20,7 @@ from maze_gen import tile_maze_gen
 from maze_gen import simple_maze_gen
 
 def refresh_batch_max():
+    """Refreshes number of batch mazes by checking txt file."""
     my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
     maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
     

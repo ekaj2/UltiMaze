@@ -1,9 +1,25 @@
+"""
+Simple maze generation (non-tilebased)
+
+Available Functions:
+    console_prog - Displays progress in the console
+    make_3Dmaze - Makes basic 3D maze from python list
+"""
+
 import sys
 from time import time
 
 import bpy
 
 def console_prog(job, progress, total_time="?"):
+    """Displays progress in the console.
+    
+    Args:
+        job - name of the job
+        progress - progress as a decimal number
+        total_time (optional) - the total amt of time the job 
+                                took for final display
+    """
     length = 20
     block = int(round(length*progress))
     message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#"*block, "-"*(length-block), progress)
@@ -14,6 +30,16 @@ def console_prog(job, progress, total_time="?"):
     sys.stdout.flush()
 
 def make_3Dmaze(maze):
+    """Makes basic 3D maze from python list.
+    
+    Constructs maze by adding primitive planes in 'grid' locations, then
+    selecting and extruding wall pieces, and finally removing doubles.
+    
+    Args:
+        maze - python list in the format:
+            [[(space in maze - x, y), is path, is walkable, active path], 
+            [(space in maze - x, y), is path, is walkable, active path], ...]
+    """
     s_time = time()
     bpy.context.window_manager.progress_begin(1, 100)
     genloops = 0
