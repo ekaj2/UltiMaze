@@ -16,9 +16,8 @@ def refresh_batch_max():
     my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
     maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
     
-    settings_text_file = open(maze_setups_file, "r")
-    settings_text = settings_text_file.read()
-    settings_text_file.close()
+    with open(maze_setups_file, "r") as s:
+        settings_text = s.read()
     
     settings_text = settings_text.replace(" && ", "", 1)
     
@@ -56,9 +55,8 @@ class StoreBatchMaze_MG(bpy.types.Operator):
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
         maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
         
-        settings_text_file = open(maze_setups_file, "a")
-        settings_text_file.write(settings_text)
-        settings_text_file.close()
+        with open(maze_setups_file, "a") as s:
+            s.write(settings_text)
 
         scene.num_batch_mazes += 1
         
@@ -78,9 +76,8 @@ class ClearBatchMazes_MG(bpy.types.Operator):
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
         maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
         
-        settings_text_file = open(maze_setups_file, "w")
-        settings_text_file.write("")
-        settings_text_file.close()
+        with open(maze_setups_file, "w") as s:
+            s.write("")
 
         scene.num_batch_mazes = 0
         
@@ -126,9 +123,8 @@ class LoadBatchMaze_MG(bpy.types.Operator):
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
         maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
         
-        settings_text_file = open(maze_setups_file, "r")
-        settings_text = settings_text_file.read()
-        settings_text_file.close()
+        with open(maze_setups_file, "r") as s:
+            settings_text = s.read()
         
         settings_text = settings_text.replace(" && ", "", 1)
         
@@ -190,9 +186,8 @@ class DeleteBatchMaze_MG(bpy.types.Operator):
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
         maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
         
-        settings_text_file = open(maze_setups_file, "r")
-        settings_text = settings_text_file.read()
-        settings_text_file.close()
+        with open(maze_setups_file, "r") as s:
+            settings_text = s.read()
         
         settings_text = settings_text.replace(" && ", "", 1)
         
@@ -210,9 +205,8 @@ class DeleteBatchMaze_MG(bpy.types.Operator):
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
         maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
         
-        settings_text_file = open(maze_setups_file, "w")
-        settings_text_file.write(new_settings_text)
-        settings_text_file.close()
+        with open(maze_setups_file, "w") as s:
+            s.write(new_settings_text)
         
         refresh_batch_max()
         
@@ -232,9 +226,8 @@ class BatchGenerateMaze_MG(bpy.types.Operator):
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
         maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
         
-        settings_text_file = open(maze_setups_file, "r")
-        settings_text = settings_text_file.read()
-        settings_text_file.close()
+        with open(maze_setups_file, "r") as s:
+            settings_text = s.read()
         
         settings_text = settings_text.replace(" && ", "", 1)
         

@@ -70,10 +70,8 @@ def save_text(text):
     text_path = text.filepath
     text_as_string = text.as_string()
     # write to file
-    disk_file = open(text_path, "w")
-    disk_file.write(str(text_as_string))
-    disk_file.close()
-
+    with open(text_path, "w") as d:
+        d.write(str(text_as_string))
 
 def always_save():
     """Saves .blend file and referenced images/texts.

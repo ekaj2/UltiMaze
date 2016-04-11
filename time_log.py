@@ -9,9 +9,8 @@ def log_time(elapsed_time):
     my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
     time_log_file = os.path.join(my_settings_dir, "estimate_time_log.txt")
     
-    time_log_text = open(time_log_file, "r")
-    time_log = time_log_text.read()
-    time_log_text.close()
+    with open(time_log_file, "r") as t:
+        time_log = t.read()
     
     log_list = time_log.split(";")
 
@@ -51,9 +50,8 @@ def log_time(elapsed_time):
         i += 1
         
     # write text to file
-    time_log_text = open(time_log_file, "w")
-    time_log_text.write(str_log_list)
-    time_log_text.close()
+    with open(time_log_file, "w") as t:
+        time_log_text.write(str_log_list)
 
  
 def read_log_file():
@@ -61,9 +59,8 @@ def read_log_file():
     my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
     time_log_file = os.path.join(my_settings_dir, "estimate_time_log.txt")
     
-    time_log_text = open(time_log_file, "r")
-    time_log = time_log_text.read()
-    time_log_text.close()
+    with open(time_log_file, "r") as t:
+        time_log = t.read()
     
     log_list = time_log.split(";")
 
