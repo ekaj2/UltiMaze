@@ -705,8 +705,7 @@ class DemoTiles_MG(bpy.types.Operator):
             bpy.ops.object.material_slot_add()
             
             # try this ...
-            (bpy.context.scene.objects.active.id_data.material_slots[0].
-                material = bpy.data.materials[material])
+            bpy.context.scene.objects.active.id_data.material_slots[0].material = bpy.data.materials[material]
             #(bpy.data.objects[bpy.context.scene.objects.active.name].
             #    material_slots[0].material) = bpy.data.materials[material]
             bpy.ops.object.make_links_data(type='MATERIAL')
