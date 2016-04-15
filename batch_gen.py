@@ -48,7 +48,9 @@ class StoreBatchMaze_MG(bpy.types.Operator):
         scene = context.scene
         
         settings_text = (" && wd,{};ht,{};3d,{};al,{};lc,{};ai,{}"
-        ";fl,{};lm,{};wl,{}".format(
+        ";fl,{};lm,{};wl,{};tb,{};im,{};mo,{};am,{};rd,{}"
+        ";w0,{};w1,{};w2,{};w3,{};w4,{};wc,{}"
+        ";f0,{};f1,{};f2,{};f3,{};f4,{};fc,{}".format(
             scene.mg_width,
             scene.mg_height,
             int(scene.gen_3d_maze),
@@ -57,14 +59,30 @@ class StoreBatchMaze_MG(bpy.types.Operator):
             int(scene.allow_islands),
             int(scene.use_list_maze),
             scene.list_maze,
-            int(scene.write_list_maze)))
-        print(settings_text)
+            int(scene.write_list_maze),
+            int(scene.tile_based),
+            int(scene.import_mat),
+            int(scene.merge_objects),
+            int(scene.apply_modifiers),
+            int(scene.remove_doubles_merge),
+            scene.wall_0_sided,
+            scene.wall_1_sided,
+            scene.wall_2_sided,
+            scene.wall_3_sided,
+            scene.wall_4_sided,
+            scene.wall_corner,
+            scene.floor_0_sided,
+            scene.floor_1_sided,
+            scene.floor_2_sided,
+            scene.floor_3_sided,
+            scene.floor_4_sided,
+            scene.floor_corner))
        
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
         maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
         
         with open(maze_setups_file, "a") as s:
-            s.write(settings_text)
+            print(settings_text, end="", file=s, flush=True)
 
         scene.num_batch_mazes += 1
         
@@ -145,6 +163,7 @@ class LoadBatchMaze_MG(bpy.types.Operator):
         for slot in maze_setup:
             parts = slot.split(",")
 
+            # main settings
             if parts[0] == "wd":
                 scene.mg_width = int(parts[1])
             elif parts[0] == "ht":
@@ -163,7 +182,45 @@ class LoadBatchMaze_MG(bpy.types.Operator):
                 scene.list_maze = parts[1]
             elif parts[0] == "wl":
                 scene.write_list_maze = bool(int(parts[1]))
-                    
+            
+            # tile settings
+            elif parts[0] == "tb":
+                scene.tile_based = bool(int(parts[1]))
+            elif parts[0] == "im":
+                scene.import_mat = bool(int(parts[1]))
+            elif parts[0] == "mo":
+                scene.merge_objects = bool(int(parts[1]))
+            elif parts[0] == "am":
+                scene.apply_modifiers = bool(int(parts[1]))
+            elif parts[0] == "rd":
+                scene.remove_doubles_merge = bool(int(parts[1]))
+            
+            # tile pieces
+            elif parts[0] == "w0":
+                scene.wall_0_sided = parts[1]
+            elif parts[0] == "w1":
+                scene.wall_1_sided = parts[1]
+            elif parts[0] == "w2":
+                scene.wall_2_sided = parts[1]
+            elif parts[0] == "w3":
+                scene.wall_3_sided = parts[1]
+            elif parts[0] == "w4":
+                scene.wall_4_sided = parts[1]
+            elif parts[0] == "wc":
+                scene.wall_corner = parts[1]
+            elif parts[0] == "f0":
+                scene.floor_0_sided = parts[1]
+            elif parts[0] == "f1":
+                scene.floor_1_sided = parts[1]
+            elif parts[0] == "f2":
+                scene.floor_2_sided = parts[1]
+            elif parts[0] == "f3":
+                scene.floor_3_sided = parts[1]
+            elif parts[0] == "f4":
+                scene.floor_4_sided = parts[1]
+            elif parts[0] == "fc":
+                scene.floor_corner = parts[1]
+
         return {'FINISHED'}
 
 
@@ -255,6 +312,7 @@ class BatchGenerateMaze_MG(bpy.types.Operator):
             for slot in maze_setup:
                 parts = slot.split(",")
 
+                # main settings
                 if parts[0] == "wd":
                     scene.mg_width = int(parts[1])
                 elif parts[0] == "ht":
@@ -273,6 +331,44 @@ class BatchGenerateMaze_MG(bpy.types.Operator):
                     scene.list_maze = parts[1]
                 elif parts[0] == "wl":
                     scene.write_list_maze = bool(int(parts[1]))
+                
+                # tile settings
+                elif parts[0] == "tb":
+                    scene.tile_based = bool(int(parts[1]))
+                elif parts[0] == "im":
+                    scene.import_mat = bool(int(parts[1]))
+                elif parts[0] == "mo":
+                    scene.merge_objects = bool(int(parts[1]))
+                elif parts[0] == "am":
+                    scene.apply_modifiers = bool(int(parts[1]))
+                elif parts[0] == "rd":
+                    scene.remove_doubles_merge = bool(int(parts[1]))
+                
+                # tile pieces
+                elif parts[0] == "w0":
+                    scene.wall_0_sided = parts[1]
+                elif parts[0] == "w1":
+                    scene.wall_1_sided = parts[1]
+                elif parts[0] == "w2":
+                    scene.wall_2_sided = parts[1]
+                elif parts[0] == "w3":
+                    scene.wall_3_sided = parts[1]
+                elif parts[0] == "w4":
+                    scene.wall_4_sided = parts[1]
+                elif parts[0] == "wc":
+                    scene.wall_corner = parts[1]
+                elif parts[0] == "f0":
+                    scene.floor_0_sided = parts[1]
+                elif parts[0] == "f1":
+                    scene.floor_1_sided = parts[1]
+                elif parts[0] == "f2":
+                    scene.floor_2_sided = parts[1]
+                elif parts[0] == "f3":
+                    scene.floor_3_sided = parts[1]
+                elif parts[0] == "f4":
+                    scene.floor_4_sided = parts[1]
+                elif parts[0] == "fc":
+                    scene.floor_corner = parts[1]
                     
             # GENERATE MAZE HERE
             tiles_exist = False
