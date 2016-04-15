@@ -221,7 +221,6 @@ class LoadBatchMaze_MG(bpy.types.Operator):
             elif parts[0] == "fc":
                 scene.floor_corner = parts[1]
 
-
         return {'FINISHED'}
 
 
