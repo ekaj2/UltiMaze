@@ -65,7 +65,7 @@ def log_time(elapsed_time):
         
     # write text to file
     with open(time_log_file, "w") as t:
-        time_log_text.write(str_log_list)
+        t.write(str_log_list)
 
  
 def read_log_file():
