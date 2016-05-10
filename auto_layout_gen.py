@@ -266,10 +266,9 @@ def add_loops(maze):
     Returns:
         updated maze
     """
-    index = 0
     chance = bpy.context.scene.loops_chance
     for i, space in enumerate(maze):
-        _, directions, _ = find_touching(maze, index)
+        _, directions, _ = find_touching(maze, i)
         if directions == ['Up', 'Down'] or directions == ['Right', 'Left']:
             random_num = random.randint(1,chance)
             if random_num == 1:
