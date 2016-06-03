@@ -11,13 +11,14 @@ from time import time
 
 import bpy
 
+
 def console_prog(job, progress, total_time="?"):
     """Displays progress in the console.
-    
+
     Args:
         job - name of the job
         progress - progress as a decimal number
-        total_time (optional) - the total amt of time the job 
+        total_time (optional) - the total amt of time the job
                                 took for final display
     """
     length = 20
@@ -31,13 +32,13 @@ def console_prog(job, progress, total_time="?"):
 
 def make_3Dmaze(maze):
     """Makes basic 3D maze from python list.
-    
+
     Constructs maze by adding primitive planes in 'grid' locations, then
     selecting and extruding wall pieces, and finally removing doubles.
-    
+
     Args:
         maze - python list in the format:
-            [[(space in maze - x, y), is path, is walkable, active path], 
+            [[(space in maze - x, y), is path, is walkable, active path],
             [(space in maze - x, y), is path, is walkable, active path], ...]
     """
     s_time = time()
@@ -45,11 +46,11 @@ def make_3Dmaze(maze):
     genloops = 0
     # create a plane primitive
     bpy.ops.mesh.primitive_plane_add(
-        view_align=False, 
-        enter_editmode=False, 
-        location=(0, 0, 0), 
-        layers=(True, False, False, False, False, False, False, False, False, 
-        False, False, False, False, False, False, False, False, False, False, 
+        view_align=False,
+        enter_editmode=False,
+        location=(0, 0, 0),
+        layers=(True, False, False, False, False, False, False, False, False,
+        False, False, False, False, False, False, False, False, False, False,
         False))
 
     # create wall material slot
@@ -75,37 +76,37 @@ def make_3Dmaze(maze):
         path = space[1]
         # create, scale, translate a plane primitive
         bpy.ops.mesh.primitive_plane_add(
-            radius=0.5, 
-            view_align=False, 
-            enter_editmode=False, 
-            location=(X_pos, -Y_pos, 0), 
-            layers=(True, False, False, False, False, False, False, False, 
-            False, False, False, False, False, False, False, False, False, 
+            radius=0.5,
+            view_align=False,
+            enter_editmode=False,
+            location=(X_pos, -Y_pos, 0),
+            layers=(True, False, False, False, False, False, False, False,
+            False, False, False, False, False, False, False, False, False,
             False, False, False))
-        
+
         # assign path material slot if applicable
         if path:
             bpy.context.object.active_material_index = 1
             bpy.ops.object.material_slot_assign()
-            
+
         # minor optimization...remove doubles
         if genloops > 2500 and double_count > 1500:
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.remove_doubles()
             double_count = 0
-            
+
         genloops += 1
         double_count += 1
 
         percent = round((genloops/len(maze))*100)
         if percent != last_percent and percent < 100:
             bpy.context.window_manager.progress_update(percent)
-            
+
             # new print out technique
             console_prog("3D Maze Gen", genloops / len(maze))
-            
+
         last_percent = percent
-    
+
     # print out finished job before "Info" from removing doubles
     console_prog("3D Maze Gen", 1, time() - s_time)
     print("\n")
@@ -119,22 +120,22 @@ def make_3Dmaze(maze):
     bpy.ops.object.material_slot_select()
 
     bpy.ops.mesh.extrude_region_move(
-        MESH_OT_extrude_region={"mirror":False}, 
-        TRANSFORM_OT_translate={"value":(0, 0, 1), 
-        "constraint_axis":(False, False, True), 
-        "constraint_orientation":'NORMAL', 
-        "mirror":False, 
-        "proportional":'DISABLED', 
-        "proportional_edit_falloff":'SMOOTH', 
-        "proportional_size":1, 
-        "snap":False, 
-        "snap_target":'CLOSEST', 
-        "snap_point":(0, 0, 0), 
-        "snap_align":False, 
-        "snap_normal":(0, 0, 0), 
-        "gpencil_strokes":False, 
-        "texture_space":False, 
-        "remove_on_cancel":False, 
+        MESH_OT_extrude_region={"mirror":False},
+        TRANSFORM_OT_translate={"value":(0, 0, 1),
+        "constraint_axis":(False, False, True),
+        "constraint_orientation":'NORMAL',
+        "mirror":False,
+        "proportional":'DISABLED',
+        "proportional_edit_falloff":'SMOOTH',
+        "proportional_size":1,
+        "snap":False,
+        "snap_target":'CLOSEST',
+        "snap_point":(0, 0, 0),
+        "snap_align":False,
+        "snap_normal":(0, 0, 0),
+        "gpencil_strokes":False,
+        "texture_space":False,
+        "remove_on_cancel":False,
         "release_confirm":False})
 
 
@@ -143,7 +144,7 @@ def make_3Dmaze(maze):
     bpy.ops.object.material_slot_assign()
     bpy.ops.mesh.select_all(action='INVERT')
     bpy.context.object.active_material_index = 1
-    bpy.ops.object.material_slot_assign()   
+    bpy.ops.object.material_slot_assign()
 
 
 

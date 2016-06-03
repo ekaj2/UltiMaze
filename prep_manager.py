@@ -7,22 +7,20 @@ Available functions:
     - always_save: Saves .blend file and referenced images/texts.
 """
 
-import os
-
 import bpy
 
 
 def check_tiles_exist():
     """Check if all tile slots are filled in UI panel.
-    
+
     Also sets tile slot to 'MISSING TILE' if not found.
-    
+
     Returns:
         True if all tile slots are filled, otherwise, False
     """
-    
+
     scene = bpy.context.scene
-    
+
     tiles_exist = True
     tiles = [(scene.wall_4_sided, "scene.wall_4_sided"),
              (scene.wall_3_sided, "scene.wall_3_sided"),
@@ -46,13 +44,13 @@ def check_tiles_exist():
         except KeyError:
             tiles_exist = False
             exec(tile[1] + "= 'MISSING TILE'")
-        
+
     return tiles_exist
 
 
 def check_list_exist():
     """Check if list is assigned in UI panel.
-    
+
     Returns:
         True if list is assigned, otherwise, False
     """
@@ -68,7 +66,7 @@ def check_list_exist():
 
 def save_text(text):
     """Saves Blender text block that is stored externally.
-    
+
     Args:
         text: Blender text block to save.
     """
@@ -81,9 +79,9 @@ def save_text(text):
 
 def always_save():
     """Saves .blend file and referenced images/texts.
-    
+
     Does not save 'Render Result' or 'Viewer Node'
-        
+
     Returns:
         "BLEND_ERROR", None: IF file has not been saved (no filepath)
         "IMAGE_ERROR", image: IF image has not been saved
@@ -91,9 +89,9 @@ def always_save():
     """
     wm = bpy.context.window_manager
     scene = bpy.context.scene
-    
+
     addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
-    
+
     # save file
     if addon_prefs.always_save_prior:
         if bpy.data.is_saved:
@@ -107,9 +105,9 @@ def always_save():
         for image in bpy.data.images:
             if not image.packed_file:
                 if not image.filepath:
-                    if (image.name != 'Render Result' and 
+                    if (image.name != 'Render Result' and
                         image.name != 'Viewer Node'):
-                            
+
                         return "IMAGE_ERROR", image
                 else:
                     image.save()
