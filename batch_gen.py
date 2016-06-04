@@ -42,39 +42,38 @@ class StoreBatchMazeMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        wm = context.window_manager
         scene = context.scene
 
         settings_text = (" && wd,{};ht,{};3d,{};al,{};lc,{};ai,{}"
                          ";fl,{};lm,{};wl,{};tb,{};im,{};mo,{};am,{};rd,{}"
                          ";w0,{};w1,{};w2,{};w3,{};w4,{};wc,{}"
                          ";f0,{};f1,{};f2,{};f3,{};f4,{};fc,{}".format(
-            scene.mg_width,
-            scene.mg_height,
-            int(scene.gen_3d_maze),
-            int(scene.allow_loops),
-            scene.loops_chance,
-            int(scene.allow_islands),
-            int(scene.use_list_maze),
-            scene.list_maze,
-            int(scene.write_list_maze),
-            int(scene.tile_based),
-            int(scene.import_mat),
-            int(scene.merge_objects),
-            int(scene.apply_modifiers),
-            int(scene.remove_doubles_merge),
-            scene.wall_0_sided,
-            scene.wall_1_sided,
-            scene.wall_2_sided,
-            scene.wall_3_sided,
-            scene.wall_4_sided,
-            scene.wall_corner,
-            scene.floor_0_sided,
-            scene.floor_1_sided,
-            scene.floor_2_sided,
-            scene.floor_3_sided,
-            scene.floor_4_sided,
-            scene.floor_corner))
+                            scene.mg_width,
+                            scene.mg_height,
+                            int(scene.gen_3d_maze),
+                            int(scene.allow_loops),
+                            scene.loops_chance,
+                            int(scene.allow_islands),
+                            int(scene.use_list_maze),
+                            scene.list_maze,
+                            int(scene.write_list_maze),
+                            int(scene.tile_based),
+                            int(scene.import_mat),
+                            int(scene.merge_objects),
+                            int(scene.apply_modifiers),
+                            int(scene.remove_doubles_merge),
+                            scene.wall_0_sided,
+                            scene.wall_1_sided,
+                            scene.wall_2_sided,
+                            scene.wall_3_sided,
+                            scene.wall_4_sided,
+                            scene.wall_corner,
+                            scene.floor_0_sided,
+                            scene.floor_1_sided,
+                            scene.floor_2_sided,
+                            scene.floor_3_sided,
+                            scene.floor_4_sided,
+                            scene.floor_corner))
 
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
         maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
@@ -224,7 +223,6 @@ class DeleteBatchMazeMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        wm = context.window_manager
         scene = context.scene
 
         refresh_batch_max()
@@ -277,7 +275,6 @@ class BatchGenerateMazeMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        wm = context.window_manager
         scene = context.scene
 
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
@@ -363,23 +360,18 @@ class BatchGenerateMazeMG(bpy.types.Operator):
                     scene.floor_corner = parts[1]
 
             # GENERATE MAZE HERE
-            tiles_exist = False
 
             if scene.tile_based and scene.gen_3d_maze:
-                tiles_exist = prep_manager.check_tiles_exist()
-
                 # if missing tiles: terminate operator
-                if not tiles_exist:
+                if not prep_manager.check_tiles_exist():
                     self.report({'ERROR'}, "One or more tile objects is missing " +
                                 "or is not a mesh! Please assign a valid object or " +
                                 "disable 'Use Modeled Tiles'.")
                     return {'CANCELLED'}
 
             if scene.use_list_maze:
-                list_exist = prep_manager.check_list_exist()
-
                 # if missing list: terminate operator
-                if not list_exist:
+                if not prep_manager.check_list_exist():
                     self.report({'ERROR'}, "List missing! Please assign a valid " +
                                 "text data block or disable 'Generate Maze From List'.")
                     return {'CANCELLED'}

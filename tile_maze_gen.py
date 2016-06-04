@@ -26,11 +26,11 @@ def console_prog(job, progress, total_time="?"):
                                 took for final display
     """
     length = 20
-    block = int(round(length*progress))
-    message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#"*block, "-"*(length-block), progress)
+    block = int(round(length * progress))
+    message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#" * block, "-" * (length - block), progress)
     # progress is complete
     if progress >= 1:
-        message = "\r{} DONE IN {} SECONDS{}".format(job.upper(), total_time, " "*12)
+        message = "\r{} DONE IN {} SECONDS{}".format(job.upper(), total_time, " " * 12)
     sys.stdout.write(message)
     sys.stdout.flush()
 
@@ -97,23 +97,23 @@ def add_tile(tile, location, rotation):
 
     # duplicate and move
     bpy.ops.object.duplicate_move(
-        OBJECT_OT_duplicate={"linked":False, "mode":'TRANSLATION'},
-        TRANSFORM_OT_translate={"value":(0, 0, 0),
-        "constraint_axis":(False, False, False),
-        "constraint_orientation":'GLOBAL',
-        "mirror":False,
-        "proportional":'DISABLED',
-        "proportional_edit_falloff":'SMOOTH',
-        "proportional_size":1,
-        "snap":False,
-        "snap_target":'CLOSEST',
-        "snap_point":(0, 0, 0),
-        "snap_align":False,
-        "snap_normal":(0, 0, 0),
-        "gpencil_strokes":False,
-        "texture_space":False,
-        "remove_on_cancel":False,
-        "release_confirm":False})
+        OBJECT_OT_duplicate={"linked": False, "mode": 'TRANSLATION'},
+        TRANSFORM_OT_translate={"value": (0, 0, 0),
+                                "constraint_axis": (False, False, False),
+                                "constraint_orientation": 'GLOBAL',
+                                "mirror": False,
+                                "proportional": 'DISABLED',
+                                "proportional_edit_falloff": 'SMOOTH',
+                                "proportional_size": 1,
+                                "snap": False,
+                                "snap_target": 'CLOSEST',
+                                "snap_point": (0, 0, 0),
+                                "snap_align": False,
+                                "snap_normal": (0, 0, 0),
+                                "gpencil_strokes": False,
+                                "texture_space": False,
+                                "remove_on_cancel": False,
+                                "release_confirm": False})
 
     tile_parent = bpy.context.scene.objects.active
 
@@ -143,7 +143,6 @@ def choose_tile(maze, space_index):
     Returns:
         tile name, rotation tile should have
     """
-    tile = ''
     rotation = 0
 
     # find out how many spaces that are touching are paths
@@ -165,11 +164,11 @@ def choose_tile(maze, space_index):
             tile = 'floor_3_sided'
 
             # determine rotation (don't know if this translates directly)
-            if directions == ['Up','Right','Down']:
+            if directions == ['Up', 'Right', 'Down']:
                 rotation = 90
-            elif directions == ['Up','Right','Left']:
+            elif directions == ['Up', 'Right', 'Left']:
                 rotation = 180
-            elif directions == ['Up','Down','Left']:
+            elif directions == ['Up', 'Down', 'Left']:
                 rotation = 270
 
             return tile, rotation
@@ -229,11 +228,11 @@ def choose_tile(maze, space_index):
         tile = 'wall_3_sided'
 
         # determine rotation
-        if directions == ['Up','Right','Down']:
+        if directions == ['Up', 'Right', 'Down']:
             rotation = 90
-        elif directions == ['Up','Right','Left']:
+        elif directions == ['Up', 'Right', 'Left']:
             rotation = 180
-        elif directions == ['Up','Down','Left']:
+        elif directions == ['Up', 'Down', 'Left']:
             rotation = 270
 
         return tile, rotation
@@ -294,25 +293,17 @@ def make_tile_maze(maze):
     s_time = time()
 
     bpy.context.window_manager.progress_begin(1, 100)
-    index = 0
     genloops = 0
     last_percent = None
-    for space in maze:
+    for index, space in enumerate(maze):
         tile, rotation = choose_tile(maze, index)
         add_tile(tile, maze[index][0], rotation)
-
         genloops += 1
-
-        percent = round((genloops/len(maze))*100)
+        percent = round((genloops / len(maze)) * 100)
         if percent != last_percent and percent < 100:
             bpy.context.window_manager.progress_update(percent)
-
-            # new printout technique
-            console_prog("Tile Maze Gen", genloops/len(maze))
-
+            console_prog("Tile Maze Gen", genloops / len(maze))
             last_percent = percent
-
-        index += 1
 
     # printout finished
     console_prog("Tile Maze Gen", 1, time() - s_time)
@@ -357,7 +348,7 @@ def make_tile_maze(maze):
 
         bpy.context.object.name = "Maze"
         bpy.ops.object.transform_apply(location=False, rotation=True,
-            scale=False)
+                                       scale=False)
 
         # remove doubles
         if bpy.context.scene.remove_doubles_merge:

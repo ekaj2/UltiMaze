@@ -22,15 +22,16 @@ def console_prog(job, progress, total_time="?"):
                                 took for final display
     """
     length = 20
-    block = int(round(length*progress))
-    message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#"*block, "-"*(length-block), progress)
+    block = int(round(length * progress))
+    message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#" * block, "-" * (length - block), progress)
     # progress is complete
     if progress >= 1:
-        message = "\r{} DONE IN {} SECONDS{}".format(job.upper(), total_time, " "*12)
+        message = "\r{} DONE IN {} SECONDS{}".format(job.upper(), total_time, " " * 12)
     sys.stdout.write(message)
     sys.stdout.flush()
 
-def make_3Dmaze(maze):
+
+def make_3dmaze(maze):
     """Makes basic 3D maze from python list.
 
     Constructs maze by adding primitive planes in 'grid' locations, then
@@ -50,8 +51,8 @@ def make_3Dmaze(maze):
         enter_editmode=False,
         location=(0, 0, 0),
         layers=(True, False, False, False, False, False, False, False, False,
-        False, False, False, False, False, False, False, False, False, False,
-        False))
+                False, False, False, False, False, False, False, False, False, False,
+                False))
 
     # create wall material slot
     bpy.ops.object.material_slot_add()
@@ -71,18 +72,18 @@ def make_3Dmaze(maze):
     double_count = 0
     last_percent = None
     for space in maze:
-        X_pos = space[0][0]
-        Y_pos = space[0][1]
+        x_pos = space[0][0]
+        y_pos = space[0][1]
         path = space[1]
         # create, scale, translate a plane primitive
         bpy.ops.mesh.primitive_plane_add(
             radius=0.5,
             view_align=False,
             enter_editmode=False,
-            location=(X_pos, -Y_pos, 0),
+            location=(x_pos, -y_pos, 0),
             layers=(True, False, False, False, False, False, False, False,
-            False, False, False, False, False, False, False, False, False,
-            False, False, False))
+                    False, False, False, False, False, False, False, False, False,
+                    False, False, False))
 
         # assign path material slot if applicable
         if path:
@@ -98,7 +99,7 @@ def make_3Dmaze(maze):
         genloops += 1
         double_count += 1
 
-        percent = round((genloops/len(maze))*100)
+        percent = round((genloops / len(maze)) * 100)
         if percent != last_percent and percent < 100:
             bpy.context.window_manager.progress_update(percent)
 
@@ -120,24 +121,23 @@ def make_3Dmaze(maze):
     bpy.ops.object.material_slot_select()
 
     bpy.ops.mesh.extrude_region_move(
-        MESH_OT_extrude_region={"mirror":False},
-        TRANSFORM_OT_translate={"value":(0, 0, 1),
-        "constraint_axis":(False, False, True),
-        "constraint_orientation":'NORMAL',
-        "mirror":False,
-        "proportional":'DISABLED',
-        "proportional_edit_falloff":'SMOOTH',
-        "proportional_size":1,
-        "snap":False,
-        "snap_target":'CLOSEST',
-        "snap_point":(0, 0, 0),
-        "snap_align":False,
-        "snap_normal":(0, 0, 0),
-        "gpencil_strokes":False,
-        "texture_space":False,
-        "remove_on_cancel":False,
-        "release_confirm":False})
-
+        MESH_OT_extrude_region={"mirror": False},
+        TRANSFORM_OT_translate={"value": (0, 0, 1),
+                                "constraint_axis": (False, False, True),
+                                "constraint_orientation": 'NORMAL',
+                                "mirror": False,
+                                "proportional": 'DISABLED',
+                                "proportional_edit_falloff": 'SMOOTH',
+                                "proportional_size": 1,
+                                "snap": False,
+                                "snap_target": 'CLOSEST',
+                                "snap_point": (0, 0, 0),
+                                "snap_align": False,
+                                "snap_normal": (0, 0, 0),
+                                "gpencil_strokes": False,
+                                "texture_space": False,
+                                "remove_on_cancel": False,
+                                "release_confirm": False})
 
     bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='FACE')
     bpy.ops.mesh.select_more()
@@ -145,8 +145,6 @@ def make_3Dmaze(maze):
     bpy.ops.mesh.select_all(action='INVERT')
     bpy.context.object.active_material_index = 1
     bpy.ops.object.material_slot_assign()
-
-
 
     # toggle editmode
     bpy.ops.object.editmode_toggle()

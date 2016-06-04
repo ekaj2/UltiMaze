@@ -8,7 +8,6 @@ class ReplaceTextMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        wm = context.window_manager
         scene = context.scene
 
         if not scene.list_maze:
@@ -35,7 +34,6 @@ class InvertTextMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        wm = context.window_manager
         scene = context.scene
 
         if not scene.list_maze:

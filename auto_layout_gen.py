@@ -30,11 +30,11 @@ def console_prog(job, progress, total_time="?"):
                                 took for final display
     """
     length = 20
-    block = int(round(length*progress))
-    message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#"*block, "-"*(length-block), progress)
+    block = int(round(length * progress))
+    message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#" * block, "-" * (length - block), progress)
     # progress is complete
     if progress >= 1:
-        message = "\r{} DONE IN {} SECONDS{}".format(job.upper(), total_time, " "*12)
+        message = "\r{} DONE IN {} SECONDS{}".format(job.upper(), total_time, " " * 12)
     sys.stdout.write(message)
     sys.stdout.flush()
 
@@ -65,7 +65,7 @@ def exist_test(ordered_pair):
         exists = True
 
         # simple formula to determine index of ordered pair
-        index = (x + (y * (x_dimensions)))
+        index = (x + (y * x_dimensions))
 
     return exists, index
 
@@ -86,45 +86,45 @@ def find_touching(maze, active_space):
 
     active_space_coord = maze[active_space][0]
 
-    touching_XY = []
+    touching_xy = []
     directions = []
     all_directions = []
 
-    new_touching_XY = [((active_space_coord[0]),(active_space_coord[1]-1))]
-    exist, index = exist_test(new_touching_XY)
+    new_touching_xy = [((active_space_coord[0]), (active_space_coord[1] - 1))]
+    exist, index = exist_test(new_touching_xy)
     if exist:
-        touching_XY += [index]
+        touching_xy += [index]
         all_directions += ['Up']
         if maze[index][1]:
             directions += ['Up']
 
-    new_touching_XY = [((active_space_coord[0]+1),(active_space_coord[1]))]
-    exist, index = exist_test(new_touching_XY)
+    new_touching_xy = [((active_space_coord[0] + 1), (active_space_coord[1]))]
+    exist, index = exist_test(new_touching_xy)
     if exist:
-        touching_XY += [index]
+        touching_xy += [index]
         all_directions += ['Right']
         if maze[index][1]:
             directions += ['Right']
 
-    new_touching_XY = [((active_space_coord[0]),(active_space_coord[1]+1))]
-    exist, index = exist_test(new_touching_XY)
+    new_touching_xy = [((active_space_coord[0]), (active_space_coord[1] + 1))]
+    exist, index = exist_test(new_touching_xy)
     if exist:
-        touching_XY += [index]
+        touching_xy += [index]
         all_directions += ['Down']
         if maze[index][1]:
             directions += ['Down']
 
-    new_touching_XY = [((active_space_coord[0]-1),(active_space_coord[1]))]
-    exist, index = exist_test(new_touching_XY)
+    new_touching_xy = [((active_space_coord[0] - 1), (active_space_coord[1]))]
+    exist, index = exist_test(new_touching_xy)
     if exist:
-        touching_XY += [index]
+        touching_xy += [index]
         all_directions += ['Left']
         if maze[index][1]:
             directions += ['Left']
 
     # directions is the directions that is_path is True,
     # all_directions is all directions that exist
-    return touching_XY, directions, all_directions
+    return touching_xy, directions, all_directions
 
 
 def valid_test(maze, existing_spaces, active_space, all_directions):
@@ -148,7 +148,7 @@ def valid_test(maze, existing_spaces, active_space, all_directions):
     count = 0
     for space in existing_spaces:
         # find spaces around an existing space
-        touching_spaces, _, _ = find_touching(maze,space)
+        touching_spaces, _, _ = find_touching(maze, space)
 
         # find paths around
         paths_found = 0
@@ -161,8 +161,7 @@ def valid_test(maze, existing_spaces, active_space, all_directions):
         # 1. Not be touching 2 paths
         # 2. Not be walking on an unwalkable space
         # 3. Not be walking on the active path (this may be removeable)
-        if (paths_found < 2 and maze[space][2] == True and
-            maze[space][3] == False):
+        if paths_found < 2 and maze[space][2] == True and maze[space][3] == False:
 
             if bpy.context.scene.allow_islands:
                 valid += [space]
@@ -170,27 +169,26 @@ def valid_test(maze, existing_spaces, active_space, all_directions):
             else:
                 # if we don't allow islands we need to know if going
                 # horizontal or vertical
-                X_coord = maze[space][0][0]
-                Y_coord = maze[space][0][1]
+                x_coord = maze[space][0][0]
+                y_coord = maze[space][0][1]
 
                 horizontal = False
                 vertical = False
 
                 # if we go right or left its horizontal, otherwise vertical
-                if (all_directions[count] == 'Right' or
-                    all_directions[count] == 'Left'):
+                if all_directions[count] == 'Right' or all_directions[count] == 'Left':
 
                     horizontal = True
                 else:
                     vertical = True
 
                 # if we are going horizontally on an even y value...we're good
-                if Y_coord % 2 == 0 and horizontal:
+                if y_coord % 2 == 0 and horizontal:
                     valid += [space]
                     valid_dir += all_directions[count]
 
                 # if we are going vertically on an even x value...we're good
-                if X_coord % 2 == 0 and vertical:
+                if x_coord % 2 == 0 and vertical:
                     valid += [space]
                     valid_dir += all_directions[count]
         count += 1
@@ -230,7 +228,7 @@ def choose_index(maze, choices):
     """
     # choices is a list of indexes
     if choices:
-        random_integer = random.randint(0,(len(choices)-1))
+        random_integer = random.randint(0, (len(choices) - 1))
         random_index = choices[random_integer]
         return random_index, random_integer
     else:
@@ -270,7 +268,7 @@ def add_loops(maze):
     for i, space in enumerate(maze):
         _, directions, _ = find_touching(maze, i)
         if directions == ['Up', 'Down'] or directions == ['Right', 'Left']:
-            random_num = random.randint(1,chance)
+            random_num = random.randint(1, chance)
             if random_num == 1:
                 maze[i][1] = True
 
@@ -308,22 +306,22 @@ def make_list_maze():
 
     bpy.context.window_manager.progress_begin(0, 100)
 
-    X_dim = bpy.context.scene.mg_width
-    Y_dim = bpy.context.scene.mg_height
-    estimated_loops = int((X_dim*Y_dim*1.25))
+    x_dim = bpy.context.scene.mg_width
+    y_dim = bpy.context.scene.mg_height
+    estimated_loops = int((x_dim * y_dim * 1.25))
 
     # generate blank grid (list) False everywhere (walls)
     maze = []
-    for y in range(0,Y_dim):
-        for x in range(0,X_dim):
+    for y in range(0, y_dim):
+        for x in range(0, x_dim):
             # [[space in maze(ordered pair),is path,is walkable,active path]]
-            maze_addition = [[(x,y),False,True,False]]
+            maze_addition = [[(x, y), False, True, False]]
             maze += maze_addition
 
     # start at a point and generate maze's path
     start_space = 0
     complete = False
-    maze = make_path(maze,start_space)
+    maze = make_path(maze, start_space)
     random_index = start_space
 
     last_percent = None
@@ -340,9 +338,9 @@ def make_list_maze():
 
         maze = make_path(maze, random_index)
 
-        complete = check_completion(maze,start_space,random_index)
+        complete = check_completion(maze, start_space, random_index)
 
-        percent = int((loops/estimated_loops)*100)
+        percent = int((loops / estimated_loops) * 100)
         if percent != last_percent and percent < 100:
             bpy.context.window_manager.progress_update(percent)
 

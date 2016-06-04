@@ -98,9 +98,8 @@ def str_list_maze(maze):
         actual name of text block it wrote to
     """
     str_maze = ""
-    index = 0
-    for space in maze:
-        if maze[index][1]:
+    for i, space in enumerate(maze):
+        if maze[i][1]:
             new_space = "1"
             old_str_maze = str_maze
             str_maze = old_str_maze + new_space
@@ -108,8 +107,6 @@ def str_list_maze(maze):
             new_space = "0"
             old_str_maze = str_maze
             str_maze = old_str_maze + new_space
-
-        index += 1
 
     text_block_name = write_to_text(str_maze)
 
@@ -130,12 +127,12 @@ def convert_list_maze():
     # replace "\n" with ""
     str_list_maze = str_list_maze.replace("\n", "")
 
-    X_dim = bpy.context.scene.mg_width
-    Y_dim = bpy.context.scene.mg_height
+    x_dim = bpy.context.scene.mg_width
+    y_dim = bpy.context.scene.mg_height
 
     maze = []
-    for y in range(0, Y_dim):
-        for x in range(0, X_dim):
+    for y in range(0, y_dim):
+        for x in range(0, x_dim):
             # [[space in maze(ordered pair),is path,is walkable,active path]]
             maze_addition = [[(x, y), False, True, False]]
             maze += maze_addition
@@ -165,7 +162,6 @@ class ConvertMazeImageMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        wm = context.window_manager
         scene = context.scene
 
         # check if image is assigned
@@ -193,8 +189,8 @@ class ConvertMazeImageMG(bpy.types.Operator):
                         "valid path or disable save texts in user prefs")
             return {'CANCELLED'}
 
-        X_dim = bpy.data.images[scene.maze_image].size[0]
-        Y_dim = bpy.data.images[scene.maze_image].size[1]
+        x_dim = bpy.data.images[scene.maze_image].size[0]
+        y_dim = bpy.data.images[scene.maze_image].size[1]
 
         maze = ""
 
@@ -213,17 +209,17 @@ class ConvertMazeImageMG(bpy.types.Operator):
 
         # the maze at this point is a mirror of what it should be
         flipped_maze = ""
-        row = (Y_dim - 1)
+        row = (y_dim - 1)
         while row >= 0:
             # snippet from exist test (here for reference only)
             #            index = (x + (y * (x_dimensions)))
 
-            maze_row = maze[(row * X_dim):(row * X_dim + X_dim)]
+            maze_row = maze[(row * x_dim):(row * x_dim + x_dim)]
             flipped_maze += maze_row
 
             row -= 1
 
-        text_block_name = write_to_text_img(flipped_maze, X_dim, Y_dim)
+        text_block_name = write_to_text_img(flipped_maze, x_dim, y_dim)
 
         self.report({'INFO'}, "See '" + str(text_block_name) +
                     "' in the text editor")
@@ -238,7 +234,6 @@ class CreateImageFromListMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        wm = context.window_manager
         scene = context.scene
 
         if not scene.list_maze:
@@ -293,7 +288,7 @@ class CreateImageFromListMG(bpy.types.Operator):
         count = 0
         while image_row >= 0:
             image_col = 0
-            while image_col < (scene.mg_width):
+            while image_col < scene.mg_width:
                 if str_list_maze[count] == "1":
                     # Red Channel
                     image_maze.pixels[(image_row * scene.mg_width * 4 +

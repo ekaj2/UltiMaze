@@ -65,7 +65,7 @@ def import_mat(material_type, my_tiles_dir):
                     directory=my_blend_directory,
                     autoselect=False)
 
-                return "maze_default_cycles"
+            return "maze_default_cycles"
 
         else:
             mat_in_blend = True
@@ -81,7 +81,7 @@ def import_mat(material_type, my_tiles_dir):
                     directory=my_blend_directory,
                     autoselect=False)
 
-                return "maze_default_bi"
+            return "maze_default_bi"
 
     return ""
 
@@ -97,7 +97,6 @@ class MazeGeneratorPanelMG(bpy.types.Panel):
     bl_category = 'Maze Gen'
 
     def draw(self, context):
-        wm = context.window_manager
         scene = context.scene
         layout = self.layout
 
@@ -492,7 +491,7 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
                            "tricks as follows")
 
             # blank row for paragraph
-            row = box.row()
+            box.row()
 
             row = box.row()
             row.scale_y = 0.5
@@ -510,7 +509,7 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
                            "be opened after you start an operator " +
                            "(by pressing any UI button).")
 
-            row = box.row()
+            box.row()
 
             row = box.row()
             row.scale_y = 0.5
@@ -615,7 +614,6 @@ class DemoTilesMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        wm = context.window_manager
         scene = context.scene
 
         my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")

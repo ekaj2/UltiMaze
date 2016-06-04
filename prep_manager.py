@@ -77,6 +77,7 @@ def save_text(text):
     with open(text_path, "w") as d:
         d.write(str(text_as_string))
 
+
 def always_save():
     """Saves .blend file and referenced images/texts.
 
@@ -87,8 +88,6 @@ def always_save():
         "IMAGE_ERROR", image: IF image has not been saved
         "SUCCESS", None: IF saved all required types correctly
     """
-    wm = bpy.context.window_manager
-    scene = bpy.context.scene
 
     addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
 
@@ -105,9 +104,7 @@ def always_save():
         for image in bpy.data.images:
             if not image.packed_file:
                 if not image.filepath:
-                    if (image.name != 'Render Result' and
-                        image.name != 'Viewer Node'):
-
+                    if image.name != 'Render Result' and image.name != 'Viewer Node':
                         return "IMAGE_ERROR", image
                 else:
                     image.save()
