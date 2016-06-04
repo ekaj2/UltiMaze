@@ -410,7 +410,7 @@ class BatchGenerateMazeMG(bpy.types.Operator):
                 if scene.tile_based:
                     tile_maze_gen.make_tile_maze(maze)
                 else:
-                    simple_maze_gen.make_3Dmaze(maze)
+                    simple_maze_gen.make_3dmaze(maze)
 
             # log time
             if scene.gen_3d_maze:

@@ -3,7 +3,7 @@ Simple maze generation (non-tilebased)
 
 Available Functions:
     console_prog - Displays progress in the console
-    make_3Dmaze - Makes basic 3D maze from python list
+    make_3dmaze - Makes basic 3D maze from python list
 """
 
 import sys
