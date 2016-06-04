@@ -131,7 +131,158 @@ def add_tile(tile, location, rotation):
                 bpy.ops.group.create(name='MazeGeneratorDoNotTouch')
 
 
-def choose_tile(maze, space_index):
+def choose_tile_twelve(maze, space_index):
+    """Chooses what tile to add based on surrounding spaces in maze.
+
+    Args:
+        maze - python list in the format:
+            [[(space in maze - x, y), is path, is walkable, active path],
+            [(space in maze - x, y), is path, is walkable, active path], ...]
+        space_index - index of space to find tile for
+
+    Returns:
+        tile name, rotation tile should have
+    """
+    rotation = 0
+
+    # find out how many spaces that are touching are paths
+    paths_found = 0
+    touching, directions, _ = auto_layout_gen.find_touching(maze, space_index)
+    for touching_space in touching:
+        if maze[touching_space][1]:
+            paths_found += 1
+
+    # FLOOR PIECES!
+
+    # start with floor pieces
+    if maze[space_index][1]:
+        if paths_found == 4:
+            tile = 'floor_4_sided'
+            return tile, rotation
+
+        elif paths_found == 3:
+            tile = 'floor_3_sided'
+
+            # determine rotation (don't know if this translates directly)
+            if directions == ['Up', 'Right', 'Down']:
+                rotation = 90
+            elif directions == ['Up', 'Right', 'Left']:
+                rotation = 180
+            elif directions == ['Up', 'Down', 'Left']:
+                rotation = 270
+
+            return tile, rotation
+
+        elif paths_found == 1:
+            tile = 'floor_1_sided'
+
+            # determine rotation
+            if directions == ['Right']:
+                rotation = 90
+            elif directions == ['Up']:
+                rotation = 180
+            elif directions == ['Left']:
+                rotation = 270
+
+            return tile, rotation
+
+        elif paths_found == 0:
+            tile = 'floor_0_sided'
+
+            return tile, rotation
+
+        # if 2 paths determine corner or straight
+        elif paths_found == 2:
+
+            # determine tile: first straight, then corner
+            if directions == ['Up', 'Down'] or directions == ['Right', 'Left']:
+                tile = 'floor_2_sided'
+
+                # determine rotation
+                if directions == ['Right', 'Left']:
+                    rotation = 90
+
+                return tile, rotation
+
+            else:
+                tile = 'floor_corner'
+
+                # determine rotation
+                if directions == ['Up', 'Right']:
+                    rotation = 90
+                elif directions == ['Up', 'Left']:
+                    rotation = 180
+                elif directions == ['Down', 'Left']:
+                    rotation = 270
+
+                return tile, rotation
+
+    # WALL PIECES!
+
+    # rule out pieces by number of paths_found (2 paths is in next block)
+    if paths_found == 4:
+        tile = 'wall_4_sided'
+        return tile, rotation
+
+    elif paths_found == 3:
+        tile = 'wall_3_sided'
+
+        # determine rotation
+        if directions == ['Up', 'Right', 'Down']:
+            rotation = 90
+        elif directions == ['Up', 'Right', 'Left']:
+            rotation = 180
+        elif directions == ['Up', 'Down', 'Left']:
+            rotation = 270
+
+        return tile, rotation
+
+    elif paths_found == 1:
+        tile = 'wall_1_sided'
+
+        # determine rotation
+        if directions == ['Right']:
+            rotation = 90
+        elif directions == ['Up']:
+            rotation = 180
+        elif directions == ['Left']:
+            rotation = 270
+
+        return tile, rotation
+
+    elif paths_found == 0:
+        tile = 'wall_0_sided'
+
+        return tile, rotation
+
+    # if 2 paths determine corner or straight
+    elif paths_found == 2:
+
+        # determine tile: first straight, then corner
+        if directions == ['Up', 'Down'] or directions == ['Right', 'Left']:
+            tile = 'wall_2_sided'
+
+            # determine rotation
+            if directions == ['Right', 'Left']:
+                rotation = 90
+
+            return tile, rotation
+
+        else:
+            tile = 'wall_corner'
+
+            # determine rotation
+            if directions == ['Up', 'Right']:
+                rotation = 90
+            elif directions == ['Up', 'Left']:
+                rotation = 180
+            elif directions == ['Down', 'Left']:
+                rotation = 270
+
+            return tile, rotation
+
+
+def choose_tile_six(maze, space_index):  # TODO - Get working!
     """Chooses what tile to add based on surrounding spaces in maze.
 
     Args:
@@ -296,7 +447,13 @@ def make_tile_maze(maze):
     genloops = 0
     last_percent = None
     for index, space in enumerate(maze):
-        tile, rotation = choose_tile(maze, index)
+        # choose tile
+        tm = bpy.context.scene.tile_mode
+        if tm == "TWELVE_TILES":
+            tile, rotation = choose_tile_twelve(maze, index)
+        elif tm == "SIX_TILES":
+            tile, rotation = choose_tile_six(maze, index)
+
         add_tile(tile, maze[index][0], rotation)
         genloops += 1
         percent = round((genloops / len(maze)) * 100)

@@ -173,6 +173,8 @@ class MazeTilesPanelMG(bpy.types.Panel):
         box = layout.box()
         box.prop(scene, 'tile_based', text="Use Modeled Tiles")
         if scene.tile_based:
+            row = box.row()
+            row.prop(scene, 'tile_mode', expand=True)
 
             # generate demo tiles
             sub_box = box.box()
@@ -198,22 +200,31 @@ class MazeTilesPanelMG(bpy.types.Panel):
             box.label("Tiles", icon='MESH_GRID')
             # list of tiles types needed
             col = box.column()
-            col.label("Wall Pieces:")
-            col.prop_search(context.scene, 'wall_4_sided', bpy.data, "objects", "4 Sided Wall")
-            col.prop_search(context.scene, 'wall_3_sided', bpy.data, "objects", "3 Sided Wall")
-            col.prop_search(context.scene, 'wall_2_sided', bpy.data, "objects", "2 Sided Wall")
-            col.prop_search(context.scene, 'wall_1_sided', bpy.data, "objects", "1 Sided Wall")
-            col.prop_search(context.scene, 'wall_0_sided', bpy.data, "objects", "0 Sided Wall")
-            col.prop_search(context.scene, 'wall_corner', bpy.data, "objects", "Wall Corner")
+            if scene.tile_mode == "TWELVE_TILES":
+                col.label("Wall Pieces:")
+                col.prop_search(context.scene, 'wall_4_sided', bpy.data, "objects", "4 Sided Wall")
+                col.prop_search(context.scene, 'wall_3_sided', bpy.data, "objects", "3 Sided Wall")
+                col.prop_search(context.scene, 'wall_2_sided', bpy.data, "objects", "2 Sided Wall")
+                col.prop_search(context.scene, 'wall_1_sided', bpy.data, "objects", "1 Sided Wall")
+                col.prop_search(context.scene, 'wall_0_sided', bpy.data, "objects", "0 Sided Wall")
+                col.prop_search(context.scene, 'wall_corner', bpy.data, "objects", "Wall Corner")
 
-            col = box.column()
-            col.label("Floor Pieces:")
-            col.prop_search(context.scene, 'floor_4_sided', bpy.data, "objects", "4 Sided Floor")
-            col.prop_search(context.scene, 'floor_3_sided', bpy.data, "objects", "3 Sided Floor")
-            col.prop_search(context.scene, 'floor_2_sided', bpy.data, "objects", "2 Sided Floor")
-            col.prop_search(context.scene, 'floor_1_sided', bpy.data, "objects", "1 Sided Floor")
-            col.prop_search(context.scene, 'floor_0_sided', bpy.data, "objects", "0 Sided Floor")
-            col.prop_search(context.scene, 'floor_corner', bpy.data, "objects", "Floor Corner")
+                col = box.column()
+                col.label("Floor Pieces:")
+                col.prop_search(context.scene, 'floor_4_sided', bpy.data, "objects", "4 Sided Floor")
+                col.prop_search(context.scene, 'floor_3_sided', bpy.data, "objects", "3 Sided Floor")
+                col.prop_search(context.scene, 'floor_2_sided', bpy.data, "objects", "2 Sided Floor")
+                col.prop_search(context.scene, 'floor_1_sided', bpy.data, "objects", "1 Sided Floor")
+                col.prop_search(context.scene, 'floor_0_sided', bpy.data, "objects", "0 Sided Floor")
+                col.prop_search(context.scene, 'floor_corner', bpy.data, "objects", "Floor Corner")
+            elif scene.tile_mode == "SIX_TILES":
+                col.label("Pieces:")  # TODO - Add props
+                col.prop_search(context.scene, 'four_way', bpy.data, "objects", "4-Way")
+                col.prop_search(context.scene, 't_int', bpy.data, "objects", "3-Way")
+                col.prop_search(context.scene, 'turn', bpy.data, "objects", "Turn")
+                col.prop_search(context.scene, 'dead_end', bpy.data, "objects", "Dead End")
+                col.prop_search(context.scene, 'straight', bpy.data, "objects", "Straight Path")
+                col.prop_search(context.scene, 'no_path', bpy.data, "objects", "Wall Only")
 
 
 class BatchGeneratorPanelMG(bpy.types.Panel):
@@ -772,6 +783,13 @@ def register():
         description="Tile set to add",
         default="BLANK")
 
+    bpy.types.Scene.tile_mode = bpy.props.EnumProperty(
+        items=[('TWELVE_TILES', "12-Piece Mode", "Use 12 tile pieces."),
+               ('SIX_TILES', "6-Piece Mode", "Use 6 tile pieces.")],
+        name="Tile Mode",
+        description="Number of tiles to use.",
+        default="TWELVE_TILES")
+
     # wall pieces
     bpy.types.Scene.wall_4_sided = bpy.props.StringProperty(
         name="wall_4_sided",
@@ -833,6 +851,36 @@ def register():
         name="floor_corner",
         default="floor_corner",
         description="Floor piece with 2 adjacent sides")
+
+    bpy.types.Scene.four_way = bpy.props.StringProperty(
+        name="four_way",
+        default="four_way",
+        description="4-way (+) intersection")
+
+    bpy.types.Scene.t_int = bpy.props.StringProperty(
+        name="t_int",
+        default="t_int",
+        description="3-way (T) intersection")
+
+    bpy.types.Scene.turn = bpy.props.StringProperty(
+        name="turn",
+        default="turn",
+        description="2-way (L) intersection")
+
+    bpy.types.Scene.dead_end = bpy.props.StringProperty(
+        name="dead_end",
+        default="dead_end",
+        description="Dead-end (]) tile")
+
+    bpy.types.Scene.straight = bpy.props.StringProperty(
+        name="straight",
+        default="straight",
+        description="Straight (|) tile")
+
+    bpy.types.Scene.no_path = bpy.props.StringProperty(
+        name="no_path",
+        default="no_path",
+        description="Wall-only (0) tile")
 
     bpy.types.Scene.import_mat = bpy.props.BoolProperty(
         name="import_mat",
@@ -937,6 +985,7 @@ def unregister():
     del bpy.types.Scene.tile_based
 
     del bpy.types.Scene.tile_set_type
+    del bpy.types.Scene.tile_mode
 
     del bpy.types.Scene.wall_4_sided
     del bpy.types.Scene.wall_3_sided
@@ -951,6 +1000,13 @@ def unregister():
     del bpy.types.Scene.floor_1_sided
     del bpy.types.Scene.floor_0_sided
     del bpy.types.Scene.floor_corner
+
+    del bpy.types.Scene.four_way
+    del bpy.types.Scene.t_int
+    del bpy.types.Scene.turn
+    del bpy.types.Scene.straight
+    del bpy.types.Scene.dead_end
+    del bpy.types.Scene.no_path
 
     del bpy.types.Scene.import_mat
 
