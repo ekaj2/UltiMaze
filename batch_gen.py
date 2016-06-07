@@ -37,7 +37,7 @@ def refresh_batch_max():
 
 class StoreBatchMazeMG(bpy.types.Operator):
     bl_label = "Store Settings"
-    bl_idname = "scene.store_batch_maze"
+    bl_idname = "maze_gen.store_batch_maze"
     bl_description = "Stores a maze to batch generate."
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -88,7 +88,7 @@ class StoreBatchMazeMG(bpy.types.Operator):
 
 class ClearBatchMazesMG(bpy.types.Operator):
     bl_label = "Clear Mazes"
-    bl_idname = "scene.clear_batch_maze"
+    bl_idname = "maze_gen.clear_batch_maze"
     bl_description = "Clears all mazes from batch cache."
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -108,7 +108,7 @@ class ClearBatchMazesMG(bpy.types.Operator):
 
 class RefreshBatchMazesMG(bpy.types.Operator):
     bl_label = "Refresh"
-    bl_idname = "scene.refresh_batch_num"
+    bl_idname = "maze_gen.refresh_batch_num"
     bl_description = "Refreshes number of batches."
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -119,7 +119,7 @@ class RefreshBatchMazesMG(bpy.types.Operator):
 
 class LoadBatchMazeMG(bpy.types.Operator):
     bl_label = "Load Settings"
-    bl_idname = "scene.load_batch_maze"
+    bl_idname = "maze_gen.load_batch_maze"
     bl_description = "Loads the maze settings for batch number."
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -218,7 +218,7 @@ class LoadBatchMazeMG(bpy.types.Operator):
 
 class DeleteBatchMazeMG(bpy.types.Operator):
     bl_label = "Delete Setting"
-    bl_idname = "scene.delete_batch_maze"
+    bl_idname = "maze_gen.delete_batch_maze"
     bl_description = "Deletes the maze settings for batch number."
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -270,7 +270,7 @@ class DeleteBatchMazeMG(bpy.types.Operator):
 
 class BatchGenerateMazeMG(bpy.types.Operator):
     bl_label = "Batch Generate"
-    bl_idname = "scene.batch_generate_maze"
+    bl_idname = "maze_gen.batch_generate_maze"
     bl_description = "Generates a maze for each stored setting."
     bl_options = {'REGISTER', 'UNDO'}
 

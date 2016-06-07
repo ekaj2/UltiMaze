@@ -89,7 +89,7 @@ def read_log_file():
 # Time estimate
 class EstimateTimeMG(bpy.types.Operator):
     bl_label = "Estimate Time"
-    bl_idname = "object.estimate_time_mg"
+    bl_idname = "maze_gen.estimate_time_mg"
     bl_description = ("Estimates the number of seconds the maze " +
                       "generator will take")
     bl_options = {'REGISTER', 'UNDO'}
