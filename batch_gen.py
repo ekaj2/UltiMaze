@@ -396,6 +396,12 @@ class BatchGenerateMazeMG(bpy.types.Operator):
                             "Assign a valid path or disable save texts in user prefs")
                 return {'CANCELLED'}
 
+            if not scene.merge_objects:
+                # fix to make sure not applying modifiers
+                # if merging is disabled (because group is not made)
+                apply_mods = scene.apply_modifiers
+                scene.apply_modifiers = False
+
             if scene.use_list_maze:
                 maze = txt_img_converter.convert_list_maze()
             elif scene.gen_3d_maze or scene.use_list_maze or scene.write_list_maze:
@@ -411,6 +417,8 @@ class BatchGenerateMazeMG(bpy.types.Operator):
                     tile_maze_gen.make_tile_maze(maze)
                 else:
                     simple_maze_gen.make_3dmaze(maze)
+
+            scene.apply_modifiers = apply_mods
 
             # log time
             if scene.gen_3d_maze:

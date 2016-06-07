@@ -188,10 +188,6 @@ class MazeTilesPanelMG(bpy.types.Panel):
             if scene.merge_objects:
                 sub_box.prop(context.scene, 'apply_modifiers', text="Apply Modifiers")
                 sub_box.prop(context.scene, 'remove_doubles_merge', text="Remove Doubles")
-            else:
-                # fix to make sure not applying modifiers
-                # if merging is disabled (because group is not made)
-                scene.apply_modifiers = False
 
             row = layout.row()
             row.separator()
@@ -218,7 +214,7 @@ class MazeTilesPanelMG(bpy.types.Panel):
                 col.prop_search(context.scene, 'floor_0_sided', bpy.data, "objects", "0 Sided Floor")
                 col.prop_search(context.scene, 'floor_corner', bpy.data, "objects", "Floor Corner")
             elif scene.tile_mode == "SIX_TILES":
-                col.label("Pieces:")  # TODO - Add props
+                col.label("Pieces:")
                 col.prop_search(context.scene, 'four_way', bpy.data, "objects", "4-Way")
                 col.prop_search(context.scene, 't_int', bpy.data, "objects", "3-Way")
                 col.prop_search(context.scene, 'turn', bpy.data, "objects", "Turn")
@@ -715,6 +711,12 @@ class GenerateMazeMG(bpy.types.Operator):
                         "Assign a valid path or disable save texts in user prefs")
             return {'CANCELLED'}
 
+        if not scene.merge_objects:
+            # fix to make sure not applying modifiers
+            # if merging is disabled (because group is not made)
+            apply_mods = scene.apply_modifiers
+            scene.apply_modifiers = False
+
         if scene.use_list_maze:
             maze = txt_img_converter.convert_list_maze()
         elif scene.gen_3d_maze or scene.use_list_maze or scene.write_list_maze:
@@ -729,6 +731,8 @@ class GenerateMazeMG(bpy.types.Operator):
                 tile_maze_gen.make_tile_maze(maze)
             else:
                 simple_maze_gen.make_3dmaze(maze)
+
+        scene.apply_modifiers = apply_mods
 
         # log time
         if scene.gen_3d_maze:
