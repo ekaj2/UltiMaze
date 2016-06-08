@@ -26,7 +26,7 @@ import os
 import time
 
 import bpy
-from bpy.props import StringProperty
+from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty
 from maze_gen import auto_layout_gen
 from maze_gen import batch_gen
 from maze_gen import prep_manager
@@ -95,12 +95,20 @@ class TileImportMenu(bpy.types.Menu):
 
     def draw(self, context):
         scene = context.scene
-        my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+
         # get file names
+        files_list = os.listdir(os.path.join(os.path.dirname(__file__), "tiles"))
+        if addon_prefs.use_custom_tile_path:
+            try:
+                files_list += os.listdir(addon_prefs.custom_tile_path)
+            except FileNotFoundError:
+                print("Invalid custom tile path!")
+
         if scene.tile_mode == "TWELVE_TILES":
-            tile_fbxs = [a for a in os.listdir(my_tiles_dir) if a[-4:] == '.fbx' and a[:-4][-1:] == "2"]
+            tile_fbxs = [a for a in files_list if a[-4:] == '.fbx' and a[:-4][-1:] == "2"]
         elif scene.tile_mode == "SIX_TILES":
-            tile_fbxs = [a for a in os.listdir(my_tiles_dir) if a[-4:] == '.fbx' and a[:-4][-1:] == "6"]
+            tile_fbxs = [a for a in files_list if a[-4:] == '.fbx' and a[:-4][-1:] == "6"]
         layout = self.layout
         for tileset in tile_fbxs:
             layout.operator("maze_gen.import_tileset", text=tileset[:-5]).filename = tileset
@@ -450,25 +458,35 @@ class HelpPanelMG(bpy.types.Panel):
 class MazeAddonPrefsMg(bpy.types.AddonPreferences):
     bl_idname = __name__
 
-    always_save_prior = bpy.props.BoolProperty(
+    use_custom_tile_path = BoolProperty(
+        name="use_custom_tile_path",
+        default=False,
+        description="Use custom tile path")
+
+    custom_tile_path = StringProperty(
+        name="custom_tile_path",
+        default=os.path.join(os.getcwd(), "MyTiles"),
+        description="Custom tile path")
+
+    always_save_prior = BoolProperty(
         name="always_save_prior",
         default=True,
         description="Always save .blend file before executing" +
                     "time-consuming operations")
 
-    save_all_images = bpy.props.BoolProperty(
+    save_all_images = BoolProperty(
         name="save_all_images",
         default=True,
         description="Always save images before executing" +
                     "time-consuming operations")
 
-    save_all_texts = bpy.props.BoolProperty(
+    save_all_texts = BoolProperty(
         name="save_all_texts",
         default=True,
         description="Always save texts before executing" +
                     "time-consuming operations")
 
-    show_quickhelp = bpy.props.BoolProperty(
+    show_quickhelp = BoolProperty(
         name="show_quickhelp",
         default=False,
         description="Show quick help")
@@ -476,12 +494,18 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
     def draw(self, context):
         layout = self.layout
 
-        row = layout.row()
-        row.prop(self, 'always_save_prior', text="Save .blend File")
-        row = layout.row()
-        row.prop(self, 'save_all_images', text="Save Images")
-        row = layout.row()
-        row.prop(self, 'save_all_texts', text="Save Texts")
+        col = layout.column()
+        box = col.box()
+        box.prop(self, 'use_custom_tile_path', text="Use Custom Path")
+        row = box.row(align=True)
+        row.prop(self, 'custom_tile_path', text="")
+        row.operator('buttons.directory_browse', text="", icon="FILESEL")
+        col.row()
+        col.prop(self, 'always_save_prior', text="Save .blend File")
+        col = layout.row()
+        col.prop(self, 'save_all_images', text="Save Images")
+        col = layout.row()
+        col.prop(self, 'save_all_texts', text="Save Texts")
 
         layout.row()
 
@@ -635,7 +659,7 @@ class ShowReadmeMG(bpy.types.Operator):
 
 
 # demo tile objects generation
-class DemoTilesMG(bpy.types.Operator):
+class DemoTilesImportMG(bpy.types.Operator):
     bl_label = "Generate Tiles"
     bl_idname = "maze_gen.import_tileset"
     bl_description = "Imports tiles."
@@ -645,9 +669,17 @@ class DemoTilesMG(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
 
         my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
         my_filepath = os.path.join(my_tiles_dir, self.filename)
+        if not os.access(my_filepath, os.R_OK) and addon_prefs.use_custom_tile_path:
+            my_filepath = os.path.join(
+                addon_prefs.custom_tile_path,
+                self.filename)
+            if not os.access(my_filepath, os.R_OK):
+                self.report({'ERROR'}, "The selected tile set could not be imported! Most likely your custom tile path is not set to a valid path.")
+                return {'CANCELLED'}
 
         # import .fbx
         bpy.ops.wm.addon_enable(module="io_scene_fbx")
@@ -678,8 +710,12 @@ class DemoTilesExportMG(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
 
-        my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
+        if addon_prefs.use_custom_tile_path and os.access(addon_prefs.custom_tile_path, os.R_OK):
+            my_tiles_dir = addon_prefs.custom_tile_path
+        else:
+            my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
         if scene.tile_mode == "TWELVE_TILES":
             my_filepath = os.path.join(my_tiles_dir, (scene.export_name + "2.fbx"))
         if scene.tile_mode == "SIX_TILES":
@@ -798,7 +834,7 @@ classes = [GenerateMazeMG, batch_gen.BatchGenerateMazeMG,
            batch_gen.RefreshBatchMazesMG, batch_gen.LoadBatchMazeMG,
            batch_gen.DeleteBatchMazeMG, time_log.EstimateTimeMG,
            MazeGeneratorPanelMG, ImageConverterPanelMG, MazeTilesPanelMG,
-           BatchGeneratorPanelMG, InfoPanelMG, HelpPanelMG, DemoTilesMG,
+           BatchGeneratorPanelMG, InfoPanelMG, HelpPanelMG, DemoTilesImportMG,
            MazeGeneratorTextToolsPanelMG, text_tools.ReplaceTextMG,
            text_tools.InvertTextMG, txt_img_converter.ConvertMazeImageMG,
            txt_img_converter.CreateImageFromListMG, ShowHelpDiagramMG,
