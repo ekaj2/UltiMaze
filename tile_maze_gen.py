@@ -47,6 +47,7 @@ def add_tile(tile, location, rotation):
     y_transform = location[1]
 
     # setup tiles for reference
+    # 12 tile gen
     wall_4_sided = bpy.context.scene.wall_4_sided
     wall_3_sided = bpy.context.scene.wall_3_sided
     wall_2_sided = bpy.context.scene.wall_2_sided
@@ -60,10 +61,19 @@ def add_tile(tile, location, rotation):
     floor_0_sided = bpy.context.scene.floor_0_sided
     floor_corner = bpy.context.scene.floor_corner
 
+    # 6 tile gen
+    four_way = bpy.context.scene.four_way
+    t_int = bpy.context.scene.t_int
+    turn = bpy.context.scene.turn
+    dead_end = bpy.context.scene.dead_end
+    straight = bpy.context.scene.straight
+    no_path = bpy.context.scene.no_path
+
     # clear selection
     bpy.ops.object.select_all(action='DESELECT')
 
     # select object correct tile
+    # 12 tile gen
     if tile == 'wall_4_sided':
         bpy.data.objects[wall_4_sided].select = True
     elif tile == 'wall_3_sided':
@@ -88,6 +98,19 @@ def add_tile(tile, location, rotation):
         bpy.data.objects[floor_0_sided].select = True
     elif tile == 'floor_corner':
         bpy.data.objects[floor_corner].select = True
+    # 6 tile gen
+    elif tile == 'four_way':
+        bpy.data.objects[four_way].select = True
+    elif tile == 't_int':
+        bpy.data.objects[t_int].select = True
+    elif tile == 'turn':
+        bpy.data.objects[turn].select = True
+    elif tile == 'dead_end':
+        bpy.data.objects[dead_end].select = True
+    elif tile == 'straight':
+        bpy.data.objects[straight].select = True
+    elif tile == 'no_path':
+        bpy.data.objects[no_path].select = True
 
     # ensure there is an active object
     bpy.context.scene.objects.active = bpy.context.selected_objects[0]
@@ -131,7 +154,7 @@ def add_tile(tile, location, rotation):
                 bpy.ops.group.create(name='MazeGeneratorDoNotTouch')
 
 
-def choose_tile(maze, space_index):
+def choose_tile_twelve(maze, space_index):
     """Chooses what tile to add based on surrounding spaces in maze.
 
     Args:
@@ -282,6 +305,93 @@ def choose_tile(maze, space_index):
             return tile, rotation
 
 
+def choose_tile_six(maze, space_index):  # TODO - Get working!
+    """Chooses what tile to add based on surrounding spaces in maze.
+
+    Args:
+        maze - python list in the format:
+            [[(space in maze - x, y), is path, is walkable, active path],
+            [(space in maze - x, y), is path, is walkable, active path], ...]
+        space_index - index of space to find tile for
+
+    Returns:
+        tile name, rotation tile should have
+    """
+    rotation = 0
+
+    # find out how many spaces that are touching are paths
+    paths_found = 0
+    touching, directions, _ = auto_layout_gen.find_touching(maze, space_index)
+    for touching_space in touching:
+        if maze[touching_space][1]:
+            paths_found += 1
+
+    # FLOOR PIECES!
+
+    # start with floor pieces
+    if maze[space_index][1]:
+        if paths_found == 4:
+            tile = 'four_way'
+            return tile, rotation
+
+        elif paths_found == 3:
+            tile = 't_int'
+
+            # determine rotation (don't know if this translates directly)
+            if directions == ['Up', 'Right', 'Down']:
+                rotation = 90
+            elif directions == ['Up', 'Right', 'Left']:
+                rotation = 180
+            elif directions == ['Up', 'Down', 'Left']:
+                rotation = 270
+
+            return tile, rotation
+
+        elif paths_found == 1:
+            tile = 'dead_end'
+
+            # determine rotation
+            if directions == ['Right']:
+                rotation = 90
+            elif directions == ['Up']:
+                rotation = 180
+            elif directions == ['Left']:
+                rotation = 270
+
+            return tile, rotation
+
+        elif paths_found == 0:
+            tile = 'no_path'
+
+            return tile, rotation
+
+        # if 2 paths determine corner or straight
+        elif paths_found == 2:
+
+            # determine tile: first straight, then corner
+            if directions == ['Up', 'Down'] or directions == ['Right', 'Left']:
+                tile = 'straight'
+
+                # determine rotation
+                if directions == ['Right', 'Left']:
+                    rotation = 90
+
+                return tile, rotation
+
+            else:
+                tile = 'turn'
+
+                # determine rotation
+                if directions == ['Up', 'Right']:
+                    rotation = 90
+                elif directions == ['Up', 'Left']:
+                    rotation = 180
+                elif directions == ['Down', 'Left']:
+                    rotation = 270
+
+                return tile, rotation
+
+
 def make_tile_maze(maze):
     """Makes tile-based maze.
 
@@ -295,9 +405,19 @@ def make_tile_maze(maze):
     bpy.context.window_manager.progress_begin(1, 100)
     genloops = 0
     last_percent = None
-    for index, space in enumerate(maze):
-        tile, rotation = choose_tile(maze, index)
-        add_tile(tile, maze[index][0], rotation)
+    for i, space in enumerate(maze):
+        # choose tile
+        tm = bpy.context.scene.tile_mode
+        if tm == "TWELVE_TILES":
+            tile, rotation = choose_tile_twelve(maze, i)
+            add_tile(tile, maze[i][0], rotation)
+        elif tm == "SIX_TILES":
+            if maze[i][0][0] % 2 == 0 and maze[i][0][1] % 2 == 0:
+                t = choose_tile_six(maze, i)
+                if t:
+                    tile, rotation = t
+                    add_tile(tile, (maze[i][0][0], maze[i][0][1]), rotation)  # TODO - clean up loc tuple
+
         genloops += 1
         percent = round((genloops / len(maze)) * 100)
         if percent != last_percent and percent < 100:

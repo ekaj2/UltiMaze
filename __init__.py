@@ -26,6 +26,7 @@ import os
 import time
 
 import bpy
+from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty
 from maze_gen import auto_layout_gen
 from maze_gen import batch_gen
 from maze_gen import prep_manager
@@ -87,6 +88,32 @@ def import_mat(material_type, my_tiles_dir):
 
 
 # UI Classes
+# Tile import menu
+class TileImportMenu(bpy.types.Menu):
+    bl_idname = "maze_gen.tile_import_menu"
+    bl_label = "Import Tile Set"
+
+    def draw(self, context):
+        scene = context.scene
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+
+        # get file names
+        files_list = os.listdir(os.path.join(os.path.dirname(__file__), "tiles"))
+        if addon_prefs.use_custom_tile_path:
+            try:
+                files_list += os.listdir(addon_prefs.custom_tile_path)
+            except FileNotFoundError:
+                print("Invalid custom tile path!")
+
+        if scene.tile_mode == "TWELVE_TILES":
+            tile_fbxs = [a for a in files_list if a[-4:] == '.fbx' and a[:-4][-1:] == "2"]
+        elif scene.tile_mode == "SIX_TILES":
+            tile_fbxs = [a for a in files_list if a[-4:] == '.fbx' and a[:-4][-1:] == "6"]
+        layout = self.layout
+        for tileset in tile_fbxs:
+            layout.operator("maze_gen.import_tileset", text=tileset[:-5]).filename = tileset
+
+
 # 3D View
 class MazeGeneratorPanelMG(bpy.types.Panel):
     bl_label = "Maze Generator"
@@ -103,7 +130,7 @@ class MazeGeneratorPanelMG(bpy.types.Panel):
         # Generate Maze button
         row = layout.row()
         row.scale_y = 1.5
-        row.operator("object.generate_maze", icon="MOD_BUILD")
+        row.operator("maze_gen.generate_maze", icon="MOD_BUILD")
 
         # layout settings box
         box = layout.box()
@@ -149,10 +176,10 @@ class ImageConverterPanelMG(bpy.types.Panel):
         box = layout.box()
         row = box.row()
         row.label("(X: " + str(scene.mg_width) + ", Y: " + str(scene.mg_height) + ")")  # TODO - New string.format
-        box.operator("scene.convert_maze_image", icon="TEXT")
+        box.operator("maze_gen.convert_maze_image", icon="TEXT")
         box.prop_search(scene, 'maze_image', bpy.data, "images", "Image Maze")
 
-        box.operator("scene.create_image_from_list", icon="IMAGE_COL")
+        box.operator("maze_gen.create_image_from_list", icon="IMAGE_COL")
         box.prop_search(scene, 'list_maze', bpy.data, "texts", "List Maze")
 
 
@@ -173,23 +200,22 @@ class MazeTilesPanelMG(bpy.types.Panel):
         box = layout.box()
         box.prop(scene, 'tile_based', text="Use Modeled Tiles")
         if scene.tile_based:
+            row = box.row()
+            row.prop(scene, 'tile_mode', expand=True)
 
             # generate demo tiles
             sub_box = box.box()
             row = sub_box.row(align=True)
-            row.operator("object.generate_demo_tiles", icon="MOD_SOLIDIFY")
-            row.prop(scene, 'tile_set_type', text="")
-            sub_box.prop(context.scene, 'import_mat', text="Import Material")
+            row.operator('maze_gen.export_tileset', text="Export Tiles", icon='EXPORT')
+            row.prop(scene, 'export_name', text="")
+            sub_box.menu('maze_gen.tile_import_menu', text="Import Tile Set")
+            sub_box.prop(scene, 'import_mat', text="Import Material")
 
             sub_box = box.box()
-            sub_box.prop(context.scene, 'merge_objects', text="Merge Objects")
+            sub_box.prop(scene, 'merge_objects', text="Merge Objects")
             if scene.merge_objects:
-                sub_box.prop(context.scene, 'apply_modifiers', text="Apply Modifiers")
-                sub_box.prop(context.scene, 'remove_doubles_merge', text="Remove Doubles")
-            else:
-                # fix to make sure not applying modifiers
-                # if merging is disabled (because group is not made)
-                scene.apply_modifiers = False
+                sub_box.prop(scene, 'apply_modifiers', text="Apply Modifiers")
+                sub_box.prop(scene, 'remove_doubles_merge', text="Remove Doubles")
 
             row = layout.row()
             row.separator()
@@ -198,22 +224,31 @@ class MazeTilesPanelMG(bpy.types.Panel):
             box.label("Tiles", icon='MESH_GRID')
             # list of tiles types needed
             col = box.column()
-            col.label("Wall Pieces:")
-            col.prop_search(context.scene, 'wall_4_sided', bpy.data, "objects", "4 Sided Wall")
-            col.prop_search(context.scene, 'wall_3_sided', bpy.data, "objects", "3 Sided Wall")
-            col.prop_search(context.scene, 'wall_2_sided', bpy.data, "objects", "2 Sided Wall")
-            col.prop_search(context.scene, 'wall_1_sided', bpy.data, "objects", "1 Sided Wall")
-            col.prop_search(context.scene, 'wall_0_sided', bpy.data, "objects", "0 Sided Wall")
-            col.prop_search(context.scene, 'wall_corner', bpy.data, "objects", "Wall Corner")
+            if scene.tile_mode == "TWELVE_TILES":
+                col.label("Wall Pieces:")
+                col.prop_search(scene, 'wall_4_sided', bpy.data, "objects", "4 Sided Wall")
+                col.prop_search(scene, 'wall_3_sided', bpy.data, "objects", "3 Sided Wall")
+                col.prop_search(scene, 'wall_2_sided', bpy.data, "objects", "2 Sided Wall")
+                col.prop_search(scene, 'wall_1_sided', bpy.data, "objects", "1 Sided Wall")
+                col.prop_search(scene, 'wall_0_sided', bpy.data, "objects", "0 Sided Wall")
+                col.prop_search(scene, 'wall_corner', bpy.data, "objects", "Wall Corner")
 
-            col = box.column()
-            col.label("Floor Pieces:")
-            col.prop_search(context.scene, 'floor_4_sided', bpy.data, "objects", "4 Sided Floor")
-            col.prop_search(context.scene, 'floor_3_sided', bpy.data, "objects", "3 Sided Floor")
-            col.prop_search(context.scene, 'floor_2_sided', bpy.data, "objects", "2 Sided Floor")
-            col.prop_search(context.scene, 'floor_1_sided', bpy.data, "objects", "1 Sided Floor")
-            col.prop_search(context.scene, 'floor_0_sided', bpy.data, "objects", "0 Sided Floor")
-            col.prop_search(context.scene, 'floor_corner', bpy.data, "objects", "Floor Corner")
+                col = box.column()
+                col.label("Floor Pieces:")
+                col.prop_search(scene, 'floor_4_sided', bpy.data, "objects", "4 Sided Floor")
+                col.prop_search(scene, 'floor_3_sided', bpy.data, "objects", "3 Sided Floor")
+                col.prop_search(scene, 'floor_2_sided', bpy.data, "objects", "2 Sided Floor")
+                col.prop_search(scene, 'floor_1_sided', bpy.data, "objects", "1 Sided Floor")
+                col.prop_search(scene, 'floor_0_sided', bpy.data, "objects", "0 Sided Floor")
+                col.prop_search(scene, 'floor_corner', bpy.data, "objects", "Floor Corner")
+            elif scene.tile_mode == "SIX_TILES":
+                col.label("Pieces:")
+                col.prop_search(scene, 'four_way', bpy.data, "objects", "4-Way")
+                col.prop_search(scene, 't_int', bpy.data, "objects", "3-Way")
+                col.prop_search(scene, 'turn', bpy.data, "objects", "Turn")
+                col.prop_search(scene, 'dead_end', bpy.data, "objects", "Dead End")
+                col.prop_search(scene, 'straight', bpy.data, "objects", "Straight Path")
+                col.prop_search(scene, 'no_path', bpy.data, "objects", "Wall Only")
 
 
 class BatchGeneratorPanelMG(bpy.types.Panel):
@@ -227,28 +262,29 @@ class BatchGeneratorPanelMG(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        scene = context.scene
 
         box = layout.box()
         row = box.row()
         row.scale_y = 1.5
-        row.operator("scene.batch_generate_maze", icon="PACKAGE")
-        box.operator("scene.store_batch_maze", icon="FILE")
+        row.operator("maze_gen.batch_generate_maze", icon="PACKAGE")
+        box.operator("maze_gen.store_batch_maze", icon="FILE")
 
         row = box.row(align=True)
-        row.operator("scene.refresh_batch_num", icon="LOAD_FACTORY")
+        row.operator("maze_gen.refresh_batch_num", icon="LOAD_FACTORY")
         sub_col = row.column()
         sub_col.enabled = False
-        sub_col.prop(context.scene, 'num_batch_mazes', text="Batches")
+        sub_col.prop(scene, 'num_batch_mazes', text="Batches")
 
-        box.operator("scene.clear_batch_maze", icon="CANCEL")
+        box.operator("maze_gen.clear_batch_maze", icon="CANCEL")
 
         row = layout.row()
         row.separator()
 
         box = layout.box()
-        box.prop(context.scene, 'batch_index', text="Batch Index")
-        box.operator("scene.load_batch_maze", icon="OOPS")
-        box.operator("scene.delete_batch_maze", icon="X")
+        box.prop(scene, 'batch_index', text="Batch Index")
+        box.operator("maze_gen.load_batch_maze", icon="OOPS")
+        box.operator("maze_gen.delete_batch_maze", icon="X")
 
 
 class InfoPanelMG(bpy.types.Panel):
@@ -264,8 +300,8 @@ class InfoPanelMG(bpy.types.Panel):
         layout = self.layout
 
         box = layout.box()
-        box.operator("scene.show_workflows_image", icon="OOPS")
-        box.operator("scene.show_readme_text", icon="FILE_TEXT")
+        box.operator("maze_gen.show_workflows_image", icon="OOPS")
+        box.operator("maze_gen.show_readme_text", icon="FILE_TEXT")
 
         row = layout.row()
         row.separator()
@@ -274,7 +310,7 @@ class InfoPanelMG(bpy.types.Panel):
         box = layout.box()
         box.label("Time Estimate", icon="TIME")
         col = box.column()
-        col.operator("object.estimate_time_mg", icon="QUESTION")
+        col.operator("maze_gen.estimate_time_mg", icon="QUESTION")
 
 
 class HelpPanelMG(bpy.types.Panel):
@@ -422,25 +458,35 @@ class HelpPanelMG(bpy.types.Panel):
 class MazeAddonPrefsMg(bpy.types.AddonPreferences):
     bl_idname = __name__
 
-    always_save_prior = bpy.props.BoolProperty(
+    use_custom_tile_path = BoolProperty(
+        name="use_custom_tile_path",
+        default=False,
+        description="Use custom tile path")
+
+    custom_tile_path = StringProperty(
+        name="custom_tile_path",
+        default=os.path.join(os.getcwd(), "MyTiles"),
+        description="Custom tile path")
+
+    always_save_prior = BoolProperty(
         name="always_save_prior",
         default=True,
         description="Always save .blend file before executing" +
                     "time-consuming operations")
 
-    save_all_images = bpy.props.BoolProperty(
+    save_all_images = BoolProperty(
         name="save_all_images",
         default=True,
         description="Always save images before executing" +
                     "time-consuming operations")
 
-    save_all_texts = bpy.props.BoolProperty(
+    save_all_texts = BoolProperty(
         name="save_all_texts",
         default=True,
         description="Always save texts before executing" +
                     "time-consuming operations")
 
-    show_quickhelp = bpy.props.BoolProperty(
+    show_quickhelp = BoolProperty(
         name="show_quickhelp",
         default=False,
         description="Show quick help")
@@ -448,12 +494,18 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
     def draw(self, context):
         layout = self.layout
 
-        row = layout.row()
-        row.prop(self, 'always_save_prior', text="Save .blend File")
-        row = layout.row()
-        row.prop(self, 'save_all_images', text="Save Images")
-        row = layout.row()
-        row.prop(self, 'save_all_texts', text="Save Texts")
+        col = layout.column()
+        box = col.box()
+        box.prop(self, 'use_custom_tile_path', text="Use Custom Path")
+        row = box.row(align=True)
+        row.prop(self, 'custom_tile_path', text="")
+        row.operator('buttons.directory_browse', text="", icon="FILESEL")
+        col.row()
+        col.prop(self, 'always_save_prior', text="Save .blend File")
+        col = layout.row()
+        col.prop(self, 'save_all_images', text="Save Images")
+        col = layout.row()
+        col.prop(self, 'save_all_texts', text="Save Texts")
 
         layout.row()
 
@@ -554,23 +606,23 @@ class MazeGeneratorTextToolsPanelMG(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        scene = context.scene
 
         row = layout.row()
-        row.prop_search(
-            context.scene, 'list_maze', bpy.data, 'texts', text="List Maze")
+        row.prop_search(scene, 'list_maze', bpy.data, 'texts', text="List Maze")
 
         box = layout.box()
-        box.operator("scene.invert_text_mg", icon="ARROW_LEFTRIGHT")
+        box.operator("maze_gen.invert_text_mg", icon="ARROW_LEFTRIGHT")
 
         box = layout.box()
-        box.operator("scene.replace_text_mg", icon="FONT_DATA")
-        box.prop(context.scene, 'text1_mg', text="Find")
-        box.prop(context.scene, 'text2_mg', text="Replace")
+        box.operator("maze_gen.replace_text_mg", icon="FONT_DATA")
+        box.prop(scene, 'text1_mg', text="Find")
+        box.prop(scene, 'text2_mg', text="Replace")
 
 
 class ShowHelpDiagramMG(bpy.types.Operator):
     bl_label = "Workflows Diagram"
-    bl_idname = "scene.show_workflows_image"
+    bl_idname = "maze_gen.show_workflows_image"
     bl_description = "Shows a workflow diagram in the image editor"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -591,7 +643,7 @@ class ShowHelpDiagramMG(bpy.types.Operator):
 
 class ShowReadmeMG(bpy.types.Operator):
     bl_label = "Readme"
-    bl_idname = "scene.show_readme_text"
+    bl_idname = "maze_gen.show_readme_text"
     bl_description = "Shows readme in the text editor"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -607,48 +659,77 @@ class ShowReadmeMG(bpy.types.Operator):
 
 
 # demo tile objects generation
-class DemoTilesMG(bpy.types.Operator):
+class DemoTilesImportMG(bpy.types.Operator):
     bl_label = "Generate Tiles"
-    bl_idname = "object.generate_demo_tiles"
-    bl_description = "Generates basic tiles."
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_idname = "maze_gen.import_tileset"
+    bl_description = "Imports tiles."
+    bl_options = {'UNDO'}
+
+    filename = StringProperty(name="File Name")
 
     def execute(self, context):
         scene = context.scene
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
 
         my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
-
-        if scene.tile_set_type == 'DEMO':
-            my_filepath = os.path.join(my_tiles_dir, "tile_demo.fbx")
-
-        elif scene.tile_set_type == 'BLANK':
-            my_filepath = os.path.join(my_tiles_dir, "tile_blanks.fbx")
-
-        elif scene.tile_set_type == 'ROUNDED':
-            my_filepath = os.path.join(my_tiles_dir, "tile_rounded.fbx")
-
-        elif scene.tile_set_type == 'PIPING':
-            my_filepath = os.path.join(my_tiles_dir, "tile_piping.fbx")
+        my_filepath = os.path.join(my_tiles_dir, self.filename)
+        if not os.access(my_filepath, os.R_OK) and addon_prefs.use_custom_tile_path:
+            my_filepath = os.path.join(
+                addon_prefs.custom_tile_path,
+                self.filename)
+            if not os.access(my_filepath, os.R_OK):
+                self.report({'ERROR'}, "The selected tile set could not be imported! Most likely your custom tile path is not set to a valid path.")
+                return {'CANCELLED'}
 
         # import .fbx
         bpy.ops.wm.addon_enable(module="io_scene_fbx")
         bpy.ops.import_scene.fbx(filepath=my_filepath)
 
-        # setup a material importer ! ! !
+        # TODO - setup a material importer ! ! !
         if scene.import_mat:
             material = import_mat("DEFAULT", my_tiles_dir)
 
             # link materials to models
-            bpy.context.scene.objects.active = bpy.context.selected_objects[0]
+            scene.objects.active = bpy.context.selected_objects[0]
             bpy.ops.object.material_slot_add()
-
-            # try this ...
-            bpy.context.scene.objects.active.id_data.material_slots[0].material = bpy.data.materials[material]
-            # (bpy.data.objects[bpy.context.scene.objects.active.name].
-            #    material_slots[0].material) = bpy.data.materials[material]
+            scene.objects.active.id_data.material_slots[0].material = bpy.data.materials[material]
             bpy.ops.object.make_links_data(type='MATERIAL')
-
         bpy.ops.object.select_all(action='DESELECT')
+
+        return {'FINISHED'}
+
+
+class DemoTilesExportMG(bpy.types.Operator):
+    bl_label = "Export Tiles"
+    bl_idname = "maze_gen.export_tileset"
+    bl_description = "Exports tiles."
+    bl_options = {'UNDO'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
+    def execute(self, context):
+        scene = context.scene
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+
+        if addon_prefs.use_custom_tile_path and os.access(addon_prefs.custom_tile_path, os.R_OK):
+            my_tiles_dir = addon_prefs.custom_tile_path
+        else:
+            my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
+        if scene.tile_mode == "TWELVE_TILES":
+            my_filepath = os.path.join(my_tiles_dir, (scene.export_name + "2.fbx"))
+        if scene.tile_mode == "SIX_TILES":
+            my_filepath = os.path.join(my_tiles_dir, (scene.export_name + "6.fbx"))
+
+        # import .fbx
+        bpy.ops.wm.addon_enable(module="io_scene_fbx")
+        bpy.ops.export_scene.fbx(filepath=my_filepath, axis_forward='-Z', axis_up='Y',
+                                 version='BIN7400', use_selection=True, global_scale=1.0,
+                                 apply_unit_scale=False, bake_space_transform=False,
+                                 object_types={'ARMATURE', 'EMPTY', 'MESH', 'OTHER'},
+                                 use_mesh_modifiers=True, mesh_smooth_type='OFF', use_mesh_edges=False,
+                                 use_tspace=False, use_custom_props=False,
+                                 path_mode='ABSOLUTE', batch_mode='OFF', use_metadata=True)
 
         return {'FINISHED'}
 
@@ -656,9 +737,12 @@ class DemoTilesMG(bpy.types.Operator):
 # main maze gen controller
 class GenerateMazeMG(bpy.types.Operator):
     bl_label = "Generate Maze"
-    bl_idname = "object.generate_maze"
+    bl_idname = "maze_gen.generate_maze"
     bl_description = "Generates a 3D maze"
     bl_options = {'REGISTER', 'UNDO'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
 
     def execute(self, context):
         scene = context.scene
@@ -704,6 +788,12 @@ class GenerateMazeMG(bpy.types.Operator):
                         "Assign a valid path or disable save texts in user prefs")
             return {'CANCELLED'}
 
+        apply_mods = scene.apply_modifiers
+        if not scene.merge_objects:
+            # fix to make sure not applying modifiers
+            # if merging is disabled (because group is not made)
+            scene.apply_modifiers = False
+
         if scene.use_list_maze:
             maze = txt_img_converter.convert_list_maze()
         elif scene.gen_3d_maze or scene.use_list_maze or scene.write_list_maze:
@@ -713,11 +803,13 @@ class GenerateMazeMG(bpy.types.Operator):
             maze = auto_layout_gen.add_loops(maze)
 
         # 3D generation
-        if bpy.context.scene.gen_3d_maze:
+        if scene.gen_3d_maze:
             if scene.tile_based:
                 tile_maze_gen.make_tile_maze(maze)
             else:
                 simple_maze_gen.make_3dmaze(maze)
+
+        scene.apply_modifiers = apply_mods
 
         # log time
         if scene.gen_3d_maze:
@@ -742,11 +834,11 @@ classes = [GenerateMazeMG, batch_gen.BatchGenerateMazeMG,
            batch_gen.RefreshBatchMazesMG, batch_gen.LoadBatchMazeMG,
            batch_gen.DeleteBatchMazeMG, time_log.EstimateTimeMG,
            MazeGeneratorPanelMG, ImageConverterPanelMG, MazeTilesPanelMG,
-           BatchGeneratorPanelMG, InfoPanelMG, HelpPanelMG, DemoTilesMG,
+           BatchGeneratorPanelMG, InfoPanelMG, HelpPanelMG, DemoTilesImportMG,
            MazeGeneratorTextToolsPanelMG, text_tools.ReplaceTextMG,
            text_tools.InvertTextMG, txt_img_converter.ConvertMazeImageMG,
            txt_img_converter.CreateImageFromListMG, ShowHelpDiagramMG,
-           ShowReadmeMG, MazeAddonPrefsMg]
+           ShowReadmeMG, MazeAddonPrefsMg, TileImportMenu, DemoTilesExportMG]
 
 
 def register():
@@ -760,17 +852,17 @@ def register():
     bpy.types.Scene.tile_based = bpy.props.BoolProperty(
         name="tile_based", default=False)
 
-    # type of pieces to add
-    bpy.types.Scene.tile_set_type = bpy.props.EnumProperty(
-        items=[('BLANK', "Blank", "Completely blank tiles"),
-               ('DEMO', "Demo", "Simple design on tiles"),
-               ('PIPING', "Piping", "A piping tileset also demonstrates ability to " +
-                "use parenting to have different modifiers for parts of a tile"),
-               ('ROUNDED', "Rounded", "Demonstrates how to model rounding " +
-                "at top of tiles")],
-        name="Tile Set",
-        description="Tile set to add",
-        default="BLANK")
+    bpy.types.Scene.export_name = StringProperty(
+        name="export_name",
+        default="MyTileSet",
+        description="Name of tile set to export")
+
+    bpy.types.Scene.tile_mode = bpy.props.EnumProperty(
+        items=[('TWELVE_TILES', "12-Piece Mode", "Use 12 tile pieces."),
+               ('SIX_TILES', "6-Piece Mode", "Use 6 tile pieces.")],
+        name="Tile Mode",
+        description="Number of tiles to use.",
+        default="TWELVE_TILES")
 
     # wall pieces
     bpy.types.Scene.wall_4_sided = bpy.props.StringProperty(
@@ -833,6 +925,36 @@ def register():
         name="floor_corner",
         default="floor_corner",
         description="Floor piece with 2 adjacent sides")
+
+    bpy.types.Scene.four_way = bpy.props.StringProperty(
+        name="four_way",
+        default="four_way",
+        description="4-way (+) intersection")
+
+    bpy.types.Scene.t_int = bpy.props.StringProperty(
+        name="t_int",
+        default="t_int",
+        description="3-way (T) intersection")
+
+    bpy.types.Scene.turn = bpy.props.StringProperty(
+        name="turn",
+        default="turn",
+        description="2-way (L) intersection")
+
+    bpy.types.Scene.dead_end = bpy.props.StringProperty(
+        name="dead_end",
+        default="dead_end",
+        description="Dead-end (]) tile")
+
+    bpy.types.Scene.straight = bpy.props.StringProperty(
+        name="straight",
+        default="straight",
+        description="Straight (|) tile")
+
+    bpy.types.Scene.no_path = bpy.props.StringProperty(
+        name="no_path",
+        default="no_path",
+        description="Wall-only (0) tile")
 
     bpy.types.Scene.import_mat = bpy.props.BoolProperty(
         name="import_mat",
@@ -936,7 +1058,8 @@ def unregister():
     del bpy.types.Scene.mg_height
     del bpy.types.Scene.tile_based
 
-    del bpy.types.Scene.tile_set_type
+    del bpy.types.Scene.export_name
+    del bpy.types.Scene.tile_mode
 
     del bpy.types.Scene.wall_4_sided
     del bpy.types.Scene.wall_3_sided
@@ -951,6 +1074,13 @@ def unregister():
     del bpy.types.Scene.floor_1_sided
     del bpy.types.Scene.floor_0_sided
     del bpy.types.Scene.floor_corner
+
+    del bpy.types.Scene.four_way
+    del bpy.types.Scene.t_int
+    del bpy.types.Scene.turn
+    del bpy.types.Scene.straight
+    del bpy.types.Scene.dead_end
+    del bpy.types.Scene.no_path
 
     del bpy.types.Scene.import_mat
 

@@ -157,7 +157,7 @@ def convert_list_maze():
 
 class ConvertMazeImageMG(bpy.types.Operator):
     bl_label = "Image to Text"
-    bl_idname = "scene.convert_maze_image"
+    bl_idname = "maze_gen.convert_maze_image"
     bl_description = "Creates a textblock with maze generated from image"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -229,7 +229,7 @@ class ConvertMazeImageMG(bpy.types.Operator):
 
 class CreateImageFromListMG(bpy.types.Operator):
     bl_label = "Text to Image"
-    bl_idname = "scene.create_image_from_list"
+    bl_idname = "maze_gen.create_image_from_list"
     bl_description = "Creates an image with maze generated from textblock"
     bl_options = {'REGISTER', 'UNDO'}
 

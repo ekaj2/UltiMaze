@@ -22,28 +22,47 @@ def check_tiles_exist():
     scene = bpy.context.scene
 
     tiles_exist = True
-    tiles = [(scene.wall_4_sided, "scene.wall_4_sided"),
-             (scene.wall_3_sided, "scene.wall_3_sided"),
-             (scene.wall_2_sided, "scene.wall_2_sided"),
-             (scene.wall_1_sided, "scene.wall_1_sided"),
-             (scene.wall_0_sided, "scene.wall_0_sided"),
-             (scene.wall_corner, "scene.wall_corner"),
-             (scene.floor_4_sided, "scene.floor_4_sided"),
-             (scene.floor_3_sided, "scene.floor_3_sided"),
-             (scene.floor_2_sided, "scene.floor_2_sided"),
-             (scene.floor_1_sided, "scene.floor_1_sided"),
-             (scene.floor_0_sided, "scene.floor_0_sided"),
-             (scene.floor_corner, "scene.floor_corner")]
+    tiles_12 = [(scene.wall_4_sided, "scene.wall_4_sided"),
+               (scene.wall_3_sided, "scene.wall_3_sided"),
+               (scene.wall_2_sided, "scene.wall_2_sided"),
+               (scene.wall_1_sided, "scene.wall_1_sided"),
+               (scene.wall_0_sided, "scene.wall_0_sided"),
+               (scene.wall_corner, "scene.wall_corner"),
+               (scene.floor_4_sided, "scene.floor_4_sided"),
+               (scene.floor_3_sided, "scene.floor_3_sided"),
+               (scene.floor_2_sided, "scene.floor_2_sided"),
+               (scene.floor_1_sided, "scene.floor_1_sided"),
+               (scene.floor_0_sided, "scene.floor_0_sided"),
+               (scene.floor_corner, "scene.floor_corner")]
 
-    for tile in tiles:
-        try:
-            object_type = bpy.data.objects[tile[0]].type
-            if object_type != 'MESH':
+    tiles_6 = [(scene.four_way, "scene.four_way"),
+               (scene.t_int, "scene.t_int"),
+               (scene.turn, "scene.turn"),
+               (scene.dead_end, "scene.dead_end"),
+               (scene.straight, "scene.straight"),
+               (scene.no_path, "scene.no_path")]
+
+    if bpy.context.scene.tile_mode == 'SIX_TILES':
+        for tile in tiles_6:
+            try:
+                object_type = bpy.data.objects[tile[0]].type
+                if object_type != 'MESH':
+                    tiles_exist = False
+                    exec(tile[1] + "= 'MISSING TILE'")
+            except KeyError:
                 tiles_exist = False
                 exec(tile[1] + "= 'MISSING TILE'")
-        except KeyError:
-            tiles_exist = False
-            exec(tile[1] + "= 'MISSING TILE'")
+
+    elif bpy.context.scene.tile_mode == 'TWELVE_TILES':
+        for tile in tiles_12:
+            try:
+                object_type = bpy.data.objects[tile[0]].type
+                if object_type != 'MESH':
+                    tiles_exist = False
+                    exec(tile[1] + "= 'MISSING TILE'")
+            except KeyError:
+                tiles_exist = False
+                exec(tile[1] + "= 'MISSING TILE'")
 
     return tiles_exist
 
