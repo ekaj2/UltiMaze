@@ -458,6 +458,17 @@ class HelpPanelMG(bpy.types.Panel):
 class MazeAddonPrefsMg(bpy.types.AddonPreferences):
     bl_idname = __name__
 
+    platform = StringProperty(
+        name="platform",
+        default=""
+    )
+
+    open_help_outbldr = BoolProperty(
+        name="open_help_outbldr",
+        default=True,
+        description="Open help files outside of Blender instead of in Blender's text editor and image editor. Will open all help files as if you double clicked them in an explorer window (only available on Windows)."
+    )
+
     use_custom_tile_path = BoolProperty(
         name="use_custom_tile_path",
         default=False,
@@ -495,6 +506,9 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
         layout = self.layout
 
         col = layout.column()
+        row = col.row()
+        row.prop(self, 'open_help_outbldr', text="Open Help Outside Blender")
+        col.row()
         box = col.box()
         box.prop(self, 'use_custom_tile_path', text="Use Custom Path")
         row = box.row(align=True)
@@ -620,6 +634,23 @@ class MazeGeneratorTextToolsPanelMG(bpy.types.Panel):
         box.prop(scene, 'text2_mg', text="Replace")
 
 
+class SaveUserPrefsMenu(bpy.types.Menu):
+    bl_idname = "maze_gen.save_user_prefs_menu"
+    bl_label = "Save user settings."
+
+    def draw(self, context):
+        layout = self.layout
+
+        row = layout.row()
+        row.label(text="Sorry, your OS doesn't support")
+        row = layout.row()
+        row.label(text="opening files outside of Blender.")
+        row = layout.row()
+        row.label(text="Please save user settings.")
+
+        layout.operator("wm.save_userpref", text="Save User Prefs")
+
+
 class ShowHelpDiagramMG(bpy.types.Operator):
     bl_label = "Workflows Diagram"
     bl_idname = "maze_gen.show_workflows_image"
@@ -627,16 +658,24 @@ class ShowHelpDiagramMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+
         my_directory = os.path.join(os.path.dirname(__file__), "help")
         image_filepath = os.path.join(my_directory, "Workflow Diagram.png")
 
-        bpy.ops.image.open(filepath=image_filepath,
-                           directory=my_directory,
-                           files=[{"name": "Workflow Diagram.png"}],
-                           relative_path=True,
-                           show_multiview=False)
-
-        self.report({'INFO'}, "See workflow diagram in the image editor")
+        if not addon_prefs.open_help_outbldr:
+            bpy.ops.image.open(filepath=image_filepath,
+                               directory=my_directory,
+                               files=[{"name": "Workflow Diagram.png"}],
+                               relative_path=True,
+                               show_multiview=False)
+            self.report({'INFO'}, "See workflow diagram in the image editor")
+        else:
+            try:
+                os.startfile(image_filepath)
+            except OSError:
+                addon_prefs.open_help_outbldr = False
+                bpy.ops.wm.call_menu(name=SaveUserPrefsMenu.bl_idname)
 
         return {'FINISHED'}
 
@@ -648,12 +687,20 @@ class ShowReadmeMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+
         my_directory = os.path.join(os.path.dirname(__file__), "help")
         my_filepath = os.path.join(my_directory, "Readme.txt")
 
-        bpy.ops.text.open(filepath=my_filepath)
-
-        self.report({'INFO'}, "See readme in the text editor")
+        if not addon_prefs.open_help_outbldr:
+            bpy.ops.text.open(filepath=my_filepath)  # TODO - Open in new blender window with readme
+            self.report({'INFO'}, "See readme in the text editor")
+        else:
+            try:
+                os.startfile(my_filepath)
+            except OSError:
+                addon_prefs.open_help_bldr = False
+                bpy.ops.wm.call_menu(name=SaveUserPrefsMenu.bl_idname)
 
         return {'FINISHED'}
 
@@ -838,7 +885,8 @@ classes = [GenerateMazeMG, batch_gen.BatchGenerateMazeMG,
            MazeGeneratorTextToolsPanelMG, text_tools.ReplaceTextMG,
            text_tools.InvertTextMG, txt_img_converter.ConvertMazeImageMG,
            txt_img_converter.CreateImageFromListMG, ShowHelpDiagramMG,
-           ShowReadmeMG, MazeAddonPrefsMg, TileImportMenu, DemoTilesExportMG]
+           ShowReadmeMG, MazeAddonPrefsMg, TileImportMenu, DemoTilesExportMG,
+           SaveUserPrefsMenu]
 
 
 def register():
