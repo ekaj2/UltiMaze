@@ -43,11 +43,12 @@ class StoreBatchMazeMG(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-
+        # TODO - save 6 tiles as well as tile mode
         settings_text = (" && wd,{};ht,{};3d,{};al,{};lc,{};ai,{}"
                          ";fl,{};lm,{};wl,{};tb,{};im,{};mo,{};am,{};rd,{}"
                          ";w0,{};w1,{};w2,{};w3,{};w4,{};wc,{}"
-                         ";f0,{};f1,{};f2,{};f3,{};f4,{};fc,{}".format(
+                         ";f0,{};f1,{};f2,{};f3,{};f4,{};fc,{}"
+                         ";tm,{};4w,{};3w,{};2t,{};de,{};2s,{};np,{}".format(
                             scene.mg_width,
                             scene.mg_height,
                             int(scene.gen_3d_maze),
@@ -73,7 +74,14 @@ class StoreBatchMazeMG(bpy.types.Operator):
                             scene.floor_2_sided,
                             scene.floor_3_sided,
                             scene.floor_4_sided,
-                            scene.floor_corner))
+                            scene.floor_corner,
+                            scene.tile_mode,
+                            scene.four_way,
+                            scene.t_int,
+                            scene.turn,
+                            scene.dead_end,
+                            scene.straight,
+                            scene.no_path))
 
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
         maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
@@ -186,8 +194,10 @@ class LoadBatchMazeMG(bpy.types.Operator):
                 scene.apply_modifiers = bool(int(parts[1]))
             elif parts[0] == "rd":
                 scene.remove_doubles_merge = bool(int(parts[1]))
+            elif parts[0] == "tm":
+                scene.tile_mode = parts[1]
 
-            # tile pieces
+            # 12 tile pieces
             elif parts[0] == "w0":
                 scene.wall_0_sided = parts[1]
             elif parts[0] == "w1":
@@ -212,6 +222,20 @@ class LoadBatchMazeMG(bpy.types.Operator):
                 scene.floor_4_sided = parts[1]
             elif parts[0] == "fc":
                 scene.floor_corner = parts[1]
+
+            # 6 tile pieces
+            elif parts[0] == "4w":
+                scene.four_way = parts[1]
+            elif parts[0] == "3w":
+                scene.t_int = parts[1]
+            elif parts[0] == "2t":
+                scene.turn = parts[1]
+            elif parts[0] == "de":
+                scene.dead_end = parts[1]
+            elif parts[0] == "2s":
+                scene.straight = parts[1]
+            elif parts[0] == "np":
+                scene.no_path = parts[1]
 
         return {'FINISHED'}
 
@@ -332,8 +356,10 @@ class BatchGenerateMazeMG(bpy.types.Operator):
                     scene.apply_modifiers = bool(int(parts[1]))
                 elif parts[0] == "rd":
                     scene.remove_doubles_merge = bool(int(parts[1]))
+                elif parts[0] == "tm":
+                    scene.tile_mode = parts[1]
 
-                # tile pieces
+                # 12 tile pieces
                 elif parts[0] == "w0":
                     scene.wall_0_sided = parts[1]
                 elif parts[0] == "w1":
@@ -358,6 +384,20 @@ class BatchGenerateMazeMG(bpy.types.Operator):
                     scene.floor_4_sided = parts[1]
                 elif parts[0] == "fc":
                     scene.floor_corner = parts[1]
+
+                # 6 tile pieces
+                elif parts[0] == "4w":
+                    scene.four_way = parts[1]
+                elif parts[0] == "3w":
+                    scene.t_int = parts[1]
+                elif parts[0] == "2t":
+                    scene.turn = parts[1]
+                elif parts[0] == "de":
+                    scene.dead_end = parts[1]
+                elif parts[0] == "2s":
+                    scene.straight = parts[1]
+                elif parts[0] == "np":
+                    scene.no_path = parts[1]
 
             # GENERATE MAZE HERE
 
