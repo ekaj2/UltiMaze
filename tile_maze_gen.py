@@ -324,12 +324,14 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
     # find out how many spaces that are touching are paths
     paths_found = 0
     touching, directions, _ = auto_layout_gen.find_touching(maze, space_index)
+    touching2, directions2, _ = auto_layout_gen.find_touching(maze, space_index, 2)
     if debug:
+        print("t: {}, t2: {}, d: {}, d2: {}".format(touching, touching2, directions, directions2))
         print("Choosing tile at {}".format(maze[space_index]))
-    for touching_space in touching:
+    for i, touching_space in enumerate(touching):
         if debug:
             print("Touching:", maze[touching_space])
-        if maze[touching_space][1]:
+        if maze[touching_space][1] and maze[touching2[i]][1]:
             paths_found += 1
 
     # FLOOR PIECES!
@@ -356,12 +358,14 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
         elif paths_found == 1:
             tile = 'dead_end'
 
+            dirs = [a for a in directions if a in directions2]
+
             # determine rotation
-            if directions == ['Right']:
+            if dirs == ['Right']:
                 rotation = 90
-            elif directions == ['Up']:
+            elif dirs == ['Up']:
                 rotation = 180
-            elif directions == ['Left']:
+            elif dirs == ['Left']:
                 rotation = 270
 
             return tile, rotation
@@ -436,7 +440,8 @@ def make_tile_maze(maze):
         percent = round((genloops / len(maze)) * 100)
         if percent != last_percent and percent < 100:
             bpy.context.window_manager.progress_update(percent)
-            console_prog("Tile Maze Gen", genloops / len(maze))
+            if not debug:
+                console_prog("Tile Maze Gen", genloops / len(maze))
             last_percent = percent
 
     if not debug:
