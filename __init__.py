@@ -458,11 +458,6 @@ class HelpPanelMG(bpy.types.Panel):
 class MazeAddonPrefsMg(bpy.types.AddonPreferences):
     bl_idname = __name__
 
-    platform = StringProperty(
-        name="platform",
-        default=""
-    )
-
     open_help_outbldr = BoolProperty(
         name="open_help_outbldr",
         default=True,
