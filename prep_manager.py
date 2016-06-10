@@ -7,46 +7,69 @@ Available functions:
     - always_save: Saves .blend file and referenced images/texts.
 """
 
-import os
-
 import bpy
 
 
 def check_tiles_exist():
     """Check if all tile slots are filled in UI panel.
-    
+
+    Also sets tile slot to 'MISSING TILE' if not found.
+
     Returns:
         True if all tile slots are filled, otherwise, False
     """
-    
-    tiles_exist = True
-    tiles = [bpy.context.scene.wall_4_sided,
-             bpy.context.scene.wall_3_sided,
-             bpy.context.scene.wall_2_sided,
-             bpy.context.scene.wall_1_sided,
-             bpy.context.scene.wall_0_sided,
-             bpy.context.scene.wall_corner,
-             bpy.context.scene.floor_4_sided,
-             bpy.context.scene.floor_3_sided,
-             bpy.context.scene.floor_2_sided,
-             bpy.context.scene.floor_1_sided,
-             bpy.context.scene.floor_0_sided,
-             bpy.context.scene.floor_corner]
 
-    for tile in tiles:
-        try:
-            object_type = bpy.data.objects[tile].type
-            if object_type != 'MESH':
+    scene = bpy.context.scene
+
+    tiles_exist = True
+    tiles_12 = [(scene.wall_4_sided, "scene.wall_4_sided"),
+               (scene.wall_3_sided, "scene.wall_3_sided"),
+               (scene.wall_2_sided, "scene.wall_2_sided"),
+               (scene.wall_1_sided, "scene.wall_1_sided"),
+               (scene.wall_0_sided, "scene.wall_0_sided"),
+               (scene.wall_corner, "scene.wall_corner"),
+               (scene.floor_4_sided, "scene.floor_4_sided"),
+               (scene.floor_3_sided, "scene.floor_3_sided"),
+               (scene.floor_2_sided, "scene.floor_2_sided"),
+               (scene.floor_1_sided, "scene.floor_1_sided"),
+               (scene.floor_0_sided, "scene.floor_0_sided"),
+               (scene.floor_corner, "scene.floor_corner")]
+
+    tiles_6 = [(scene.four_way, "scene.four_way"),
+               (scene.t_int, "scene.t_int"),
+               (scene.turn, "scene.turn"),
+               (scene.dead_end, "scene.dead_end"),
+               (scene.straight, "scene.straight"),
+               (scene.no_path, "scene.no_path")]
+
+    if bpy.context.scene.tile_mode == 'SIX_TILES':
+        for tile in tiles_6:
+            try:
+                object_type = bpy.data.objects[tile[0]].type
+                if object_type != 'MESH':
+                    tiles_exist = False
+                    exec(tile[1] + "= 'MISSING TILE'")
+            except KeyError:
                 tiles_exist = False
-        except KeyError:
-            tiles_exist = False
-        
+                exec(tile[1] + "= 'MISSING TILE'")
+
+    elif bpy.context.scene.tile_mode == 'TWELVE_TILES':
+        for tile in tiles_12:
+            try:
+                object_type = bpy.data.objects[tile[0]].type
+                if object_type != 'MESH':
+                    tiles_exist = False
+                    exec(tile[1] + "= 'MISSING TILE'")
+            except KeyError:
+                tiles_exist = False
+                exec(tile[1] + "= 'MISSING TILE'")
+
     return tiles_exist
 
 
 def check_list_exist():
     """Check if list is assigned in UI panel.
-    
+
     Returns:
         True if list is assigned, otherwise, False
     """
@@ -62,7 +85,7 @@ def check_list_exist():
 
 def save_text(text):
     """Saves Blender text block that is stored externally.
-    
+
     Args:
         text: Blender text block to save.
     """
@@ -73,26 +96,27 @@ def save_text(text):
     with open(text_path, "w") as d:
         d.write(str(text_as_string))
 
+
 def always_save():
     """Saves .blend file and referenced images/texts.
-    
+
     Does not save 'Render Result' or 'Viewer Node'
-        
+
     Returns:
         "BLEND_ERROR", None: IF file has not been saved (no filepath)
         "IMAGE_ERROR", image: IF image has not been saved
         "SUCCESS", None: IF saved all required types correctly
     """
-    wm = bpy.context.window_manager
-    scene = bpy.context.scene
-    
+
     addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
-    
+    debug = addon_prefs.debug_mode
+
     # save file
     if addon_prefs.always_save_prior:
         if bpy.data.is_saved:
             bpy.ops.wm.save_mainfile()
-            print("File saved...")
+            if not debug:
+                print("File saved...")
         else:
             return "BLEND_ERROR", None
 
@@ -101,9 +125,7 @@ def always_save():
         for image in bpy.data.images:
             if not image.packed_file:
                 if not image.filepath:
-                    if (image.name != 'Render Result' and 
-                        image.name != 'Viewer Node'):
-                            
+                    if image.name != 'Render Result' and image.name != 'Viewer Node':
                         return "IMAGE_ERROR", image
                 else:
                     image.save()
