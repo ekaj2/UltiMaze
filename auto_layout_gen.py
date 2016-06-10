@@ -299,9 +299,11 @@ def make_list_maze():
             [[(space in maze - x, y), is path, is walkable, active path],
             [(space in maze - x, y), is path, is walkable, active path], ...]
     """
+    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
 
     s_time = time()
-    print("\n")
+    if not debug:
+        print("\n")
     loops = 0
 
     bpy.context.window_manager.progress_begin(0, 100)
@@ -343,15 +345,16 @@ def make_list_maze():
         percent = int((loops / estimated_loops) * 100)
         if percent != last_percent and percent < 100:
             bpy.context.window_manager.progress_update(percent)
-
-            # new print out technique
-            console_prog("Layout Gen", loops / estimated_loops)
+            if not debug:
+                # new print out technique
+                console_prog("Layout Gen", loops / estimated_loops)
 
         last_percent = percent
 
-    # print out finished job
-    console_prog("Layout Gen", 1, time() - s_time)
-    print("\n")
+    if not debug:
+        # print out finished job
+        console_prog("Layout Gen", 1, time() - s_time)
+        print("\n")
     bpy.context.window_manager.progress_end()
 
     return maze

@@ -317,12 +317,18 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
     Returns:
         tile name, rotation tile should have
     """
+    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+
     rotation = 0
 
     # find out how many spaces that are touching are paths
     paths_found = 0
     touching, directions, _ = auto_layout_gen.find_touching(maze, space_index)
+    if debug:
+        print("Choosing tile at {}".format(maze[space_index]))
     for touching_space in touching:
+        if debug:
+            print("Touching:", maze[touching_space])
         if maze[touching_space][1]:
             paths_found += 1
 
@@ -391,6 +397,12 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
 
                 return tile, rotation
 
+    # move on to wall pieces
+    elif not maze[space_index][1]:
+        tile = 'no_path'
+
+        return tile, rotation
+
 
 def make_tile_maze(maze):
     """Makes tile-based maze.
@@ -400,6 +412,8 @@ def make_tile_maze(maze):
             [[(space in maze - x, y), is path, is walkable, active path],
             [(space in maze - x, y), is path, is walkable, active path], ...]
     """
+    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+
     s_time = time()
 
     bpy.context.window_manager.progress_begin(1, 100)
@@ -425,9 +439,10 @@ def make_tile_maze(maze):
             console_prog("Tile Maze Gen", genloops / len(maze))
             last_percent = percent
 
-    # printout finished
-    console_prog("Tile Maze Gen", 1, time() - s_time)
-    print("\n")
+    if not debug:
+        # printout finished
+        console_prog("Tile Maze Gen", 1, time() - s_time)
+        print("\n")
 
     for active in bpy.context.selected_objects:
         bpy.context.scene.objects.active = active

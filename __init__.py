@@ -469,6 +469,11 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
         description="Open help files outside of Blender instead of in Blender's text editor and image editor. Will open all help files as if you double clicked them in an explorer window (only available on Windows)."
     )
 
+    debug_mode = BoolProperty(
+        name="debug_mode",
+        default=False,
+        description="Only for development! Do not touch!")
+
     use_custom_tile_path = BoolProperty(
         name="use_custom_tile_path",
         default=False,
@@ -508,6 +513,7 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
         col = layout.column()
         row = col.row()
         row.prop(self, 'open_help_outbldr', text="Open Help Outside Blender")
+        row.prop(self, 'debug_mode', text="Debug")
         col.row()
         box = col.box()
         box.prop(self, 'use_custom_tile_path', text="Use Custom Path")
