@@ -335,7 +335,7 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
             paths_found += 1
 
     # FLOOR PIECES!
-
+    dirs = [a for a in directions if a in directions2]
     # start with floor pieces
     if maze[space_index][1]:
         if paths_found == 4:
@@ -346,19 +346,17 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
             tile = 't_int'
 
             # determine rotation (don't know if this translates directly)
-            if directions == ['Up', 'Right', 'Down']:
+            if dirs == ['Up', 'Right', 'Down']:
                 rotation = 90
-            elif directions == ['Up', 'Right', 'Left']:
+            elif dirs == ['Up', 'Right', 'Left']:
                 rotation = 180
-            elif directions == ['Up', 'Down', 'Left']:
+            elif dirs == ['Up', 'Down', 'Left']:
                 rotation = 270
 
             return tile, rotation
 
         elif paths_found == 1:
             tile = 'dead_end'
-
-            dirs = [a for a in directions if a in directions2]
 
             # determine rotation
             if dirs == ['Right']:
@@ -379,11 +377,11 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
         elif paths_found == 2:
 
             # determine tile: first straight, then corner
-            if directions == ['Up', 'Down'] or directions == ['Right', 'Left']:
+            if dirs == ['Up', 'Down'] or dirs == ['Right', 'Left']:
                 tile = 'straight'
 
                 # determine rotation
-                if directions == ['Right', 'Left']:
+                if dirs == ['Right', 'Left']:
                     rotation = 90
 
                 return tile, rotation
@@ -392,11 +390,11 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
                 tile = 'turn'
 
                 # determine rotation
-                if directions == ['Up', 'Right']:
+                if dirs == ['Up', 'Right']:
                     rotation = 90
-                elif directions == ['Up', 'Left']:
+                elif dirs == ['Up', 'Left']:
                     rotation = 180
-                elif directions == ['Down', 'Left']:
+                elif dirs == ['Down', 'Left']:
                     rotation = 270
 
                 return tile, rotation
