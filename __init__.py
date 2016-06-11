@@ -37,7 +37,7 @@ from maze_gen import time_log
 from maze_gen import txt_img_converter
 
 
-def append_objs(path, prefix="", suffix="", case_sens=False):
+def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
     """Appends all objects into scene from .blend if they meet argument criteria."""
 
     scene = bpy.context.scene
@@ -45,9 +45,9 @@ def append_objs(path, prefix="", suffix="", case_sens=False):
     with bpy.data.libraries.load(path) as (data_from, data_to):
         if not case_sens:
             data_to.objects = [name for name in data_from.objects if
-                               name.lower().startswith(prefix.lower()) and name.lower().endswith(suffix.lower())]
+                               name.lower().startswith(prefix.lower()) and name.lower().endswith(suffix.lower()) and ignore.upper() not in name.upper()]
         else:
-            data_to.objects = [name for name in data_from.objects if name.startswith(prefix) and name.endswith(suffix)]
+            data_to.objects = [name for name in data_from.objects if name.startswith(prefix) and name.endswith(suffix) and ignore.upper() not in name.upper()]
 
     for obj in data_to.objects:
         if obj is not None:
@@ -439,7 +439,7 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
 
     custom_tile_path = StringProperty(
         name="custom_tile_path",
-        default=os.path.join(os.getcwd(), "MyTiles"),
+        default=os.getcwd(),
         description="Custom tile path",
         subtype='FILE_PATH')
 
@@ -802,7 +802,7 @@ classes = [GenerateMazeMG, batch_gen.BatchGenerateMazeMG,
            MazeGeneratorTextToolsPanelMG, text_tools.ReplaceTextMG,
            text_tools.InvertTextMG, txt_img_converter.ConvertMazeImageMG,
            txt_img_converter.CreateImageFromListMG, ShowHelpDiagramMG,
-           ShowReadmeMG, MazeAddonPrefsMg, TileImportMenu, DemoTilesExportMG,
+           ShowReadmeMG, MazeAddonPrefsMg, TileImportMenu,
            SaveUserPrefsMenu]
 
 
