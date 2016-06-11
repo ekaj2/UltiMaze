@@ -9,12 +9,14 @@ import os
 import time
 
 import bpy
+
 from maze_gen import auto_layout_gen
 from maze_gen import prep_manager
 from maze_gen import simple_maze_gen
 from maze_gen import tile_maze_gen
 from maze_gen import time_log
 from maze_gen import txt_img_converter
+from maze_gen import menus
 
 
 def refresh_batch_max():
@@ -309,6 +311,10 @@ class BatchGenerateMazeMG(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
+
+        if not scene.layers[0]:
+            bpy.ops.wm.call_menu(name=menus.EnableLayerMenu.bl_idname)
+            return {'CANCELLED'}
 
         my_settings_dir = os.path.join(os.path.dirname(__file__), "settings")
         maze_setups_file = os.path.join(my_settings_dir, "maze_setups.txt")
