@@ -27,6 +27,7 @@ import time
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty
+
 from maze_gen import auto_layout_gen
 from maze_gen import batch_gen
 from maze_gen import prep_manager
@@ -35,6 +36,7 @@ from maze_gen import text_tools
 from maze_gen import tile_maze_gen
 from maze_gen import time_log
 from maze_gen import txt_img_converter
+from maze_gen import menus
 
 
 def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
@@ -55,32 +57,6 @@ def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
 
 
 # UI Classes
-# Tile import menu
-class TileImportMenu(bpy.types.Menu):
-    bl_idname = "maze_gen.tile_import_menu"
-    bl_label = "Import Tile Set"
-
-    def draw(self, context):
-        scene = context.scene
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
-
-        # get file names
-        files_list = os.listdir(os.path.join(os.path.dirname(__file__), "tiles"))
-        if addon_prefs.use_custom_tile_path:
-            try:
-                files_list += os.listdir(addon_prefs.custom_tile_path)
-            except FileNotFoundError:
-                print("Invalid custom tile path!")
-
-        if scene.tile_mode == "TWELVE_TILES":
-            tile_blends = [a for a in files_list if a[-6:] == '.blend' and a[:-6][-1:] == "2"]
-        elif scene.tile_mode == "SIX_TILES":
-            tile_blends = [a for a in files_list if a[-6:] == '.blend' and a[:-6][-1:] == "6"]
-        layout = self.layout
-        for tileset in tile_blends:
-            layout.operator("maze_gen.import_tileset", text=tileset[:-7]).filename = tileset
-
-
 # 3D View
 class MazeGeneratorPanelMG(bpy.types.Panel):
     bl_label = "Maze Generator"
@@ -598,22 +574,6 @@ class MazeGeneratorTextToolsPanelMG(bpy.types.Panel):
         box.prop(scene, 'text2_mg', text="Replace")
 
 
-class SaveUserPrefsMenu(bpy.types.Menu):
-    bl_idname = "maze_gen.save_user_prefs_menu"
-    bl_label = "Save user settings."
-
-    def draw(self, context):
-        layout = self.layout
-
-        row = layout.row()
-        row.label(text="Sorry, your OS doesn't support")
-        row = layout.row()
-        row.label(text="opening files outside of Blender.")
-        row = layout.row()
-        row.label(text="Please save user settings.")
-
-        layout.operator("wm.save_userpref", text="Save User Prefs")
-
 
 class ShowHelpDiagramMG(bpy.types.Operator):
     bl_label = "Workflows Diagram"
@@ -639,7 +599,7 @@ class ShowHelpDiagramMG(bpy.types.Operator):
                 os.startfile(image_filepath)
             except OSError:
                 addon_prefs.open_help_outbldr = False
-                bpy.ops.wm.call_menu(name=SaveUserPrefsMenu.bl_idname)
+                bpy.ops.wm.call_menu(name=menus.SaveUserPrefsMenu.bl_idname)
 
         return {'FINISHED'}
 
@@ -664,7 +624,7 @@ class ShowReadmeMG(bpy.types.Operator):
                 os.startfile(my_filepath)
             except OSError:
                 addon_prefs.open_help_bldr = False
-                bpy.ops.wm.call_menu(name=SaveUserPrefsMenu.bl_idname)
+                bpy.ops.wm.call_menu(name=menus.SaveUserPrefsMenu.bl_idname)
 
         return {'FINISHED'}
 
@@ -697,6 +657,16 @@ class DemoTilesImportMG(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class EnableLayerMG(bpy.types.Operator):
+    bl_label = "Enable First Layer"
+    bl_idname = "maze_gen.enable_layer"
+    bl_description = "Enables first layer so UltiMaze can work :)"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        context.scene.layers[0] = True
+        return {'FINISHED'}
+
 
 # main maze gen controller
 class GenerateMazeMG(bpy.types.Operator):
@@ -710,6 +680,10 @@ class GenerateMazeMG(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
+
+        if not scene.layers[0]:
+            bpy.ops.wm.call_menu(name=menus.EnableLayerMenu.bl_idname)
+            return {'CANCELLED'}
 
         time_start = time.time()
 
@@ -802,8 +776,8 @@ classes = [GenerateMazeMG, batch_gen.BatchGenerateMazeMG,
            MazeGeneratorTextToolsPanelMG, text_tools.ReplaceTextMG,
            text_tools.InvertTextMG, txt_img_converter.ConvertMazeImageMG,
            txt_img_converter.CreateImageFromListMG, ShowHelpDiagramMG,
-           ShowReadmeMG, MazeAddonPrefsMg, TileImportMenu,
-           SaveUserPrefsMenu]
+           ShowReadmeMG, MazeAddonPrefsMg, menus.TileImportMenu, menus.EnableLayerMenu,
+           EnableLayerMG, menus.SaveUserPrefsMenu]
 
 
 def register():
