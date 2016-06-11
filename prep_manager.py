@@ -109,12 +109,14 @@ def always_save():
     """
 
     addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
+    debug = addon_prefs.debug_mode
 
     # save file
     if addon_prefs.always_save_prior:
         if bpy.data.is_saved:
             bpy.ops.wm.save_mainfile()
-            print("File saved...")
+            if not debug:
+                print("File saved...")
         else:
             return "BLEND_ERROR", None
 

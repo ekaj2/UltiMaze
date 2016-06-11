@@ -3,7 +3,7 @@ import bpy
 
 class ReplaceTextMG(bpy.types.Operator):
     bl_label = "Replace Text"
-    bl_idname = "scene.replace_text_mg"
+    bl_idname = "maze_gen.replace_text_mg"
     bl_description = "Replaces text1 with text2 in specified textblock"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -29,7 +29,7 @@ class ReplaceTextMG(bpy.types.Operator):
 
 class InvertTextMG(bpy.types.Operator):
     bl_label = "Invert Maze"
-    bl_idname = "scene.invert_text_mg"
+    bl_idname = "maze_gen.invert_text_mg"
     bl_description = "Inverts 1s and 0s in specified textblock"
     bl_options = {'REGISTER', 'UNDO'}
 

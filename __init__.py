@@ -475,16 +475,16 @@ class HelpPanelMG(bpy.types.Panel):
 class MazeAddonPrefsMg(bpy.types.AddonPreferences):
     bl_idname = __name__
 
-    platform = StringProperty(
-        name="platform",
-        default=""
-    )
-
     open_help_outbldr = BoolProperty(
         name="open_help_outbldr",
         default=True,
         description="Open help files outside of Blender instead of in Blender's text editor and image editor. Will open all help files as if you double clicked them in an explorer window (only available on Windows)."
     )
+
+    debug_mode = BoolProperty(
+        name="debug_mode",
+        default=False,
+        description="Only for development! Do not touch!")
 
     use_custom_tile_path = BoolProperty(
         name="use_custom_tile_path",
@@ -494,7 +494,8 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
     custom_tile_path = StringProperty(
         name="custom_tile_path",
         default=os.path.join(os.getcwd(), "MyTiles"),
-        description="Custom tile path")
+        description="Custom tile path",
+        subtype='FILE_PATH')
 
     always_save_prior = BoolProperty(
         name="always_save_prior",
@@ -525,12 +526,12 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
         col = layout.column()
         row = col.row()
         row.prop(self, 'open_help_outbldr', text="Open Help Outside Blender")
+        row.prop(self, 'debug_mode', text="Debug")
         col.row()
         box = col.box()
         box.prop(self, 'use_custom_tile_path', text="Use Custom Path")
-        row = box.row(align=True)
+        row = box.row()
         row.prop(self, 'custom_tile_path', text="")
-        row.operator('buttons.directory_browse', text="", icon="FILESEL")
         col.row()
         col.prop(self, 'always_save_prior', text="Save .blend File")
         col = layout.row()

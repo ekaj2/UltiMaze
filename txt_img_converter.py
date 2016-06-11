@@ -234,6 +234,7 @@ class CreateImageFromListMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
         scene = context.scene
 
         if not scene.list_maze:
@@ -307,19 +308,19 @@ class CreateImageFromListMG(bpy.types.Operator):
                 percent = round((count / area) * 100)
                 if percent != last_percent and percent < 100:
                     bpy.context.window_manager.progress_update(percent)
-
-                    # new print out technique
-                    console_prog("Text to Image", count / area)
+                    if not debug:
+                        # new print out technique
+                        console_prog("Text to Image", count / area)
 
                 last_percent = percent
 
                 image_col += 1
                 count += 1
             image_row -= 1
-
-        # printout finished
-        console_prog("Text to Image", 1, time() - s_time)
-        print("\n")
+        if not debug:
+            # printout finished
+            console_prog("Text to Image", 1, time() - s_time)
+            print("\n")
 
         # stop progress report
         bpy.context.window_manager.progress_end()

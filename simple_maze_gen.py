@@ -42,6 +42,8 @@ def make_3dmaze(maze):
             [[(space in maze - x, y), is path, is walkable, active path],
             [(space in maze - x, y), is path, is walkable, active path], ...]
     """
+    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+
     s_time = time()
     bpy.context.window_manager.progress_begin(1, 100)
     genloops = 0
@@ -102,15 +104,15 @@ def make_3dmaze(maze):
         percent = round((genloops / len(maze)) * 100)
         if percent != last_percent and percent < 100:
             bpy.context.window_manager.progress_update(percent)
-
-            # new print out technique
-            console_prog("3D Maze Gen", genloops / len(maze))
+            if not debug:
+                # new print out technique
+                console_prog("3D Maze Gen", genloops / len(maze))
 
         last_percent = percent
-
-    # print out finished job before "Info" from removing doubles
-    console_prog("3D Maze Gen", 1, time() - s_time)
-    print("\n")
+    if not debug:
+        # print out finished job before "Info" from removing doubles
+        console_prog("3D Maze Gen", 1, time() - s_time)
+        print("\n")
 
     # remove doubles then extrude based on material selection
     bpy.ops.mesh.select_all(action='SELECT')

@@ -100,6 +100,9 @@ class ClearBatchMazesMG(bpy.types.Operator):
     bl_description = "Clears all mazes from batch cache."
     bl_options = {'REGISTER', 'UNDO'}
 
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
     def execute(self, context):
         scene = context.scene
 
@@ -246,6 +249,9 @@ class DeleteBatchMazeMG(bpy.types.Operator):
     bl_description = "Deletes the maze settings for batch number."
     bl_options = {'REGISTER', 'UNDO'}
 
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
     def execute(self, context):
         scene = context.scene
 
@@ -297,6 +303,9 @@ class BatchGenerateMazeMG(bpy.types.Operator):
     bl_idname = "maze_gen.batch_generate_maze"
     bl_description = "Generates a maze for each stored setting."
     bl_options = {'REGISTER', 'UNDO'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
 
     def execute(self, context):
         scene = context.scene
