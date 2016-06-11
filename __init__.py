@@ -87,6 +87,23 @@ def import_mat(material_type, my_tiles_dir):
     return ""
 
 
+def append_objs(path, prefix="", suffix="", case_sens=False):
+    """Appends all objects into scene from .blend if they meet argument criteria."""
+
+    scene = bpy.context.scene
+
+    with bpy.data.libraries.load(path) as (data_from, data_to):
+        if not case_sens:
+            data_to.objects = [name for name in data_from.objects if
+                               name.lower().startswith(prefix.lower()) and name.lower().endswith(suffix.lower())]
+        else:
+            data_to.objects = [name for name in data_from.objects if name.startswith(prefix) and name.endswith(suffix)]
+
+    for obj in data_to.objects:
+        if obj is not None:
+            scene.objects.link(obj)
+
+
 # UI Classes
 # Tile import menu
 class TileImportMenu(bpy.types.Menu):
@@ -106,12 +123,12 @@ class TileImportMenu(bpy.types.Menu):
                 print("Invalid custom tile path!")
 
         if scene.tile_mode == "TWELVE_TILES":
-            tile_fbxs = [a for a in files_list if a[-4:] == '.fbx' and a[:-4][-1:] == "2"]
+            tile_blends = [a for a in files_list if a[-6:] == '.blend' and a[:-6][-1:] == "2"]
         elif scene.tile_mode == "SIX_TILES":
-            tile_fbxs = [a for a in files_list if a[-4:] == '.fbx' and a[:-4][-1:] == "6"]
+            tile_blends = [a for a in files_list if a[-6:] == '.blend' and a[:-6][-1:] == "6"]
         layout = self.layout
-        for tileset in tile_fbxs:
-            layout.operator("maze_gen.import_tileset", text=tileset[:-5]).filename = tileset
+        for tileset in tile_blends:
+            layout.operator("maze_gen.import_tileset", text=tileset[:-7]).filename = tileset
 
 
 # 3D View
@@ -205,9 +222,9 @@ class MazeTilesPanelMG(bpy.types.Panel):
 
             # generate demo tiles
             sub_box = box.box()
-            row = sub_box.row(align=True)
-            row.operator('maze_gen.export_tileset', text="Export Tiles", icon='EXPORT')
-            row.prop(scene, 'export_name', text="")
+            #row = sub_box.row(align=True)
+            #row.operator('maze_gen.export_tileset', text="Export Tiles", icon='EXPORT')
+            #row.prop(scene, 'export_name', text="")
             sub_box.menu('maze_gen.tile_import_menu', text="Import Tile Set")
             sub_box.prop(scene, 'import_mat', text="Import Material")
 
@@ -715,7 +732,6 @@ class DemoTilesImportMG(bpy.types.Operator):
     filename = StringProperty(name="File Name")
 
     def execute(self, context):
-        scene = context.scene
         addon_prefs = context.user_preferences.addons['maze_gen'].preferences
 
         my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
@@ -728,19 +744,8 @@ class DemoTilesImportMG(bpy.types.Operator):
                 self.report({'ERROR'}, "The selected tile set could not be imported! Most likely your custom tile path is not set to a valid path.")
                 return {'CANCELLED'}
 
-        # import .fbx
-        bpy.ops.wm.addon_enable(module="io_scene_fbx")
-        bpy.ops.import_scene.fbx(filepath=my_filepath)
+        append_objs(my_filepath+".blend")
 
-        # TODO - setup a material importer ! ! !
-        if scene.import_mat:
-            material = import_mat("DEFAULT", my_tiles_dir)
-
-            # link materials to models
-            scene.objects.active = bpy.context.selected_objects[0]
-            bpy.ops.object.material_slot_add()
-            scene.objects.active.id_data.material_slots[0].material = bpy.data.materials[material]
-            bpy.ops.object.make_links_data(type='MATERIAL')
         bpy.ops.object.select_all(action='DESELECT')
 
         return {'FINISHED'}
