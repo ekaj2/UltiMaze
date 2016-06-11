@@ -226,7 +226,7 @@ class MazeTilesPanelMG(bpy.types.Panel):
             #row.operator('maze_gen.export_tileset', text="Export Tiles", icon='EXPORT')
             #row.prop(scene, 'export_name', text="")
             sub_box.menu('maze_gen.tile_import_menu', text="Import Tile Set")
-            sub_box.prop(scene, 'import_mat', text="Import Material")
+            #sub_box.prop(scene, 'import_mat', text="Import Material")
 
             sub_box = box.box()
             sub_box.prop(scene, 'merge_objects', text="Merge Objects")
@@ -745,7 +745,7 @@ class DemoTilesImportMG(bpy.types.Operator):
                 self.report({'ERROR'}, "The selected tile set could not be imported! Most likely your custom tile path is not set to a valid path.")
                 return {'CANCELLED'}
 
-        append_objs(my_filepath+".blend")
+        append_objs(my_filepath)
 
         bpy.ops.object.select_all(action='DESELECT')
 
