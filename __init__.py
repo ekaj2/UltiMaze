@@ -37,56 +37,6 @@ from maze_gen import time_log
 from maze_gen import txt_img_converter
 
 
-def import_mat(material_type, my_tiles_dir):
-    """Imports material if not in .blend.
-
-    Args:
-        material_type - type of material to change logic (not used much now)
-        my_tiles_dir - directory where material_lib.blend is located
-
-    Returns:
-        actual name of imported material
-    """
-    my_blend_filepath = os.path.join(my_tiles_dir, "material_lib.blend")
-    my_blend_directory = os.path.join(my_blend_filepath, "Material")
-
-    if material_type == 'DEFAULT':
-
-        if bpy.context.scene.render.engine == 'CYCLES':
-            mat_in_blend = True
-            try:
-                bpy.data.materials['maze_default_cycles']
-            except KeyError:
-                mat_in_blend = False
-            if not mat_in_blend:
-                bpy.ops.wm.append(
-                    filepath=("//material_lib.blend/Material/" +
-                              "maze_default_cycles"),
-                    filename="maze_default_cycles",
-                    directory=my_blend_directory,
-                    autoselect=False)
-
-            return "maze_default_cycles"
-
-        else:
-            mat_in_blend = True
-            try:
-                bpy.data.materials['maze_default_bi']
-            except KeyError:
-                print("\nBI mat not in .blend.\n")
-                mat_in_blend = False
-            if not mat_in_blend:
-                bpy.ops.wm.append(
-                    filepath="//material_lib.blend/Material/maze_default_bi",
-                    filename="maze_default_bi",
-                    directory=my_blend_directory,
-                    autoselect=False)
-
-            return "maze_default_bi"
-
-    return ""
-
-
 def append_objs(path, prefix="", suffix="", case_sens=False):
     """Appends all objects into scene from .blend if they meet argument criteria."""
 
@@ -222,11 +172,7 @@ class MazeTilesPanelMG(bpy.types.Panel):
 
             # generate demo tiles
             sub_box = box.box()
-            #row = sub_box.row(align=True)
-            #row.operator('maze_gen.export_tileset', text="Export Tiles", icon='EXPORT')
-            #row.prop(scene, 'export_name', text="")
             sub_box.menu('maze_gen.tile_import_menu', text="Import Tile Set")
-            #sub_box.prop(scene, 'import_mat', text="Import Material")
 
             sub_box = box.box()
             sub_box.prop(scene, 'merge_objects', text="Merge Objects")
@@ -748,41 +694,6 @@ class DemoTilesImportMG(bpy.types.Operator):
         append_objs(my_filepath)
 
         bpy.ops.object.select_all(action='DESELECT')
-
-        return {'FINISHED'}
-
-
-class DemoTilesExportMG(bpy.types.Operator):
-    bl_label = "Export Tiles"
-    bl_idname = "maze_gen.export_tileset"
-    bl_description = "Exports tiles."
-    bl_options = {'UNDO'}
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_confirm(self, event)
-
-    def execute(self, context):
-        scene = context.scene
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
-
-        if addon_prefs.use_custom_tile_path and os.access(addon_prefs.custom_tile_path, os.R_OK):
-            my_tiles_dir = addon_prefs.custom_tile_path
-        else:
-            my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
-        if scene.tile_mode == "TWELVE_TILES":
-            my_filepath = os.path.join(my_tiles_dir, (scene.export_name + "2.fbx"))
-        if scene.tile_mode == "SIX_TILES":
-            my_filepath = os.path.join(my_tiles_dir, (scene.export_name + "6.fbx"))
-
-        # import .fbx
-        bpy.ops.wm.addon_enable(module="io_scene_fbx")
-        bpy.ops.export_scene.fbx(filepath=my_filepath, axis_forward='-Z', axis_up='Y',
-                                 version='BIN7400', use_selection=True, global_scale=1.0,
-                                 apply_unit_scale=False, bake_space_transform=False,
-                                 object_types={'ARMATURE', 'EMPTY', 'MESH', 'OTHER'},
-                                 use_mesh_modifiers=True, mesh_smooth_type='OFF', use_mesh_edges=False,
-                                 use_tspace=False, use_custom_props=False,
-                                 path_mode='ABSOLUTE', batch_mode='OFF', use_metadata=True)
 
         return {'FINISHED'}
 
