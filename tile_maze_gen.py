@@ -317,17 +317,25 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
     Returns:
         tile name, rotation tile should have
     """
+    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+
     rotation = 0
 
     # find out how many spaces that are touching are paths
     paths_found = 0
     touching, directions, _ = auto_layout_gen.find_touching(maze, space_index)
-    for touching_space in touching:
-        if maze[touching_space][1]:
+    touching2, directions2, _ = auto_layout_gen.find_touching(maze, space_index, 2)
+    if debug:
+        print("t: {}, t2: {}, d: {}, d2: {}".format(touching, touching2, directions, directions2))
+        print("Choosing tile at {}".format(maze[space_index]))
+    for i, touching_space in enumerate(touching):
+        if debug:
+            print("Touching:", maze[touching_space])
+        if maze[touching_space][1] and maze[touching2[i]][1]:
             paths_found += 1
 
     # FLOOR PIECES!
-
+    dirs = [a for a in directions if a in directions2]
     # start with floor pieces
     if maze[space_index][1]:
         if paths_found == 4:
@@ -338,11 +346,11 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
             tile = 't_int'
 
             # determine rotation (don't know if this translates directly)
-            if directions == ['Up', 'Right', 'Down']:
+            if dirs == ['Up', 'Right', 'Down']:
                 rotation = 90
-            elif directions == ['Up', 'Right', 'Left']:
+            elif dirs == ['Up', 'Right', 'Left']:
                 rotation = 180
-            elif directions == ['Up', 'Down', 'Left']:
+            elif dirs == ['Up', 'Down', 'Left']:
                 rotation = 270
 
             return tile, rotation
@@ -351,11 +359,11 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
             tile = 'dead_end'
 
             # determine rotation
-            if directions == ['Right']:
+            if dirs == ['Right']:
                 rotation = 90
-            elif directions == ['Up']:
+            elif dirs == ['Up']:
                 rotation = 180
-            elif directions == ['Left']:
+            elif dirs == ['Left']:
                 rotation = 270
 
             return tile, rotation
@@ -369,11 +377,11 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
         elif paths_found == 2:
 
             # determine tile: first straight, then corner
-            if directions == ['Up', 'Down'] or directions == ['Right', 'Left']:
+            if dirs == ['Up', 'Down'] or dirs == ['Right', 'Left']:
                 tile = 'straight'
 
                 # determine rotation
-                if directions == ['Right', 'Left']:
+                if dirs == ['Right', 'Left']:
                     rotation = 90
 
                 return tile, rotation
@@ -382,14 +390,20 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
                 tile = 'turn'
 
                 # determine rotation
-                if directions == ['Up', 'Right']:
+                if dirs == ['Up', 'Right']:
                     rotation = 90
-                elif directions == ['Up', 'Left']:
+                elif dirs == ['Up', 'Left']:
                     rotation = 180
-                elif directions == ['Down', 'Left']:
+                elif dirs == ['Down', 'Left']:
                     rotation = 270
 
                 return tile, rotation
+
+    # move on to wall pieces
+    elif not maze[space_index][1]:
+        tile = 'no_path'
+
+        return tile, rotation
 
 
 def make_tile_maze(maze):
@@ -400,6 +414,8 @@ def make_tile_maze(maze):
             [[(space in maze - x, y), is path, is walkable, active path],
             [(space in maze - x, y), is path, is walkable, active path], ...]
     """
+    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+
     s_time = time()
 
     bpy.context.window_manager.progress_begin(1, 100)
@@ -422,12 +438,14 @@ def make_tile_maze(maze):
         percent = round((genloops / len(maze)) * 100)
         if percent != last_percent and percent < 100:
             bpy.context.window_manager.progress_update(percent)
-            console_prog("Tile Maze Gen", genloops / len(maze))
+            if not debug:
+                console_prog("Tile Maze Gen", genloops / len(maze))
             last_percent = percent
 
-    # printout finished
-    console_prog("Tile Maze Gen", 1, time() - s_time)
-    print("\n")
+    if not debug:
+        # printout finished
+        console_prog("Tile Maze Gen", 1, time() - s_time)
+        print("\n")
 
     for active in bpy.context.selected_objects:
         bpy.context.scene.objects.active = active
