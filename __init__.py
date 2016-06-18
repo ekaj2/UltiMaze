@@ -27,6 +27,7 @@ import time
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty
+
 from maze_gen import auto_layout_gen
 from maze_gen import batch_gen
 from maze_gen import prep_manager
@@ -35,85 +36,27 @@ from maze_gen import text_tools
 from maze_gen import tile_maze_gen
 from maze_gen import time_log
 from maze_gen import txt_img_converter
+from maze_gen import menus
 
 
-def import_mat(material_type, my_tiles_dir):
-    """Imports material if not in .blend.
+def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
+    """Appends all objects into scene from .blend if they meet argument criteria."""
 
-    Args:
-        material_type - type of material to change logic (not used much now)
-        my_tiles_dir - directory where material_lib.blend is located
+    scene = bpy.context.scene
 
-    Returns:
-        actual name of imported material
-    """
-    my_blend_filepath = os.path.join(my_tiles_dir, "material_lib.blend")
-    my_blend_directory = os.path.join(my_blend_filepath, "Material")
-
-    if material_type == 'DEFAULT':
-
-        if bpy.context.scene.render.engine == 'CYCLES':
-            mat_in_blend = True
-            try:
-                bpy.data.materials['maze_default_cycles']
-            except KeyError:
-                mat_in_blend = False
-            if not mat_in_blend:
-                bpy.ops.wm.append(
-                    filepath=("//material_lib.blend/Material/" +
-                              "maze_default_cycles"),
-                    filename="maze_default_cycles",
-                    directory=my_blend_directory,
-                    autoselect=False)
-
-            return "maze_default_cycles"
-
+    with bpy.data.libraries.load(path) as (data_from, data_to):
+        if not case_sens:
+            data_to.objects = [name for name in data_from.objects if
+                               name.lower().startswith(prefix.lower()) and name.lower().endswith(suffix.lower()) and ignore.upper() not in name.upper()]
         else:
-            mat_in_blend = True
-            try:
-                bpy.data.materials['maze_default_bi']
-            except KeyError:
-                print("\nBI mat not in .blend.\n")
-                mat_in_blend = False
-            if not mat_in_blend:
-                bpy.ops.wm.append(
-                    filepath="//material_lib.blend/Material/maze_default_bi",
-                    filename="maze_default_bi",
-                    directory=my_blend_directory,
-                    autoselect=False)
+            data_to.objects = [name for name in data_from.objects if name.startswith(prefix) and name.endswith(suffix) and ignore.upper() not in name.upper()]
 
-            return "maze_default_bi"
-
-    return ""
+    for obj in data_to.objects:
+        if obj is not None:
+            scene.objects.link(obj)
 
 
 # UI Classes
-# Tile import menu
-class TileImportMenu(bpy.types.Menu):
-    bl_idname = "maze_gen.tile_import_menu"
-    bl_label = "Import Tile Set"
-
-    def draw(self, context):
-        scene = context.scene
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
-
-        # get file names
-        files_list = os.listdir(os.path.join(os.path.dirname(__file__), "tiles"))
-        if addon_prefs.use_custom_tile_path:
-            try:
-                files_list += os.listdir(addon_prefs.custom_tile_path)
-            except FileNotFoundError:
-                print("Invalid custom tile path!")
-
-        if scene.tile_mode == "TWELVE_TILES":
-            tile_fbxs = [a for a in files_list if a[-4:] == '.fbx' and a[:-4][-1:] == "2"]
-        elif scene.tile_mode == "SIX_TILES":
-            tile_fbxs = [a for a in files_list if a[-4:] == '.fbx' and a[:-4][-1:] == "6"]
-        layout = self.layout
-        for tileset in tile_fbxs:
-            layout.operator("maze_gen.import_tileset", text=tileset[:-5]).filename = tileset
-
-
 # 3D View
 class MazeGeneratorPanelMG(bpy.types.Panel):
     bl_label = "Maze Generator"
@@ -205,11 +148,7 @@ class MazeTilesPanelMG(bpy.types.Panel):
 
             # generate demo tiles
             sub_box = box.box()
-            row = sub_box.row(align=True)
-            row.operator('maze_gen.export_tileset', text="Export Tiles", icon='EXPORT')
-            row.prop(scene, 'export_name', text="")
             sub_box.menu('maze_gen.tile_import_menu', text="Import Tile Set")
-            sub_box.prop(scene, 'import_mat', text="Import Material")
 
             sub_box = box.box()
             sub_box.prop(scene, 'merge_objects', text="Merge Objects")
@@ -476,7 +415,7 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
 
     custom_tile_path = StringProperty(
         name="custom_tile_path",
-        default=os.path.join(os.getcwd(), "MyTiles"),
+        default=os.getcwd(),
         description="Custom tile path",
         subtype='FILE_PATH')
 
@@ -635,22 +574,6 @@ class MazeGeneratorTextToolsPanelMG(bpy.types.Panel):
         box.prop(scene, 'text2_mg', text="Replace")
 
 
-class SaveUserPrefsMenu(bpy.types.Menu):
-    bl_idname = "maze_gen.save_user_prefs_menu"
-    bl_label = "Save user settings."
-
-    def draw(self, context):
-        layout = self.layout
-
-        row = layout.row()
-        row.label(text="Sorry, your OS doesn't support")
-        row = layout.row()
-        row.label(text="opening files outside of Blender.")
-        row = layout.row()
-        row.label(text="Please save user settings.")
-
-        layout.operator("wm.save_userpref", text="Save User Prefs")
-
 
 class ShowHelpDiagramMG(bpy.types.Operator):
     bl_label = "Workflows Diagram"
@@ -676,7 +599,7 @@ class ShowHelpDiagramMG(bpy.types.Operator):
                 os.startfile(image_filepath)
             except OSError:
                 addon_prefs.open_help_outbldr = False
-                bpy.ops.wm.call_menu(name=SaveUserPrefsMenu.bl_idname)
+                bpy.ops.wm.call_menu(name=menus.SaveUserPrefsMenu.bl_idname)
 
         return {'FINISHED'}
 
@@ -701,7 +624,7 @@ class ShowReadmeMG(bpy.types.Operator):
                 os.startfile(my_filepath)
             except OSError:
                 addon_prefs.open_help_bldr = False
-                bpy.ops.wm.call_menu(name=SaveUserPrefsMenu.bl_idname)
+                bpy.ops.wm.call_menu(name=menus.SaveUserPrefsMenu.bl_idname)
 
         return {'FINISHED'}
 
@@ -716,7 +639,6 @@ class DemoTilesImportMG(bpy.types.Operator):
     filename = StringProperty(name="File Name")
 
     def execute(self, context):
-        scene = context.scene
         addon_prefs = context.user_preferences.addons['maze_gen'].preferences
 
         my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
@@ -729,56 +651,20 @@ class DemoTilesImportMG(bpy.types.Operator):
                 self.report({'ERROR'}, "The selected tile set could not be imported! Most likely your custom tile path is not set to a valid path.")
                 return {'CANCELLED'}
 
-        # import .fbx
-        bpy.ops.wm.addon_enable(module="io_scene_fbx")
-        bpy.ops.import_scene.fbx(filepath=my_filepath)
+        append_objs(my_filepath)
 
-        # TODO - setup a material importer ! ! !
-        if scene.import_mat:
-            material = import_mat("DEFAULT", my_tiles_dir)
-
-            # link materials to models
-            scene.objects.active = bpy.context.selected_objects[0]
-            bpy.ops.object.material_slot_add()
-            scene.objects.active.id_data.material_slots[0].material = bpy.data.materials[material]
-            bpy.ops.object.make_links_data(type='MATERIAL')
         bpy.ops.object.select_all(action='DESELECT')
 
         return {'FINISHED'}
 
-
-class DemoTilesExportMG(bpy.types.Operator):
-    bl_label = "Export Tiles"
-    bl_idname = "maze_gen.export_tileset"
-    bl_description = "Exports tiles."
-    bl_options = {'UNDO'}
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_confirm(self, event)
+class EnableLayerMG(bpy.types.Operator):
+    bl_label = "Enable First Layer"
+    bl_idname = "maze_gen.enable_layer"
+    bl_description = "Enables first layer so UltiMaze can work :)"
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        scene = context.scene
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
-
-        if addon_prefs.use_custom_tile_path and os.access(addon_prefs.custom_tile_path, os.R_OK):
-            my_tiles_dir = addon_prefs.custom_tile_path
-        else:
-            my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
-        if scene.tile_mode == "TWELVE_TILES":
-            my_filepath = os.path.join(my_tiles_dir, (scene.export_name + "2.fbx"))
-        if scene.tile_mode == "SIX_TILES":
-            my_filepath = os.path.join(my_tiles_dir, (scene.export_name + "6.fbx"))
-
-        # import .fbx
-        bpy.ops.wm.addon_enable(module="io_scene_fbx")
-        bpy.ops.export_scene.fbx(filepath=my_filepath, axis_forward='-Z', axis_up='Y',
-                                 version='BIN7400', use_selection=True, global_scale=1.0,
-                                 apply_unit_scale=False, bake_space_transform=False,
-                                 object_types={'ARMATURE', 'EMPTY', 'MESH', 'OTHER'},
-                                 use_mesh_modifiers=True, mesh_smooth_type='OFF', use_mesh_edges=False,
-                                 use_tspace=False, use_custom_props=False,
-                                 path_mode='ABSOLUTE', batch_mode='OFF', use_metadata=True)
-
+        context.scene.layers[0] = True
         return {'FINISHED'}
 
 
@@ -794,6 +680,10 @@ class GenerateMazeMG(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
+
+        if not scene.layers[0]:
+            bpy.ops.wm.call_menu(name=menus.EnableLayerMenu.bl_idname)
+            return {'CANCELLED'}
 
         time_start = time.time()
 
@@ -886,8 +776,8 @@ classes = [GenerateMazeMG, batch_gen.BatchGenerateMazeMG,
            MazeGeneratorTextToolsPanelMG, text_tools.ReplaceTextMG,
            text_tools.InvertTextMG, txt_img_converter.ConvertMazeImageMG,
            txt_img_converter.CreateImageFromListMG, ShowHelpDiagramMG,
-           ShowReadmeMG, MazeAddonPrefsMg, TileImportMenu, DemoTilesExportMG,
-           SaveUserPrefsMenu]
+           ShowReadmeMG, MazeAddonPrefsMg, menus.TileImportMenu, menus.EnableLayerMenu,
+           EnableLayerMG, menus.SaveUserPrefsMenu]
 
 
 def register():
