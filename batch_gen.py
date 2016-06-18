@@ -10,12 +10,7 @@ import time
 
 import bpy
 
-from maze_gen import auto_layout_gen
-from maze_gen import prep_manager
-from maze_gen import simple_maze_gen
-from maze_gen import tile_maze_gen
-from maze_gen import time_log
-from maze_gen import txt_img_converter
+from maze_gen import maze_gen
 from maze_gen import menus
 
 
@@ -35,6 +30,85 @@ def refresh_batch_max():
         bpy.context.scene.num_batch_mazes = 0
     else:
         bpy.context.scene.num_batch_mazes = len(split_settings)
+
+def load_batch_settings(context, maze_setup):
+    scene = context.scene
+    for slot in maze_setup:
+        parts = slot.split(",")
+
+        # main settings
+        if parts[0] == "wd":
+            scene.mg_width = int(parts[1])
+        elif parts[0] == "ht":
+            scene.mg_height = int(parts[1])
+        elif parts[0] == "3d":
+            scene.gen_3d_maze = bool(int(parts[1]))
+        elif parts[0] == "al":
+            scene.allow_loops = bool(int(parts[1]))
+        elif parts[0] == "lc":
+            scene.loops_chance = int(parts[1])
+        elif parts[0] == "ai":
+            scene.allow_islands = bool(int(parts[1]))
+        elif parts[0] == "fl":
+            scene.use_list_maze = bool(int(parts[1]))
+        elif parts[0] == "lm":
+            scene.list_maze = parts[1]
+        elif parts[0] == "wl":
+            scene.write_list_maze = bool(int(parts[1]))
+
+        # tile settings
+        elif parts[0] == "tb":
+            scene.tile_based = bool(int(parts[1]))
+        elif parts[0] == "im":
+            scene.import_mat = bool(int(parts[1]))
+        elif parts[0] == "mo":
+            scene.merge_objects = bool(int(parts[1]))
+        elif parts[0] == "am":
+            scene.apply_modifiers = bool(int(parts[1]))
+        elif parts[0] == "rd":
+            scene.remove_doubles_merge = bool(int(parts[1]))
+        elif parts[0] == "tm":
+            scene.tile_mode = parts[1]
+
+        # 12 tile pieces
+        elif parts[0] == "w0":
+            scene.wall_0_sided = parts[1]
+        elif parts[0] == "w1":
+            scene.wall_1_sided = parts[1]
+        elif parts[0] == "w2":
+            scene.wall_2_sided = parts[1]
+        elif parts[0] == "w3":
+            scene.wall_3_sided = parts[1]
+        elif parts[0] == "w4":
+            scene.wall_4_sided = parts[1]
+        elif parts[0] == "wc":
+            scene.wall_corner = parts[1]
+        elif parts[0] == "f0":
+            scene.floor_0_sided = parts[1]
+        elif parts[0] == "f1":
+            scene.floor_1_sided = parts[1]
+        elif parts[0] == "f2":
+            scene.floor_2_sided = parts[1]
+        elif parts[0] == "f3":
+            scene.floor_3_sided = parts[1]
+        elif parts[0] == "f4":
+            scene.floor_4_sided = parts[1]
+        elif parts[0] == "fc":
+            scene.floor_corner = parts[1]
+
+        # 6 tile pieces
+        elif parts[0] == "4w":
+            scene.four_way = parts[1]
+        elif parts[0] == "3w":
+            scene.t_int = parts[1]
+        elif parts[0] == "2t":
+            scene.turn = parts[1]
+        elif parts[0] == "de":
+            scene.dead_end = parts[1]
+        elif parts[0] == "2s":
+            scene.straight = parts[1]
+        elif parts[0] == "np":
+            scene.no_path = parts[1]
 
 
 class StoreBatchMazeMG(bpy.types.Operator):
@@ -165,82 +239,7 @@ class LoadBatchMazeMG(bpy.types.Operator):
 
         maze_setup = maze_setup.split(";")
 
-        for slot in maze_setup:
-            parts = slot.split(",")
-
-            # main settings
-            if parts[0] == "wd":
-                scene.mg_width = int(parts[1])
-            elif parts[0] == "ht":
-                scene.mg_height = int(parts[1])
-            elif parts[0] == "3d":
-                scene.gen_3d_maze = bool(int(parts[1]))
-            elif parts[0] == "al":
-                scene.allow_loops = bool(int(parts[1]))
-            elif parts[0] == "lc":
-                scene.loops_chance = int(parts[1])
-            elif parts[0] == "ai":
-                scene.allow_islands = bool(int(parts[1]))
-            elif parts[0] == "fl":
-                scene.use_list_maze = bool(int(parts[1]))
-            elif parts[0] == "lm":
-                scene.list_maze = parts[1]
-            elif parts[0] == "wl":
-                scene.write_list_maze = bool(int(parts[1]))
-
-            # tile settings
-            elif parts[0] == "tb":
-                scene.tile_based = bool(int(parts[1]))
-            elif parts[0] == "im":
-                scene.import_mat = bool(int(parts[1]))
-            elif parts[0] == "mo":
-                scene.merge_objects = bool(int(parts[1]))
-            elif parts[0] == "am":
-                scene.apply_modifiers = bool(int(parts[1]))
-            elif parts[0] == "rd":
-                scene.remove_doubles_merge = bool(int(parts[1]))
-            elif parts[0] == "tm":
-                scene.tile_mode = parts[1]
-
-            # 12 tile pieces
-            elif parts[0] == "w0":
-                scene.wall_0_sided = parts[1]
-            elif parts[0] == "w1":
-                scene.wall_1_sided = parts[1]
-            elif parts[0] == "w2":
-                scene.wall_2_sided = parts[1]
-            elif parts[0] == "w3":
-                scene.wall_3_sided = parts[1]
-            elif parts[0] == "w4":
-                scene.wall_4_sided = parts[1]
-            elif parts[0] == "wc":
-                scene.wall_corner = parts[1]
-            elif parts[0] == "f0":
-                scene.floor_0_sided = parts[1]
-            elif parts[0] == "f1":
-                scene.floor_1_sided = parts[1]
-            elif parts[0] == "f2":
-                scene.floor_2_sided = parts[1]
-            elif parts[0] == "f3":
-                scene.floor_3_sided = parts[1]
-            elif parts[0] == "f4":
-                scene.floor_4_sided = parts[1]
-            elif parts[0] == "fc":
-                scene.floor_corner = parts[1]
-
-            # 6 tile pieces
-            elif parts[0] == "4w":
-                scene.four_way = parts[1]
-            elif parts[0] == "3w":
-                scene.t_int = parts[1]
-            elif parts[0] == "2t":
-                scene.turn = parts[1]
-            elif parts[0] == "de":
-                scene.dead_end = parts[1]
-            elif parts[0] == "2s":
-                scene.straight = parts[1]
-            elif parts[0] == "np":
-                scene.no_path = parts[1]
+        load_batch_settings(context, maze_setup)
 
         return {'FINISHED'}
 
@@ -277,9 +276,7 @@ class DeleteBatchMazeMG(bpy.types.Operator):
             settings_text = s.read()
 
         settings_text = settings_text.replace(" && ", "", 1)
-
         split_settings = settings_text.split(" && ")
-
         # delete setting
         del split_settings[scene.batch_index - 1]
 
@@ -323,170 +320,22 @@ class BatchGenerateMazeMG(bpy.types.Operator):
             settings_text = s.read()
 
         settings_text = settings_text.replace(" && ", "", 1)
-
         split_settings = settings_text.split(" && ")
-
         # check for if no mazes are stored
         if split_settings[0] == "":
             self.report({'ERROR'}, "No mazes stored! Click store settings to " +
                         "store current maze settings.")
             return {'CANCELLED'}
 
-        time_start = time.time()
         for maze_setup in split_settings:
-
             maze_setup = maze_setup.split(";")
+            load_batch_settings(context, maze_setup)
 
-            for slot in maze_setup:
-                parts = slot.split(",")
-
-                # main settings
-                if parts[0] == "wd":
-                    scene.mg_width = int(parts[1])
-                elif parts[0] == "ht":
-                    scene.mg_height = int(parts[1])
-                elif parts[0] == "3d":
-                    scene.gen_3d_maze = bool(int(parts[1]))
-                elif parts[0] == "al":
-                    scene.allow_loops = bool(int(parts[1]))
-                elif parts[0] == "lc":
-                    scene.loops_chance = int(parts[1])
-                elif parts[0] == "ai":
-                    scene.allow_islands = bool(int(parts[1]))
-                elif parts[0] == "fl":
-                    scene.use_list_maze = bool(int(parts[1]))
-                elif parts[0] == "lm":
-                    scene.list_maze = parts[1]
-                elif parts[0] == "wl":
-                    scene.write_list_maze = bool(int(parts[1]))
-
-                # tile settings
-                elif parts[0] == "tb":
-                    scene.tile_based = bool(int(parts[1]))
-                elif parts[0] == "im":
-                    scene.import_mat = bool(int(parts[1]))
-                elif parts[0] == "mo":
-                    scene.merge_objects = bool(int(parts[1]))
-                elif parts[0] == "am":
-                    scene.apply_modifiers = bool(int(parts[1]))
-                elif parts[0] == "rd":
-                    scene.remove_doubles_merge = bool(int(parts[1]))
-                elif parts[0] == "tm":
-                    scene.tile_mode = parts[1]
-
-                # 12 tile pieces
-                elif parts[0] == "w0":
-                    scene.wall_0_sided = parts[1]
-                elif parts[0] == "w1":
-                    scene.wall_1_sided = parts[1]
-                elif parts[0] == "w2":
-                    scene.wall_2_sided = parts[1]
-                elif parts[0] == "w3":
-                    scene.wall_3_sided = parts[1]
-                elif parts[0] == "w4":
-                    scene.wall_4_sided = parts[1]
-                elif parts[0] == "wc":
-                    scene.wall_corner = parts[1]
-                elif parts[0] == "f0":
-                    scene.floor_0_sided = parts[1]
-                elif parts[0] == "f1":
-                    scene.floor_1_sided = parts[1]
-                elif parts[0] == "f2":
-                    scene.floor_2_sided = parts[1]
-                elif parts[0] == "f3":
-                    scene.floor_3_sided = parts[1]
-                elif parts[0] == "f4":
-                    scene.floor_4_sided = parts[1]
-                elif parts[0] == "fc":
-                    scene.floor_corner = parts[1]
-
-                # 6 tile pieces
-                elif parts[0] == "4w":
-                    scene.four_way = parts[1]
-                elif parts[0] == "3w":
-                    scene.t_int = parts[1]
-                elif parts[0] == "2t":
-                    scene.turn = parts[1]
-                elif parts[0] == "de":
-                    scene.dead_end = parts[1]
-                elif parts[0] == "2s":
-                    scene.straight = parts[1]
-                elif parts[0] == "np":
-                    scene.no_path = parts[1]
-
-            # GENERATE MAZE HERE
-
-            if scene.tile_based and scene.gen_3d_maze:
-                # if missing tiles: terminate operator
-                if not prep_manager.check_tiles_exist():
-                    self.report({'ERROR'}, "One or more tile objects is missing " +
-                                "or is not a mesh! Please assign a valid object or " +
-                                "disable 'Use Modeled Tiles'.")
-                    return {'CANCELLED'}
-
-            if scene.use_list_maze:
-                # if missing list: terminate operator
-                if not prep_manager.check_list_exist():
-                    self.report({'ERROR'}, "List missing! Please assign a valid " +
-                                "text data block or disable 'Generate Maze From List'.")
-                    return {'CANCELLED'}
-
-            # save files
-            save_return, bad_file = prep_manager.always_save()
-            if save_return == "BLEND_ERROR":
-                self.report({'ERROR'}, "Save file or disable always save " +
-                            "in user prefs.")
-                return {'CANCELLED'}
-
-            elif save_return == "IMAGE_ERROR":
-                self.report({'ERROR'}, "Image '" + bad_file.name +
-                            "' does not have a valid file path (for saving). Assign " +
-                            "a valid path, pack image, or disable save images in " +
-                            "user prefs")
-                return {'CANCELLED'}
-
-            elif save_return == "TEXT_ERROR":
-                self.report({'ERROR'}, "Text '" + bad_file.name +
-                            "' does not have a valid file path (for saving). " +
-                            "Assign a valid path or disable save texts in user prefs")
-                return {'CANCELLED'}
-
-            apply_mods = scene.apply_modifiers
-            if not scene.merge_objects:
-                # fix to make sure not applying modifiers
-                # if merging is disabled (because group is not made)
-                scene.apply_modifiers = False
-
-            if scene.use_list_maze:
-                maze = txt_img_converter.convert_list_maze()
-            elif scene.gen_3d_maze or scene.use_list_maze or scene.write_list_maze:
-                maze = auto_layout_gen.make_list_maze()
-
-            if scene.allow_loops:
-                maze = auto_layout_gen.add_loops(maze)
-
-            # 3D generation
-            if bpy.context.scene.gen_3d_maze:
-
-                if scene.tile_based:
-                    tile_maze_gen.make_tile_maze(maze)
-                else:
-                    simple_maze_gen.make_3dmaze(maze)
-
-            scene.apply_modifiers = apply_mods
-
-            # log time
-            if scene.gen_3d_maze:
-                time_log.log_time(time.time() - time_start)
-
-            if scene.gen_3d_maze or scene.write_list_maze:
-                self.report({'INFO'}, "Finished generating maze in " +
-                            str(time.time() - time_start) + " seconds")
-
-            # write list maze if enabled
-            if scene.write_list_maze:
-                text_block_name = txt_img_converter.str_list_maze(maze)
-                self.report({'INFO'}, "See '" + str(text_block_name) +
-                            "' in the text editor")
+            # generate maze here...ignore the status unless it is cancelled
+            messages, message_lvls, status = maze_gen.make_maze(context)
+            for i, message in enumerate(messages):
+                self.report({message_lvls[i]}, message)
+            if status == 'CANCELLED':
+                return {status}
 
         return {'FINISHED'}

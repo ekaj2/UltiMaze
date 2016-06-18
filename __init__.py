@@ -8,6 +8,17 @@ classes and properties.
 Available Functions:
     import_mat - Imports material if not in .blend
 """
+import os
+
+import bpy
+from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty
+
+from maze_gen import maze_gen
+from maze_gen import batch_gen
+from maze_gen import text_tools
+from maze_gen import time_log
+from maze_gen import txt_img_converter
+from maze_gen import menus
 
 bl_info = {
     "name": "UltiMaze [PRO]",
@@ -21,22 +32,6 @@ bl_info = {
     "wiki_url": "",
     "category": "3D View",
 }
-
-import os
-import time
-
-import bpy
-from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty
-
-from maze_gen import auto_layout_gen
-from maze_gen import batch_gen
-from maze_gen import prep_manager
-from maze_gen import simple_maze_gen
-from maze_gen import text_tools
-from maze_gen import tile_maze_gen
-from maze_gen import time_log
-from maze_gen import txt_img_converter
-from maze_gen import menus
 
 
 def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
@@ -118,7 +113,7 @@ class ImageConverterPanelMG(bpy.types.Panel):
         # image box
         box = layout.box()
         row = box.row()
-        row.label("(X: " + str(scene.mg_width) + ", Y: " + str(scene.mg_height) + ")")  # TODO - New string.format
+        row.label("(X: {}, Y: {})".format(scene.mg_width, scene.mg_height))
         box.operator("maze_gen.convert_maze_image", icon="TEXT")
         box.prop_search(scene, 'maze_image', bpy.data, "images", "Image Maze")
 
@@ -171,7 +166,6 @@ class MazeTilesPanelMG(bpy.types.Panel):
                 col.prop_search(scene, 'wall_1_sided', bpy.data, "objects", "1 Sided Wall")
                 col.prop_search(scene, 'wall_0_sided', bpy.data, "objects", "0 Sided Wall")
                 col.prop_search(scene, 'wall_corner', bpy.data, "objects", "Wall Corner")
-
                 col = box.column()
                 col.label("Floor Pieces:")
                 col.prop_search(scene, 'floor_4_sided', bpy.data, "objects", "4 Sided Floor")
@@ -278,14 +272,12 @@ class HelpPanelMG(bpy.types.Panel):
 
         box = layout.box()
         if scene.generation_desire == "SIMP_3D" and scene.user_provision == "SETTINGS":
-
             row = box.row()
             row.label("1. Disable Gen Maze from list")
             row = box.row()
             row.label("2. Hit Generate Maze")
 
         elif scene.generation_desire == "SIMP_3D" and scene.user_provision == "IMAGE_MAZE":
-
             row = box.row()
             row.label("1. Select image in image converter")
             row = box.row()
@@ -298,7 +290,6 @@ class HelpPanelMG(bpy.types.Panel):
             row.label("5. Hit Generate Maze")
 
         elif scene.generation_desire == "SIMP_3D" and scene.user_provision == "TEXT_MAZE":
-
             row = box.row()
             row.label("1. Enable Gen from list")
             row = box.row()
@@ -307,7 +298,6 @@ class HelpPanelMG(bpy.types.Panel):
             row.label("3. Hit Generate Maze")
 
         elif scene.generation_desire == "TILE_MAZE" and scene.user_provision == "SETTINGS":
-
             row = box.row()
             row.label("1. Disable Gen Maze from list")
             row = box.row()
@@ -318,7 +308,6 @@ class HelpPanelMG(bpy.types.Panel):
             row.label("4. Hit Generate Maze")
 
         elif scene.generation_desire == "TILE_MAZE" and scene.user_provision == "IMAGE_MAZE":
-
             row = box.row()
             row.label("1. Select image in image converter")
             row = box.row()
@@ -335,7 +324,6 @@ class HelpPanelMG(bpy.types.Panel):
             row.label("7. Hit Generate Maze")
 
         elif scene.generation_desire == "TILE_MAZE" and scene.user_provision == "TEXT_MAZE":
-
             row = box.row()
             row.label("1. Enable Gen from list")
             row = box.row()
@@ -348,7 +336,6 @@ class HelpPanelMG(bpy.types.Panel):
             row.label("5. Hit Generate Maze")
 
         elif scene.generation_desire == "TEXT_MAZE" and scene.user_provision == "SETTINGS":
-
             row = box.row()
             row.label("1. Disable Gen Maze from List")
             row = box.row()
@@ -357,19 +344,16 @@ class HelpPanelMG(bpy.types.Panel):
             row.label("3. Hit Generate Maze")
 
         elif scene.generation_desire == "TEXT_MAZE" and scene.user_provision == "IMAGE_MAZE":
-
             row = box.row()
             row.label("1. Select image in image converter")
             row = box.row()
             row.label("2. Hit convert to text")
 
         elif scene.generation_desire == "TEXT_MAZE" and scene.user_provision == "TEXT_MAZE":
-
             row = box.row()
             row.label("1. Already done!")
 
         elif scene.generation_desire == "IMAGE_MAZE" and scene.user_provision == "SETTINGS":
-
             row = box.row()
             row.label("1. Enable write maze list")
             row = box.row()
@@ -382,12 +366,10 @@ class HelpPanelMG(bpy.types.Panel):
             row.label("5. Hit convert to image")
 
         elif scene.generation_desire == "IMAGE_MAZE" and scene.user_provision == "IMAGE_MAZE":
-
             row = box.row()
             row.label("1. Already done!")
 
         elif scene.generation_desire == "IMAGE_MAZE" and scene.user_provision == "TEXT_MAZE":
-
             row = box.row()
             row.label("1. Select text in image converter")
             row = box.row()
@@ -462,75 +444,48 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
         col.prop(self, 'save_all_texts', text="Save Texts")
 
         layout.row()
-
         # quick help box
         box = layout.box()
-
         show_help_text = "Show Quick Help"
-        if self.show_quickhelp:
-            show_help_text = "Hide Quick Help"
         row = box.row()
         row.prop(self, "show_quickhelp", text=show_help_text, toggle=True)
         if self.show_quickhelp:
+            show_help_text = "Hide Quick Help"
             box.row()
-
             row = box.row()
             row.scale_y = 0.5
-            row.label(text="If Blender locks up where you have unsaved work " +
-                           "and you are fortunate enough to have found this do not")
+            row.label(text="If Blender locks up where you have unsaved work " + "and you are fortunate enough to have found this do not")
             row = box.row()
             row.scale_y = 0.5
-            row.label(text="close Blender . . . yet. Read this first and/or " +
-                           "contact support, if needed, to try to salvage your progress.")
-
+            row.label(text="close Blender . . . yet. Read this first and/or " + "contact support, if needed, to try to salvage your progress.")
             box.row()
-
             row = box.row()
             row.scale_y = 0.5
-            row.label(text="The amount of time for most maze operations to " +
-                           "complete will increase exponentially with the size " +
-                           "of the maze.")
+            row.label(text="The amount of time for most maze operations to " + "complete will increase exponentially with the size " + "of the maze.")
             row = box.row()
             row.scale_y = 0.5
-            row.label(text="Blender freezes its UI when scripts are " +
-                           "executing, however, this can be combated with a few " +
-                           "tricks as follows")
-
+            row.label(text="Blender freezes its UI when scripts are " + "executing, however, this can be combated with a few " + "tricks as follows")
             # blank row for paragraph
             box.row()
-
             row = box.row()
             row.scale_y = 0.5
-            row.label(text="First, open a system console window (for " +
-                           "Windows available from Info Header > Window > Toggle " +
-                           "System Console)")
+            row.label(text="First, open a system console window (for " + "Windows available from Info Header > Window > Toggle " + "System Console)")
             row = box.row()
             row.scale_y = 0.5
-            row.label(text="to see progress as a percent or to stop the " +
-                           "operation (with Ctrl-C). It is important to have this open " +
-                           "before")
+            row.label(text="to see progress as a percent or to stop the " + "operation (with Ctrl-C). It is important to have this open " + "before")
             row = box.row()
             row.scale_y = 0.5
-            row.label(text="starting an operation, because it can't easily " +
-                           "be opened after you start an operator " +
-                           "(by pressing any UI button).")
-
+            row.label(text="starting an operation, because it can't easily " + "be opened after you start an operator " + "(by pressing any UI button).")
             box.row()
-
             row = box.row()
             row.scale_y = 0.5
-            row.label(text="Another useful tip is to always save your work " +
-                           "before generating anything or use a blank " +
-                           ".blend file for generation.")
+            row.label(text="Another useful tip is to always save your work " + "before generating anything or use a blank " + ".blend file for generation.")
             row = box.row()
             row.scale_y = 0.5
-            row.label(text="This will allow you to force Blender to close " +
-                           "without losing your work. This can be done automatically " +
-                           "by leaving the")
+            row.label(text="This will allow you to force Blender to close " + "without losing your work. This can be done automatically " + "by leaving the")
             row = box.row()
             row.scale_y = 0.5
-            row.label(text="3 checkboxes above (Save .blend File, " +
-                           "Save Images . . . ) enabled.")
+            row.label(text="3 checkboxes above (Save .blend File, " + "Save Images . . . ) enabled.")
 
         layout.row()
 
@@ -547,8 +502,7 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
         # website url
         row.operator("wm.url_open", text="Support Website", icon='QUESTION').url = "http://integrity-sg.com"
         # e-mail
-        row.operator("wm.url_open", text="Support E-Mail",
-                     icon='LINENUMBERS_ON').url = "mailto: assetsupport@integrity-sg.com"
+        row.operator("wm.url_open", text="Support E-Mail", icon='LINENUMBERS_ON').url = "mailto: assetsupport@integrity-sg.com"
 
 
 # Text Editor
@@ -572,7 +526,6 @@ class MazeGeneratorTextToolsPanelMG(bpy.types.Panel):
         box.operator("maze_gen.replace_text_mg", icon="FONT_DATA")
         box.prop(scene, 'text1_mg', text="Find")
         box.prop(scene, 'text2_mg', text="Replace")
-
 
 
 class ShowHelpDiagramMG(bpy.types.Operator):
@@ -657,6 +610,7 @@ class DemoTilesImportMG(bpy.types.Operator):
 
         return {'FINISHED'}
 
+
 class EnableLayerMG(bpy.types.Operator):
     bl_label = "Enable First Layer"
     bl_idname = "maze_gen.enable_layer"
@@ -685,85 +639,11 @@ class GenerateMazeMG(bpy.types.Operator):
             bpy.ops.wm.call_menu(name=menus.EnableLayerMenu.bl_idname)
             return {'CANCELLED'}
 
-        time_start = time.time()
+        messages, message_lvls, status = maze_gen.make_maze(context)
+        for i, message in enumerate(messages):
+            self.report({message_lvls[i]}, message)
 
-        if scene.tile_based and scene.gen_3d_maze:
-            tiles_exist = prep_manager.check_tiles_exist()
-
-            # if missing tiles: terminate operator
-            if not tiles_exist:
-                self.report({'ERROR'}, "One or more tile objects is missing " +
-                            "or is not a mesh! Please assign a valid object or " +
-                            "disable 'Use Modeled Tiles'.")
-                return {'CANCELLED'}
-
-        if scene.use_list_maze:
-            list_exist = prep_manager.check_list_exist()
-
-            # if missing list: terminate operator
-            if not list_exist:
-                self.report({'ERROR'}, "List missing! Please assign a valid " +
-                            "text data block or disable 'Generate Maze From List'.")
-                return {'CANCELLED'}
-
-        # save files
-        save_return, bad_file = prep_manager.always_save()
-        if save_return == "BLEND_ERROR":
-            self.report({'ERROR'}, "Save file or disable always save " +
-                        "in user prefs.")
-            return {'CANCELLED'}
-
-        elif save_return == "IMAGE_ERROR":
-            self.report({'ERROR'}, "Image '" + bad_file.name +
-                        "' does not have a valid file path (for saving). Assign " +
-                        "a valid path, pack image, or disable save images in " +
-                        "user prefs")
-            return {'CANCELLED'}
-
-        elif save_return == "TEXT_ERROR":
-            self.report({'ERROR'}, "Text '" + bad_file.name +
-                        "' does not have a valid file path (for saving). " +
-                        "Assign a valid path or disable save texts in user prefs")
-            return {'CANCELLED'}
-
-        apply_mods = scene.apply_modifiers
-        if not scene.merge_objects:
-            # fix to make sure not applying modifiers
-            # if merging is disabled (because group is not made)
-            scene.apply_modifiers = False
-
-        if scene.use_list_maze:
-            maze = txt_img_converter.convert_list_maze()
-        elif scene.gen_3d_maze or scene.use_list_maze or scene.write_list_maze:
-            maze = auto_layout_gen.make_list_maze()
-
-        if scene.allow_loops:
-            maze = auto_layout_gen.add_loops(maze)
-
-        # 3D generation
-        if scene.gen_3d_maze:
-            if scene.tile_based:
-                tile_maze_gen.make_tile_maze(maze)
-            else:
-                simple_maze_gen.make_3dmaze(maze)
-
-        scene.apply_modifiers = apply_mods
-
-        # log time
-        if scene.gen_3d_maze:
-            time_log.log_time(time.time() - time_start)
-
-        if scene.gen_3d_maze or scene.write_list_maze:
-            self.report({'INFO'}, "Finished generating maze in " +
-                        str(time.time() - time_start) + " seconds")
-
-        # write list maze if enabled
-        if scene.write_list_maze:
-            text_block_name = txt_img_converter.str_list_maze(maze)
-            self.report({'INFO'}, "See '" + str(text_block_name) +
-                        "' in the text editor")
-
-        return {'FINISHED'}
+        return {status}
 
 
 # classes to register
