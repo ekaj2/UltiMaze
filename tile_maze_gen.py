@@ -331,6 +331,12 @@ def choose_tile_six(maze, space_index):  # TODO - Get working!
     for i, touching_space in enumerate(touching):
         if debug:
             print("Touching:", maze[touching_space])
+        # index out of range checks 
+        if len(touching2) <= i:
+            continue
+        if touching_space >= len(maze) <= touching2[i]:
+            continue
+        
         if maze[touching_space][1] and maze[touching2[i]][1]:
             paths_found += 1
 
