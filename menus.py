@@ -37,6 +37,7 @@ class EnableLayerMenu(bpy.types.Menu):
         layout.operator("maze_gen.enable_layer")
 
 
+# TODO - Remove this menu (bug should be fixed)
 class SaveUserPrefsMenu(bpy.types.Menu):
     bl_idname = "maze_gen.save_user_prefs_menu"
     bl_label = "Save user settings."

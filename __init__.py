@@ -9,6 +9,8 @@ Available Functions:
     import_mat - Imports material if not in .blend
 """
 import os
+import sys
+import subprocess
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty
@@ -528,6 +530,14 @@ class MazeGeneratorTextToolsPanelMG(bpy.types.Panel):
         box.prop(scene, 'text2_mg', text="Replace")
 
 
+def open_file(filename):
+    if sys.platform == "win32":
+        os.startfile(filename)
+    else:
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.call([opener, filename])
+
+
 class ShowHelpDiagramMG(bpy.types.Operator):
     bl_label = "Workflows Diagram"
     bl_idname = "maze_gen.show_workflows_image"
@@ -548,11 +558,7 @@ class ShowHelpDiagramMG(bpy.types.Operator):
                                show_multiview=False)
             self.report({'INFO'}, "See workflow diagram in the image editor")
         else:
-            try:
-                os.startfile(image_filepath)
-            except OSError:
-                addon_prefs.open_help_outbldr = False
-                bpy.ops.wm.call_menu(name=menus.SaveUserPrefsMenu.bl_idname)
+            open_file(image_filepath)
 
         return {'FINISHED'}
 
@@ -573,12 +579,8 @@ class ShowReadmeMG(bpy.types.Operator):
             bpy.ops.text.open(filepath=my_filepath)  # TODO - Open in new blender window with readme
             self.report({'INFO'}, "See readme in the text editor")
         else:
-            try:
-                os.startfile(my_filepath)
-            except OSError:
-                addon_prefs.open_help_bldr = False
-                bpy.ops.wm.call_menu(name=menus.SaveUserPrefsMenu.bl_idname)
-
+            open_file(my_filepath)
+        
         return {'FINISHED'}
 
 
