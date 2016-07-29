@@ -19,6 +19,7 @@ from time import time
 
 import bpy
 
+from random_probability import rand_prob
 
 def console_prog(job, progress, total_time="?"):
     """Displays progress in the console.
@@ -39,11 +40,11 @@ def console_prog(job, progress, total_time="?"):
     sys.stdout.flush()
 
 
-def exist_test(ordered_pair):
+def exist_test((x,y)):
     """Check if ordered pair exists with maze size.
 
     Args:
-        ordered_pair - the ordered pair to check
+        (x, y) - the ordered pair to check
 
     Returns:
         exists T/F, maze index of ordered pair
@@ -54,9 +55,6 @@ def exist_test(ordered_pair):
 
     exists = False
     index = None
-
-    x = ordered_pair[0][0]
-    y = ordered_pair[0][1]
 
     # if x and y are greater than or equal to 0 - the left and top bounds &
     # if x and y are less than their respective dimensions - the right
@@ -70,14 +68,14 @@ def exist_test(ordered_pair):
     return exists, index
 
 
-def find_touching(maze, active_space, dist=1):
+def find_touching(maze, space, dist=1):
     """Find the spaces that touch the active space.
 
     Args:
         maze - python list in the format:
             [[(space in maze - x, y), is path, is walkable, active path],
             [(space in maze - x, y), is path, is walkable, active path], ...]
-        active_space - the start location of maze (currently top left corner)
+        space - the start location of maze (currently top left corner)
         dist - distance from start space
 
             ---------------------
@@ -96,15 +94,15 @@ def find_touching(maze, active_space, dist=1):
         indexes of touching spaces, directions that is_path is True,
         all directions that exist
     """
-    # find spaces touching active_space (an index)
+    # find spaces touching space (an index)
 
-    active_space_coord = maze[active_space][0]
+    space_coord = maze[space][0]
 
     touching_xy = []
     directions = []
     all_directions = []
 
-    new_touching_xy = [((active_space_coord[0]), (active_space_coord[1] - dist))]
+    new_touching_xy = (space_coord[0], space_coord[1] - dist)
     exist, index = exist_test(new_touching_xy)
     if exist:
         touching_xy += [index]
@@ -112,7 +110,7 @@ def find_touching(maze, active_space, dist=1):
         if maze[index][1]:
             directions += ['Up']
 
-    new_touching_xy = [((active_space_coord[0] + dist), (active_space_coord[1]))]
+    new_touching_xy = (space_coord[0] + dist, space_coord[1])
     exist, index = exist_test(new_touching_xy)
     if exist:
         touching_xy += [index]
@@ -120,7 +118,7 @@ def find_touching(maze, active_space, dist=1):
         if maze[index][1]:
             directions += ['Right']
 
-    new_touching_xy = [((active_space_coord[0]), (active_space_coord[1] + dist))]
+    new_touching_xy = (space_coord[0], space_coord[1] + dist)
     exist, index = exist_test(new_touching_xy)
     if exist:
         touching_xy += [index]
@@ -128,7 +126,7 @@ def find_touching(maze, active_space, dist=1):
         if maze[index][1]:
             directions += ['Down']
 
-    new_touching_xy = [((active_space_coord[0] - dist), (active_space_coord[1]))]
+    new_touching_xy = (space_coord[0] - dist, space_coord[1])
     exist, index = exist_test(new_touching_xy)
     if exist:
         touching_xy += [index]
@@ -191,7 +189,6 @@ def valid_test(maze, existing_spaces, active_space, all_directions):
 
                 # if we go right or left its horizontal, otherwise vertical
                 if all_directions[count] == 'Right' or all_directions[count] == 'Left':
-
                     horizontal = True
                 else:
                     vertical = True
@@ -319,7 +316,7 @@ def make_list_maze():
 
     while not complete:
         loops += 1
-        existing_spaces, directions, all_directions = find_touching(
+        existing_spaces, _, all_directions = find_touching(
             maze, random_index)
 
         valid, all_directions = valid_test(

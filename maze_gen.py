@@ -67,7 +67,7 @@ def make_maze(context):
 
     if scene.use_list_maze:
         maze = txt_img_converter.convert_list_maze()
-    elif scene.gen_3d_maze or scene.use_list_maze or scene.write_list_maze:
+    elif scene.gen_3d_maze or scene.write_list_maze:
         maze = auto_layout_gen.make_list_maze()
 
     if scene.allow_loops:
