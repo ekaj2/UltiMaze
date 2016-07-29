@@ -227,29 +227,6 @@ def valid_test(maze, existing_spaces, active_space, all_directions):
     return valid, all_directions
 
 
-def choose_index(maze, choices):
-    """Randomly makes a choice out of possibilities.
-
-    Args:
-        maze - python list in the format:
-            [[(space in maze - x, y), is path, is walkable, active path],
-            [(space in maze - x, y), is path, is walkable, active path], ...]
-        choices - possibilities to choose from
-
-    Returns:
-        TODO - this function is probably not even needed...
-               seems like random.choice()
-    """
-    # choices is a list of indexes
-    if choices:
-        random_integer = random.randint(0, (len(choices) - 1))
-        random_index = choices[random_integer]
-        return random_index, random_integer
-    else:
-        # this should never happen: only here for debugging
-        print("No choices possible! We are gonna have some issues!")
-
-
 def make_path(maze, path_index):
     """Makes a maze[path_index] a path and makes it active.
 
@@ -289,13 +266,10 @@ def add_loops(maze):
     return maze
 
 
-def check_completion(maze, start_space, random_index):
+def check_completion(start_space, random_index):
     """Checks if maze generation is complete.
 
     Args:
-        maze - python list in the format:
-            [[(space in maze - x, y), is path, is walkable, active path],
-            [(space in maze - x, y), is path, is walkable, active path], ...]
         start_space - the start location of maze (currently top left corner)
         random_index - path choice
     """
@@ -340,6 +314,7 @@ def make_list_maze():
     maze = make_path(maze, start_space)
     random_index = start_space
 
+    # initialize to none instead of 0 so that it will print 0 b/c 0 != last_percent = None
     last_percent = None
 
     while not complete:
@@ -350,23 +325,22 @@ def make_list_maze():
         valid, all_directions = valid_test(
             maze, existing_spaces, random_index, all_directions)
 
-        random_index, choices_index = choose_index(maze, valid)
+        random_index = random.choice(valid)
 
         maze = make_path(maze, random_index)
 
-        complete = check_completion(maze, start_space, random_index)
+        complete = check_completion(start_space, random_index)
 
+        # update printout
         percent = int((loops / estimated_loops) * 100)
         if percent != last_percent and percent < 100:
             bpy.context.window_manager.progress_update(percent)
             if not debug:
-                # new print out technique
                 console_prog("Layout Gen", loops / estimated_loops)
-
         last_percent = percent
-
+        
+    # print out finished job
     if not debug:
-        # print out finished job
         console_prog("Layout Gen", 1, time() - s_time)
         print("\n")
     bpy.context.window_manager.progress_end()
