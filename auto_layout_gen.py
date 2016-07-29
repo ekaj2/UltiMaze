@@ -221,7 +221,7 @@ def valid_test(maze, existing_spaces, active_space, all_directions):
             maze[active_space][3] = False
         count += 1
 
-    return valid, all_directions
+    return valid
 
 
 def make_path(maze, path_index):
@@ -284,17 +284,16 @@ def make_list_maze():
             [[(space in maze - x, y), is path, is walkable, active path],
             [(space in maze - x, y), is path, is walkable, active path], ...]
     """
+    scene = bpy.context.scene
+    x_dim = scene.mg_width
+    y_dim = scene.mg_height
     debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
 
+    # display setups
+    bpy.context.window_manager.progress_begin(0, 100)
     s_time = time()
     if not debug:
         print("\n")
-    loops = 0
-
-    bpy.context.window_manager.progress_begin(0, 100)
-
-    x_dim = bpy.context.scene.mg_width
-    y_dim = bpy.context.scene.mg_height
     estimated_loops = int((x_dim * y_dim * 1.25))
 
     # generate blank grid (list) False everywhere (walls)
@@ -307,28 +306,26 @@ def make_list_maze():
 
     # start at a point and generate maze's path
     start_space = 0
-    complete = False
     maze = make_path(maze, start_space)
     random_index = start_space
 
     # initialize to none instead of 0 so that it will print 0 b/c 0 != last_percent = None
     last_percent = None
-
+    loops = 0
+    complete = False
     while not complete:
-        loops += 1
-        existing_spaces, _, all_directions = find_touching(
-            maze, random_index)
-
-        valid, all_directions = valid_test(
-            maze, existing_spaces, random_index, all_directions)
-
+        
+        # the old way
+        existing_spaces, _, all_directions = find_touching(maze, random_index)
+        valid = valid_test(maze, existing_spaces, random_index, all_directions)
         random_index = random.choice(valid)
-
         maze = make_path(maze, random_index)
-
+        
+        # check for completion
         complete = check_completion(start_space, random_index)
-
+                
         # update printout
+        loops += 1
         percent = int((loops / estimated_loops) * 100)
         if percent != last_percent and percent < 100:
             bpy.context.window_manager.progress_update(percent)
