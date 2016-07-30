@@ -1,6 +1,10 @@
 import random
 
-def rand_prob(items, probs):
+def rand_prob(list_items):
+    """list_items = [[item1, prob], [item2, prob], ...]"""
+    items = [a[0] for a in list_items]
+    probs = [a[1] for a in list_items]
+    
     factor = sum(probs)
     rand = random.random()
     val = round(rand * factor)

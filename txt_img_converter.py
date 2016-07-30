@@ -134,7 +134,7 @@ def convert_list_maze():
     for y in range(0, y_dim):
         for x in range(0, x_dim):
             # [[space in maze(ordered pair),is path,is walkable,active path]]
-            maze_addition = [[(x, y), False, True, False]]
+            maze_addition = [[(x, y), False]]
             maze += maze_addition
 
     index = 0
