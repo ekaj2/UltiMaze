@@ -83,7 +83,7 @@ class MazeGeneratorPanelMG(bpy.types.Panel):
         row.prop(scene, 'loops_chance', text="Chance")
 
         row = box.row()
-        row.prop(scene, 'allow_islands', text="Allow 'Islands'")
+        row.prop(scene, 'algorithm', text="", icon="OOPS")
 
         if scene.use_list_maze:
             row.enabled = False
@@ -809,19 +809,22 @@ def register():
     bpy.types.Scene.allow_loops = bpy.props.BoolProperty(
         name="allow_loops",
         default=False)
-
-    bpy.types.Scene.allow_islands = bpy.props.BoolProperty(
-        name="allow_islands",
-        default=False,
-        description="Allow pieces connected only by a corner")
-
+    
     bpy.types.Scene.loops_chance = bpy.props.IntProperty(
         name="loops_chance",
         default=3,
         min=1,
         max=1000000,
         description="1/x chance of creating each possible loop")
-
+    
+    bpy.types.Scene.algorithm = bpy.props.EnumProperty(
+        items=[('DEPTH_FIRST', "Depth-First", ""),
+               ('BREADTH_FIRST', "Breadth-First", ""),
+               ('PRIMS', "Prim's", "")],
+        name="Algorithm",
+        description="Algorithm to use when generating maze paths internally",
+        default="DEPTH_FIRST")
+    
     bpy.types.Scene.num_batch_mazes = bpy.props.IntProperty(
         name="num_batch_mazes",
         default=0,
@@ -914,7 +917,7 @@ def unregister():
     del bpy.types.Scene.write_list_maze
 
     del bpy.types.Scene.allow_loops
-    del bpy.types.Scene.allow_islands
+    del bpy.types.Scene.algorithm
     del bpy.types.Scene.loops_chance
 
     del bpy.types.Scene.num_batch_mazes

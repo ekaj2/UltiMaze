@@ -12,7 +12,7 @@ Available Functions:
     check_completion - Checks if maze generation is complete
     make_list_maze - Constructs a python list maze based on maze gen settings
 """
-IN_BLENDER = True
+IN_BLENDER = False
 
 import random
 import sys
@@ -26,14 +26,15 @@ if IN_BLENDER:
 else:
     from random_probability import rand_prob
 
-def find_touching(self, space, dist=1):
+# here for compatibility with other modules
+def find_touching(maze, active_space, dist=1):
     """Find the spaces that touch the active space.
 
     Args:
         maze - python list in the format:
             [[(space in maze - x, y), is path, is walkable, active path],
             [(space in maze - x, y), is path, is walkable, active path], ...]
-        space - the start location of maze (currently top left corner)
+        active_space - the start location of maze (currently top left corner)
         dist - distance from start space
 
             ---------------------
@@ -49,17 +50,52 @@ def find_touching(self, space, dist=1):
             ---------------------
 
     Returns:
-        indexes of touching spaces
+        indexes of touching spaces, directions that is_path is True,
+        all directions that exist
     """
-    offsets = [(0, -dist), (dist, 0), (0, dist), (-dist, 0)]
-    
+    # find spaces touching active_space (an index)
+
+    active_space_coord = maze[active_space][0]
+
     touching_xy = []
-    for offset in offsets:
-        new_touching_xy = (self.maze[space][0][0] + offset[0], self.maze[space][0][1] + offset[1])
-        exist, index = self.exist_test(new_touching_xy)
-        if exist:
-            touching_xy += [index]
-    return touching_xy
+    directions = []
+    all_directions = []
+
+    new_touching_xy = [((active_space_coord[0]), (active_space_coord[1] - dist))]
+    exist, index = exist_test(new_touching_xy)
+    if exist:
+        touching_xy += [index]
+        all_directions += ['Up']
+        if maze[index][1]:
+            directions += ['Up']
+
+    new_touching_xy = [((active_space_coord[0] + dist), (active_space_coord[1]))]
+    exist, index = exist_test(new_touching_xy)
+    if exist:
+        touching_xy += [index]
+        all_directions += ['Right']
+        if maze[index][1]:
+            directions += ['Right']
+
+    new_touching_xy = [((active_space_coord[0]), (active_space_coord[1] + dist))]
+    exist, index = exist_test(new_touching_xy)
+    if exist:
+        touching_xy += [index]
+        all_directions += ['Down']
+        if maze[index][1]:
+            directions += ['Down']
+
+    new_touching_xy = [((active_space_coord[0] - dist), (active_space_coord[1]))]
+    exist, index = exist_test(new_touching_xy)
+    if exist:
+        touching_xy += [index]
+        all_directions += ['Left']
+        if maze[index][1]:
+            directions += ['Left']
+
+    # directions is the directions that is_path is True,
+    # all_directions is all directions that exist
+    return touching_xy, directions, all_directions
 
 def remove_doubles_list(a):
     """Removes list doubles in list where list(set(a)) will raise a TypeError."""
@@ -136,7 +172,7 @@ class Maze():
         if self.debug:
             self.display()
     
-    def make(self):
+    def make(self, algorithm):
         global IN_BLENDER
                 
         estimated_loops = int((self.x_dim * self.y_dim * 1.25))
@@ -153,7 +189,7 @@ class Maze():
         while self.cells:
             
             # choose index from cells list
-            index = self.choose_ind()
+            index = self.choose_ind(algorithm)
             
             # get ordered pair of selected cell
             x, y = self.cells[index][0], self.cells[index][1]
@@ -171,14 +207,20 @@ class Maze():
             for dir in directions:
                 dx, dy = dir
                 
-                # check that we're on evens
+                # skip dir if that we're on odd x going along y or odd y going along x
+                # todo - prim's and breadth first seem to break this somehow
                 if dy != y and dx % 2:
                     continue
                 if dx != x and dy % 2:
                     continue
                 
-                # check that we're not by more that 1 path cell
+                # check that we're not by more than 1 path cell
                 if len(self.paths_only(self.find_touching((dx,dy)))) > 1:
+                    continue
+                
+                # check diagonals
+                # todo - FIX THIS!!! SCREWS EVERYTHING UP
+                if len(self.paths_only(self.find_touching((dx,dy), 1, True))) > 2:
                     continue
                 
                 if self.exist_test(dir)[0] and self.maze[dir[0]][dir[1]] == 0:
@@ -210,15 +252,13 @@ class Maze():
             print("\n\n\n\n\n")
             self.display()
     
-    def choose_ind(self):
-        # DEPTH-FIRST
-        return len(self.cells) - 1
-        
-        # PRIM'S
-        #return random.randint(0, len(self.cells) - 1)
-        
-        # BREADTH-FIRST
-        #return 0
+    def choose_ind(self, algorithm):
+        if algorithm == 'DEPTH_FIRST':
+            return len(self.cells) - 1
+        elif algorithm == 'BREADTH_FIRST':
+            return 0
+        elif algorithm == 'PRIMS':
+            return random.randint(0, len(self.cells) - 1)
     
     def exist_test(self, xy):
         """Check if ordered pair exists with maze size.
@@ -247,7 +287,7 @@ class Maze():
         return exists, index
 
 
-    def find_touching(self, space, dist=1):
+    def find_touching(self, space, dist=1, diagonals=False):
         """Find the spaces that touch the active space.
     
         Args:
@@ -273,7 +313,10 @@ class Maze():
             indexes of touching spaces
         """
         x, y = space
-        directions = [(x, y - dist), (x + dist, y), (x, y + dist), (x - dist, y)]
+        if diagonals:
+            directions = [(x - dist, y - dist), (x + dist, y + dist), (x + dist, y + dist), (x - dist, y - dist)]
+        else:
+            directions = [(x, y - dist), (x + dist, y), (x, y + dist), (x - dist, y)]
         
         touching_xy = []
         for dir in directions:
@@ -329,7 +372,7 @@ def make_list_maze():
         print("\n")
         
     m = Maze(debug, x_dim, y_dim)
-    m.make()
+    m.make(scene.algorithm)
     maze = m.get()
     
     # a bit of a hack for now to avoid changing the maze format everywhere just yet...
@@ -350,7 +393,7 @@ def make_list_maze():
 
 def main():
     m = Maze(9,9)
-    m.make()
+    m.make('PRIMS')
 #     maze = m.get()
 
 if __name__ == "__main__":
