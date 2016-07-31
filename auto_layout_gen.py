@@ -12,7 +12,7 @@ Available Functions:
     check_completion - Checks if maze generation is complete
     make_list_maze - Constructs a python list maze based on maze gen settings
 """
-IN_BLENDER = False
+IN_BLENDER = True
 
 import random
 import sys
@@ -21,8 +21,10 @@ from time import time, sleep
 if IN_BLENDER:
     import bpy
 
-from random_probability import rand_prob
-
+if IN_BLENDER:
+    from maze_gen.random_probability import rand_prob
+else:
+    from random_probability import rand_prob
 
 def find_touching(self, space, dist=1):
     """Find the spaces that touch the active space.
@@ -109,21 +111,17 @@ def add_loops(maze):
     return maze
 
 
-class Maze(object):
+class Maze():
     global IN_BLENDER
-    
-    maze = []
-    cells = []
-    show = False
         
-    if IN_BLENDER:
-        debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
-    else:
-        debug = True
+    def __init__(self, debug, x_dim=10, y_dim=10):
         
-    def __init__(self, x_dim=10, y_dim=10):
+        self.debug = debug
         self.x_dim = x_dim
         self.y_dim = y_dim
+        
+        self.maze = []
+        self.cells = []
         
         # generate blank grid (list) False everywhere (walls)
         # maze = [[0:x_dim][0:y_dim]]
@@ -134,13 +132,13 @@ class Maze(object):
             self.maze += [[]]
             for row in range(0, self.y_dim):
                 self.maze[column] += [0]
-        self.display()
+        
+        if self.debug:
+            self.display()
     
-    def make(self, show=False):
+    def make(self):
         global IN_BLENDER
-        
-        self.show = show
-        
+                
         estimated_loops = int((self.x_dim * self.y_dim * 1.25))
         
         # select a cell and add it to the cells list - this could be random
@@ -156,8 +154,6 @@ class Maze(object):
             
             # choose index from cells list
             index = self.choose_ind()
-            sleep(0.5)
-            print("index:", index, ", cells:", self.cells)
             
             # get ordered pair of selected cell
             x, y = self.cells[index][0], self.cells[index][1]
@@ -167,25 +163,25 @@ class Maze(object):
 
             random.shuffle(directions)
             
+            illum_list = []
+            
+            for dir in directions:
+                illum_list += [dir]
+            
             for dir in directions:
                 dx, dy = dir
-                print("dir:", dir, ", exists:", self.exist_test(dir)[0])
-                
-                go_ahead = True
                 
                 # check that we're on evens
-                if dx % 2 or dy % 2:
-                    go_ahead = False
+                if dy != y and dx % 2:
+                    continue
+                if dx != x and dy % 2:
+                    continue
                 
-                # check that we're not by a path cell
-                directions2 = [(dx, dy + 1), (dx + 1, dy), (dx, dy - 1), (dx - 1, dy)]
-                found_paths = 0
-                for d in directions2:
-                    if self.maze[d[0]][d[1]]:
-                        found_paths += 1
+                # check that we're not by more that 1 path cell
+                if len(self.paths_only(self.find_touching((dx,dy)))) > 1:
+                    continue
                 
-                if self.exist_test(dir)[0] and self.maze[dir[0]][dir[1]] == 0 and go_ahead:
-                    print(self.maze[dx][dy])
+                if self.exist_test(dir)[0] and self.maze[dir[0]][dir[1]] == 0:
                     self.maze[dx][dy] = 1
                     self.cells += [(dx, dy)]
                     index = None
@@ -195,7 +191,10 @@ class Maze(object):
             if index != None:
                 self.cells.pop(index)
             
-            self.display()
+            if self.debug:
+                print("\n\n\n\n\n")
+                self.display(illum_list)
+                #sleep(0.1)
                                             
             # update printout
             loops += 1
@@ -206,9 +205,20 @@ class Maze(object):
                     if not self.debug:
                         console_prog("Layout Gen", loops / estimated_loops)
             last_percent = percent
+          
+        if self.debug:
+            print("\n\n\n\n\n")
+            self.display()
     
     def choose_ind(self):
+        # DEPTH-FIRST
         return len(self.cells) - 1
+        
+        # PRIM'S
+        #return random.randint(0, len(self.cells) - 1)
+        
+        # BREADTH-FIRST
+        #return 0
     
     def exist_test(self, xy):
         """Check if ordered pair exists with maze size.
@@ -231,7 +241,9 @@ class Maze(object):
     
             # determine index of ordered pair
             index = (x + (y * self.x_dim))
-    
+            if self.debug:
+                print(x,y)
+            
         return exists, index
 
 
@@ -260,24 +272,36 @@ class Maze(object):
         Returns:
             indexes of touching spaces
         """
-        offsets = [(0, -dist), (dist, 0), (0, dist), (-dist, 0)]
+        x, y = space
+        directions = [(x, y - dist), (x + dist, y), (x, y + dist), (x - dist, y)]
         
         touching_xy = []
-        for offset in offsets:
-            new_touching_xy = (self.maze[space][0][0] + offset[0], self.maze[space][0][1] + offset[1])
-            exist, index = self.exist_test(new_touching_xy)
-            if exist:
-                touching_xy += [index]
+        for dir in directions:
+            if self.exist_test(dir)[0]:
+                touching_xy += [dir]
+            
         return touching_xy
+    
+    def paths_only(self, spaces):
+        path_spaces = []
+        for space in spaces:
+            x,y = space
+            if self.debug:
+                print("paths_only:", x,y)
+            if self.maze[x][y]:
+                path_spaces += [space]
+        return path_spaces
     
     def get(self):
         return self.maze
     
-    def display(self):
+    def display(self, illum_list=[]):
         disp = ""
-        for row in range(self.y_dim):
-            for column in range(self.x_dim):
-                if self.maze[column][row]:
+        for y in range(self.y_dim):
+            for x in range(self.x_dim):
+                if (x, y) in illum_list:
+                    disp += "$"
+                elif self.maze[x][y]:
                     disp += " "
                 else:
                     disp += "#"
@@ -304,10 +328,16 @@ def make_list_maze():
     if not debug:
         print("\n")
         
-    m = Maze(x_dim, y_dim)
+    m = Maze(debug, x_dim, y_dim)
     m.make()
     maze = m.get()
     
+    # a bit of a hack for now to avoid changing the maze format everywhere just yet...
+    old_maze = []
+    for y in range(0, y_dim):
+        for x in range(0, x_dim):
+            # [[space in maze(ordered pair),is path]]
+            old_maze += [[(x, y), maze[x][y]]]
         
     # print out finished job
     if not debug:
@@ -315,12 +345,12 @@ def make_list_maze():
         print("\n")
     bpy.context.window_manager.progress_end()
 
-    return maze
+    return old_maze
 
 
 def main():
-    m = Maze()
-    m.make(show=True)
+    m = Maze(9,9)
+    m.make()
 #     maze = m.get()
 
 if __name__ == "__main__":
