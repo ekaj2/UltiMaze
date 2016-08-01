@@ -3,6 +3,8 @@ from time import time
 
 import bpy
 
+from maze_gen.time_display import TimeDisplay
+
 
 def console_prog(job, progress, total_time="?"):
     """Displays progress in the console.
@@ -17,7 +19,9 @@ def console_prog(job, progress, total_time="?"):
     message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#" * block, "-" * (length - block), progress)
     # progress is complete
     if progress >= 1:
-        message = "\r{} DONE IN {} SECONDS{}".format(job.upper(), total_time, " " * 12)
+        time_disp = TimeDisplay()
+        time_disp.convert(total_time)
+        message = "\r{} DONE IN {}                    ".format(job.upper(), time_disp.upper())
     sys.stdout.write(message)
     sys.stdout.flush()
 
@@ -47,7 +51,6 @@ class BlenderProgress():
 
     def finish(self):
         self.elapsed_time = time() - self.s_time
-
         if not self.debug:
             console_prog(self.job, 1, self.elapsed_time)
             print("\n")

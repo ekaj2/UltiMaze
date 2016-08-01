@@ -84,6 +84,9 @@ def make_3dmaze(maze):
         progress = genloops / len(maze)
         bldr_prog.update(progress)
 
+    # this needs to be before remove doubles b/c it has an info report which screws up the console :(
+    bldr_prog.finish()
+
     # remove doubles then extrude based on material selection
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.mesh.remove_doubles()
@@ -123,5 +126,3 @@ def make_3dmaze(maze):
 
     # name object 'Maze'
     bpy.context.object.name = "Maze"
-
-    bldr_prog.finish()

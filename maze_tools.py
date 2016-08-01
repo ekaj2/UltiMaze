@@ -1,4 +1,4 @@
-IN_BLENDER = True
+IN_BLENDER = False
 
 import random
 
@@ -7,6 +7,7 @@ if IN_BLENDER:
     from maze_gen.progress_display import BlenderProgress
 else:
     from random_probability import rand_prob
+    from time import sleep
 
 
 class Maze:
@@ -40,9 +41,6 @@ class Maze:
             for row in range(0, self.y_dim):
                 self.maze[column] += [0]
 
-        if self.debug:
-            self.display()
-
     def make(self, algorithm1, algorithm2, mix):
         """Makes a maze.
 
@@ -55,8 +53,9 @@ class Maze:
 
         estimated_loops = int((self.x_dim * self.y_dim * 1.25))
 
-        bldr_prog = BlenderProgress("Layout Gen", self.debug)
-        bldr_prog.start()
+        if IN_BLENDER:
+            bldr_prog = BlenderProgress("Layout Gen", self.debug)
+            bldr_prog.start()
 
         # select a cell and add it to the cells list - this could be random
         x, y = random.randint(0, self.x_dim - 1), random.randint(0, self.y_dim - 1)
@@ -98,10 +97,17 @@ class Maze:
                 self.cells.pop(index)
 
             loops += 1
-            progress = loops / estimated_loops
-            bldr_prog.update(progress)
 
-        bldr_prog.finish()
+            if IN_BLENDER:
+                progress = loops / estimated_loops
+                bldr_prog.update(progress)
+
+            else:
+                self.display()
+                sleep(0.5)
+
+        if IN_BLENDER:
+            bldr_prog.finish()
 
     def choose_ind(self, algorithm):
         """Chooses index based on algorithm parameter."""
@@ -194,8 +200,8 @@ class Maze:
 
 
 def main():
-    m = Maze(9, 9)
-    m.make('PRIMS')
+    m = Maze(True, 25, 20)
+    m.make('PRIMS', '', 0)
 
 if __name__ == "__main__":
     main()
