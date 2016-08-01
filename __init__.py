@@ -82,8 +82,9 @@ class MazeGeneratorPanelMG(bpy.types.Panel):
         row.prop(scene, 'allow_loops', text="Allow Loops")
         row.prop(scene, 'loops_chance', text="Chance")
 
-        row = box.row()
-        row.prop(scene, 'algorithm', text="", icon="OOPS")
+        box.prop(scene, 'algorithm1', text="", icon="OOPS")
+        box.prop(scene, 'algorithm2', text="", icon="OOPS")
+        box.prop(scene, 'algorithm_mix', text="", slider=True)
 
         if scene.use_list_maze:
             row.enabled = False
@@ -817,11 +818,26 @@ def register():
         max=1000000,
         description="1/x chance of creating each possible loop")
     
-    bpy.types.Scene.algorithm = bpy.props.EnumProperty(
+    bpy.types.Scene.algorithm1 = bpy.props.EnumProperty(
         items=[('DEPTH_FIRST', "Depth-First", ""),
                ('BREADTH_FIRST', "Breadth-First", ""),
                ('PRIMS', "Prim's", "")],
-        name="Algorithm",
+        name="Algorithm 1",
+        description="Algorithm to use when generating maze paths internally",
+        default="DEPTH_FIRST")
+    
+    bpy.types.Scene.algorithm_mix = bpy.props.FloatProperty(
+        name="algorithm_mix",
+        default=0,
+        min=0,
+        max=1,
+        description="Random probability mix between the two algorithms:\n    0 = only algorithm 1\n    1 = only algorithm 2")
+    
+    bpy.types.Scene.algorithm2 = bpy.props.EnumProperty(
+        items=[('DEPTH_FIRST', "Depth-First", ""),
+               ('BREADTH_FIRST', "Breadth-First", ""),
+               ('PRIMS', "Prim's", "")],
+        name="Algorithm 2",
         description="Algorithm to use when generating maze paths internally",
         default="DEPTH_FIRST")
     
@@ -917,8 +933,11 @@ def unregister():
     del bpy.types.Scene.write_list_maze
 
     del bpy.types.Scene.allow_loops
-    del bpy.types.Scene.algorithm
     del bpy.types.Scene.loops_chance
+    
+    del bpy.types.Scene.algorithm1
+    del bpy.types.Scene.algorithm2
+    del bpy.types.Scene.algorithm_mix
 
     del bpy.types.Scene.num_batch_mazes
     del bpy.types.Scene.batch_index

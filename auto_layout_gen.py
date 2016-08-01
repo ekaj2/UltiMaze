@@ -12,7 +12,7 @@ Available Functions:
     check_completion - Checks if maze generation is complete
     make_list_maze - Constructs a python list maze based on maze gen settings
 """
-IN_BLENDER = False
+IN_BLENDER = True
 
 import random
 import sys
@@ -25,6 +25,7 @@ if IN_BLENDER:
     from maze_gen.random_probability import rand_prob
 else:
     from random_probability import rand_prob
+
 
 # here for compatibility with other modules
 def find_touching(maze, active_space, dist=1):
@@ -96,6 +97,37 @@ def find_touching(maze, active_space, dist=1):
     # directions is the directions that is_path is True,
     # all_directions is all directions that exist
     return touching_xy, directions, all_directions
+
+def exist_test(ordered_pair):
+    """Check if ordered pair exists with maze size.
+
+    Args:
+        ordered_pair - the ordered pair to check
+
+    Returns:
+        exists T/F, maze index of ordered pair
+    """
+
+    x_dimensions = bpy.context.scene.mg_width
+    y_dimensions = bpy.context.scene.mg_height
+
+    exists = False
+    index = None
+
+    x = ordered_pair[0][0]
+    y = ordered_pair[0][1]
+
+    # if x and y are greater than or equal to 0 - the left and top bounds &
+    # if x and y are less than their respective dimensions - the right
+    # and bottom bounds
+    if x >= 0 and y >= 0 and x < x_dimensions and y < y_dimensions:
+        exists = True
+
+        # simple formula to determine index of ordered pair
+        index = (x + (y * x_dimensions))
+
+    return exists, index
+
 
 def remove_doubles_list(a):
     """Removes list doubles in list where list(set(a)) will raise a TypeError."""
@@ -172,14 +204,13 @@ class Maze():
         if self.debug:
             self.display()
     
-    def make(self, algorithm):
+    def make(self, algorithm1, algorithm2, mix):
         global IN_BLENDER
                 
         estimated_loops = int((self.x_dim * self.y_dim * 1.25))
         
         # select a cell and add it to the cells list - this could be random
-        #self.cells += [(random.randint(0, self.x_dim - 1), random.randint(0, self.y_dim - 1))]
-        x, y = 0, 0
+        x, y = random.randint(0, self.x_dim - 1), random.randint(0, self.y_dim - 1)
         self.cells += [(x, y)]
         self.maze[x][y] = 1
     
@@ -189,13 +220,13 @@ class Maze():
         while self.cells:
             
             # choose index from cells list
-            index = self.choose_ind(algorithm)
+            index = self.choose_ind(rand_prob([[algorithm1, 100 - mix * 100], [algorithm2, mix * 100]]))
             
             # get ordered pair of selected cell
             x, y = self.cells[index][0], self.cells[index][1]
             
             # shuffle cardinal directions
-            directions = [(x, y + 1), (x + 1, y), (x, y - 1), (x - 1, y)]
+            directions = [(x, y + 2), (x + 2, y), (x, y - 2), (x - 2, y)]
 
             random.shuffle(directions)
             
@@ -207,37 +238,28 @@ class Maze():
             for dir in directions:
                 dx, dy = dir
                 
-                # skip dir if that we're on odd x going along y or odd y going along x
-                # todo - prim's and breadth first seem to break this somehow
-                if dy != y and dx % 2:
-                    continue
-                if dx != x and dy % 2:
-                    continue
-                
                 # check that we're not by more than 1 path cell
                 if len(self.paths_only(self.find_touching((dx,dy)))) > 1:
                     continue
                 
-                # check diagonals
-                # todo - FIX THIS!!! SCREWS EVERYTHING UP
-                if len(self.paths_only(self.find_touching((dx,dy), 1, True))) > 2:
-                    continue
-                
                 if self.exist_test(dir)[0] and self.maze[dir[0]][dir[1]] == 0:
+                    # space in between b/c we are doing doubles
+                    print((x+dx)/2, (y+dy)/2)
+                    self.maze[round((x+dx)/2)][round((y+dy)/2)] = 1
+                    # space (second one)
                     self.maze[dx][dy] = 1
                     self.cells += [(dx, dy)]
                     index = None
                     break
                 
             # remove from cells list if index has not been found
-            if index != None:
+            if index is not None:
                 self.cells.pop(index)
             
             if self.debug:
                 print("\n\n\n\n\n")
                 self.display(illum_list)
-                #sleep(0.1)
-                                            
+
             # update printout
             loops += 1
             percent = int((loops / estimated_loops) * 100)
@@ -276,7 +298,7 @@ class Maze():
         # if x and y are greater than or equal to 0 - the left and top bounds &
         # if x and y are less than their respective dimensions - the right
         # and bottom bounds
-        if x >= 0 and y >= 0 and x < self.x_dim and y < self.y_dim:
+        if self.x_dim > x >= 0 and self.y_dim > y >= 0:
             exists = True
     
             # determine index of ordered pair
@@ -285,7 +307,6 @@ class Maze():
                 print(x,y)
             
         return exists, index
-
 
     def find_touching(self, space, dist=1, diagonals=False):
         """Find the spaces that touch the active space.
@@ -338,7 +359,7 @@ class Maze():
     def get(self):
         return self.maze
     
-    def display(self, illum_list=[]):
+    def display(self, illum_list=()):
         disp = ""
         for y in range(self.y_dim):
             for x in range(self.x_dim):
@@ -372,10 +393,10 @@ def make_list_maze():
         print("\n")
         
     m = Maze(debug, x_dim, y_dim)
-    m.make(scene.algorithm)
+    m.make(scene.algorithm1, scene.algorithm2, scene.algorithm_mix)
     maze = m.get()
     
-    # a bit of a hack for now to avoid changing the maze format everywhere just yet...
+    # a bit of a hack for now to avoid changing the maze format everywhere just yet...converts to old style
     old_maze = []
     for y in range(0, y_dim):
         for x in range(0, x_dim):
