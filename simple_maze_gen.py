@@ -6,13 +6,9 @@ Available Functions:
     make_3dmaze - Makes basic 3D maze from python list
 """
 
-import sys
-from time import time
-
 import bpy
 
-from maze_gen.console_prog import console_prog
-
+from maze_gen.progress_display import BlenderProgress
 
 
 def make_3dmaze(maze):
@@ -28,9 +24,11 @@ def make_3dmaze(maze):
     """
     debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
 
-    s_time = time()
-    bpy.context.window_manager.progress_begin(1, 100)
+    bldr_prog = BlenderProgress("3D Maze Gen", debug)
+    bldr_prog.start()
+
     genloops = 0
+
     # create a plane primitive
     bpy.ops.mesh.primitive_plane_add(
         view_align=False,
@@ -48,7 +46,6 @@ def make_3dmaze(maze):
     bpy.ops.object.material_slot_add()
     bpy.context.object.active_material_index = 1
 
-    # toggle editmode
     bpy.ops.object.editmode_toggle()
 
     # remove all preexisting verts
@@ -56,7 +53,6 @@ def make_3dmaze(maze):
     bpy.ops.mesh.delete(type='VERT')
 
     double_count = 0
-    last_percent = None
     for space in maze:
         x_pos = space[0][0]
         y_pos = space[0][1]
@@ -85,18 +81,8 @@ def make_3dmaze(maze):
         genloops += 1
         double_count += 1
 
-        percent = round((genloops / len(maze)) * 100)
-        if percent != last_percent and percent < 100:
-            bpy.context.window_manager.progress_update(percent)
-            if not debug:
-                # new print out technique
-                console_prog("3D Maze Gen", genloops / len(maze))
-
-        last_percent = percent
-    if not debug:
-        # print out finished job before "Info" from removing doubles
-        console_prog("3D Maze Gen", 1, time() - s_time)
-        print("\n")
+        progress = genloops / len(maze)
+        bldr_prog.update(progress)
 
     # remove doubles then extrude based on material selection
     bpy.ops.mesh.select_all(action='SELECT')
@@ -138,4 +124,4 @@ def make_3dmaze(maze):
     # name object 'Maze'
     bpy.context.object.name = "Maze"
 
-    bpy.context.window_manager.progress_end()
+    bldr_prog.finish()

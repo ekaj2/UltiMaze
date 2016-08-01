@@ -12,20 +12,11 @@ Available Functions:
     check_completion - Checks if maze generation is complete
     make_list_maze - Constructs a python list maze based on maze gen settings
 """
-IN_BLENDER = True
 
 import random
-import sys
-from time import time, sleep
 
-if IN_BLENDER:
-    import bpy
-
-if IN_BLENDER:
-    from maze_gen.random_probability import rand_prob
-    from maze_gen.console_prog import console_prog
-else:
-    from random_probability import rand_prob
+import bpy
+from maze_gen.maze_tools import Maze
 
 
 # here for compatibility with other modules
@@ -137,15 +128,6 @@ def exist_test(ordered_pair):
     return exists, index
 
 
-def remove_doubles_list(a):
-    """Removes list doubles in list where list(set(a)) will raise a TypeError."""
-    clean_list = []
-    for b in a:
-        if b not in clean_list:
-            clean_list += [b]
-    return clean_list
-
-
 def add_loops(maze):
     """Adds the ability to walk in circles by removing walls.
 
@@ -168,209 +150,6 @@ def add_loops(maze):
     return maze
 
 
-class Maze:
-    """Flexible and powerful maze generation class.
-
-    Methods:
-        __init__ - Creates maze grid and initializes variables.
-        make - Makes a maze.
-        choose_ind -  Chooses index based on algorithm parameter.
-        exist_test - Checks if ordered pair exists within maze size.
-        find_touching - Finds the spaces that touch 'space' separated by 'dist'.
-        paths_only - Filters out all wall spaces from a list of spaces.
-        get - Returns maze.
-        display - Prints maze to terminal or console window.
-    """
-
-    global IN_BLENDER
-        
-    def __init__(self, debug, x_dim=10, y_dim=10):
-        """Creates maze grid and initializes variables."""
-        
-        self.debug = debug
-        self.x_dim = x_dim
-        self.y_dim = y_dim
-        
-        self.maze = []
-        self.cells = []
-        
-        for column in range(0, self.x_dim):
-            self.maze += [[]]
-            for row in range(0, self.y_dim):
-                self.maze[column] += [0]
-        
-        if self.debug:
-            self.display()
-    
-    def make(self, algorithm1, algorithm2, mix):
-        """Makes a maze.
-
-        Args:
-            algorithm1 - first algorithm to mix
-            algorithm2 - second algorithm to mix
-            mix - factor to mix algorithms with
-        """
-        global IN_BLENDER
-                
-        estimated_loops = int((self.x_dim * self.y_dim * 1.25))
-        
-        # select a cell and add it to the cells list - this could be random
-        x, y = random.randint(0, self.x_dim - 1), random.randint(0, self.y_dim - 1)
-        self.cells += [(x, y)]
-        self.maze[x][y] = 1
-    
-        # initialize to none instead of 0 so that it will print 0 b/c 0 != last_percent = None
-        last_percent = None
-        loops = 0
-        while self.cells:
-            
-            # choose index from cells list
-            index = self.choose_ind(rand_prob([[algorithm1, 100 - mix * 100], [algorithm2, mix * 100]]))
-            
-            # get ordered pair of selected cell
-            x, y = self.cells[index][0], self.cells[index][1]
-            
-            # shuffle cardinal directions
-            directions = [(x, y + 2), (x + 2, y), (x, y - 2), (x - 2, y)]
-
-            random.shuffle(directions)
-            
-            illum_list = []
-            
-            for dir in directions:
-                illum_list += [dir]
-            
-            for dir in directions:
-                dx, dy = dir
-                
-                # check that we're not by more than 1 path cell
-                if len(self.paths_only(self.find_touching((dx,dy)))) > 1:
-                    continue
-                
-                if self.exist_test(dir) and self.maze[dir[0]][dir[1]] == 0:
-                    # space in between b/c we are doing doubles
-                    print((x+dx)/2, (y+dy)/2)
-                    self.maze[round((x+dx)/2)][round((y+dy)/2)] = 1
-                    # space (second one)
-                    self.maze[dx][dy] = 1
-                    self.cells += [(dx, dy)]
-                    index = None
-                    break
-                
-            # remove from cells list if index has not been found
-            if index is not None:
-                self.cells.pop(index)
-            
-            if self.debug:
-                print("\n\n\n\n\n")
-                self.display(illum_list)
-
-            # update printout
-            loops += 1
-            percent = int((loops / estimated_loops) * 100)
-            if percent != last_percent and percent < 100:
-                if IN_BLENDER:
-                    bpy.context.window_manager.progress_update(percent)
-                    if not self.debug:
-                        console_prog("Layout Gen", loops / estimated_loops)
-            last_percent = percent
-          
-        if self.debug:
-            print("\n\n\n\n\n")
-            self.display()
-    
-    def choose_ind(self, algorithm):
-        """Chooses index based on algorithm parameter."""
-
-        if algorithm == 'DEPTH_FIRST':
-            return len(self.cells) - 1
-        elif algorithm == 'BREADTH_FIRST':
-            return 0
-        elif algorithm == 'PRIMS':
-            return random.randint(0, len(self.cells) - 1)
-    
-    def exist_test(self, xy):
-        """Checks if ordered pair exists within maze size.
-    
-        Args:
-            xy - the ordered pair to check: <tuple> (x, y)
-    
-        Returns:
-            boolean exists
-        """
-        x, y = xy
-        exists = False
-
-        # check that x and y are within maze bounds
-        if self.x_dim > x >= 0 and self.y_dim > y >= 0:
-            exists = True
-            
-        return exists
-
-    def find_touching(self, space, dist=1):
-        """Finds the spaces that touch 'space' separated by 'dist'.
-    
-        Args:
-            space - the space to base it off of
-            dist - distance from 'space' to check
-    
-                ---------------------
-                |   |   | 2 |   |   |
-                ---------------------
-                |   |   | 1 |   |   |
-                ---------------------
-                | 2 | 1 | # | 1 | 2 |
-                ---------------------
-                |   |   | 1 |   |   |
-                ---------------------
-                |   |   | 2 |   |   |
-                ---------------------
-    
-        Returns:
-            a list of ordered pairs of touching spaces that exist
-        """
-        x, y = space
-        directions = [(x, y - dist), (x + dist, y), (x, y + dist), (x - dist, y)]
-        
-        touching_xy = []
-        for dir in directions:
-            if self.exist_test(dir):
-                touching_xy += [dir]
-            
-        return touching_xy
-    
-    def paths_only(self, spaces):
-        """Filters out all wall spaces from a list of spaces."""
-
-        path_spaces = []
-        for space in spaces:
-            x,y = space
-            if self.debug:
-                print("paths_only:", x,y)
-            if self.maze[x][y]:
-                path_spaces += [space]
-        return path_spaces
-    
-    def get(self):
-        """Returns maze."""
-        return self.maze
-    
-    def display(self, illum_list=()):
-        """Prints maze to terminal or console window."""
-
-        disp = ""
-        for y in range(self.y_dim):
-            for x in range(self.x_dim):
-                if (x, y) in illum_list:
-                    disp += "$"
-                elif self.maze[x][y]:
-                    disp += " "
-                else:
-                    disp += "#"
-            disp += "\n"
-        print(disp)
-
-
 def make_list_maze():
     """Constructs a python list maze based on maze gen settings.
 
@@ -383,12 +162,6 @@ def make_list_maze():
     x_dim = scene.mg_width
     y_dim = scene.mg_height
     debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
-
-    # display setups
-    bpy.context.window_manager.progress_begin(0, 100)
-    s_time = time()
-    if not debug:
-        print("\n")
         
     m = Maze(debug, x_dim, y_dim)
     m.make(scene.algorithm1, scene.algorithm2, scene.algorithm_mix)
@@ -400,20 +173,5 @@ def make_list_maze():
         for x in range(0, x_dim):
             # [[space in maze(ordered pair),is path]]
             old_maze += [[(x, y), maze[x][y]]]
-        
-    # print out finished job
-    if not debug:
-        console_prog("Layout Gen", 1, time() - s_time)
-        print("\n")
-    bpy.context.window_manager.progress_end()
 
     return old_maze
-
-
-def main():
-    m = Maze(9,9)
-    m.make('PRIMS')
-#     maze = m.get()
-
-if __name__ == "__main__":
-    main() 

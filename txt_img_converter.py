@@ -11,13 +11,12 @@ Available Functions:
     convert_list_maze - Convert text maze into a Python list maze
 """
 
-import sys
 from time import time
 
 import bpy
 from maze_gen import prep_manager
 
-from maze_gen.console_prog import console_prog
+from maze_gen.progress_display import BlenderProgress
 
 
 def write_to_text(text):
@@ -244,7 +243,8 @@ class CreateImageFromListMG(bpy.types.Operator):
                         "valid path or disable save texts in user prefs")
             return {'CANCELLED'}
 
-        s_time = time()
+        bldr_prog = BlenderProgress("Text to Image", debug)
+        bldr_prog.start()
 
         # get list maze as string
         str_list_maze = bpy.data.texts[scene.list_maze].as_string()
@@ -262,11 +262,6 @@ class CreateImageFromListMG(bpy.types.Operator):
             name="Maze",
             width=scene.mg_width,
             height=scene.mg_height)
-
-        # start progress report
-        bpy.context.window_manager.progress_begin(1, 100)
-
-        last_percent = None
 
         image_row = scene.mg_height - 1
         count = 0
@@ -288,28 +283,17 @@ class CreateImageFromListMG(bpy.types.Operator):
                                        image_col * 4 + 3)] = 1
 
                 # report progress if changed
-                percent = round((count / area) * 100)
-                if percent != last_percent and percent < 100:
-                    bpy.context.window_manager.progress_update(percent)
-                    if not debug:
-                        # new print out technique
-                        console_prog("Text to Image", count / area)
-
-                last_percent = percent
+                progress = count / area
+                bldr_prog.update(progress)
 
                 image_col += 1
                 count += 1
             image_row -= 1
-        if not debug:
-            # printout finished
-            console_prog("Text to Image", 1, time() - s_time)
-            print("\n")
 
-        # stop progress report
-        bpy.context.window_manager.progress_end()
+        bldr_prog.finish()
 
         self.report({'INFO'}, "Finished generating 2d maze in " +
-                    str(time() - s_time) + " seconds")
+                    str(bldr_prog.elapsed()) + " seconds")
 
         self.report({'INFO'}, "See '" + image_maze.name +
                     "' in the image editor")

@@ -9,12 +9,10 @@ Available Functions:
 """
 
 import math
-import sys
-from time import time
 
 import bpy
 from maze_gen import auto_layout_gen
-from maze_gen.console_prog import console_prog
+from maze_gen.progress_display import BlenderProgress
 
 
 def add_tile(tile, location, rotation):
@@ -404,11 +402,8 @@ def make_tile_maze(maze):
     """
     debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
 
-    s_time = time()
-
-    bpy.context.window_manager.progress_begin(1, 100)
+    bldr_prog = BlenderProgress("Tile Maze Gen", debug)
     genloops = 0
-    last_percent = None
     for i, space in enumerate(maze):
         # choose tile
         tm = bpy.context.scene.tile_mode
@@ -423,17 +418,8 @@ def make_tile_maze(maze):
                     add_tile(tile, (maze[i][0][0], maze[i][0][1]), rotation)  # TODO - clean up loc tuple
 
         genloops += 1
-        percent = round((genloops / len(maze)) * 100)
-        if percent != last_percent and percent < 100:
-            bpy.context.window_manager.progress_update(percent)
-            if not debug:
-                console_prog("Tile Maze Gen", genloops / len(maze))
-            last_percent = percent
-
-    if not debug:
-        # printout finished
-        console_prog("Tile Maze Gen", 1, time() - s_time)
-        print("\n")
+        progress = genloops / len(maze)
+        bldr_prog.update(progress)
 
     for active in bpy.context.selected_objects:
         bpy.context.scene.objects.active = active
@@ -488,4 +474,4 @@ def make_tile_maze(maze):
             bpy.ops.mesh.select_all(action='DESELECT')
             bpy.ops.object.editmode_toggle()
 
-    bpy.context.window_manager.progress_end()
+    bldr_prog.finish()
