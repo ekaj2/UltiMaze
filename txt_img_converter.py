@@ -11,8 +11,6 @@ Available Functions:
     convert_list_maze - Convert text maze into a Python list maze
 """
 
-from time import time
-
 import bpy
 from maze_gen import prep_manager
 

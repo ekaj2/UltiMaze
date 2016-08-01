@@ -1,4 +1,4 @@
-import time
+from time import time
 
 from maze_gen import prep_manager
 from maze_gen import txt_img_converter
@@ -23,7 +23,7 @@ def make_maze(context):
     messages = []
     message_lvls = []
     scene = context.scene
-    time_start = time.time()
+    time_start = time()
 
     # check that all needed tiles and lists have been provided
     if scene.tile_based and scene.gen_3d_maze:
@@ -83,8 +83,9 @@ def make_maze(context):
     scene.apply_modifiers = apply_mods
 
     if scene.gen_3d_maze or scene.write_list_maze:
-        time_log.log_time(time.time() - time_start)
-        messages += ["Finished generating maze in " + str(time.time() - time_start) + " seconds"]
+        elapsed_time = time() - time_start
+        time_log.log_time(elapsed_time)
+        messages += ["Finished generating maze in " + str(elapsed_time) + " seconds"]
         message_lvls += ['INFO']
 
     # write list maze if enabled
