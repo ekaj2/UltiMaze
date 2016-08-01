@@ -15,6 +15,7 @@ import bpy
 from maze_gen import prep_manager
 
 from maze_gen.progress_display import BlenderProgress
+from maze_gen.time_display import TimeDisplay
 
 
 def write_to_text(text):
@@ -290,8 +291,11 @@ class CreateImageFromListMG(bpy.types.Operator):
 
         bldr_prog.finish()
 
-        self.report({'INFO'}, "Finished generating 2d maze in " +
-                    str(bldr_prog.elapsed()) + " seconds")
+        time_log.log_time(bldr_prog.elapsed())
+        time_disp = TimeDisplay()
+        time_disp.convert(elapsed_time)
+
+        self.report({'INFO'}, "Finished generating 2d maze in " + str(time_disp))
 
         self.report({'INFO'}, "See '" + image_maze.name +
                     "' in the image editor")

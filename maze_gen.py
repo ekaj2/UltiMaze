@@ -6,6 +6,7 @@ from maze_gen import auto_layout_gen
 from maze_gen import tile_maze_gen
 from maze_gen import simple_maze_gen
 from maze_gen import time_log
+from maze_gen.time_display import TimeDisplay
 
 
 def make_maze(context):
@@ -85,7 +86,9 @@ def make_maze(context):
     if scene.gen_3d_maze or scene.write_list_maze:
         elapsed_time = time() - time_start
         time_log.log_time(elapsed_time)
-        messages += ["Finished generating maze in " + str(elapsed_time) + " seconds"]
+        time_disp = TimeDisplay()
+        time_disp.convert(elapsed_time)
+        messages += ["Finished generating maze in " + str(time_disp)]
         message_lvls += ['INFO']
 
     # write list maze if enabled
