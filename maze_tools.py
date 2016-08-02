@@ -1,4 +1,4 @@
-IN_BLENDER = False
+IN_BLENDER = True
 
 import random
 
@@ -69,7 +69,8 @@ class GridMaze:
     def make(self):
         """Makes a maze. Only a stub."""
 
-        x, y = random.randint(0, self.x_dim - 1), random.randint(0, self.y_dim - 1)
+        # generate random, but even x and y start location
+        x, y = self.start_location()
         self.cells += [(x, y)]
         self.maze[x][y] = 1
 
@@ -101,9 +102,11 @@ class GridMaze:
             if index is not None:
                 self.cells.pop(index)
 
-            self.loops += 1
-            self.loop_update(0.1)
+            self.loop_update()
 
+    def start_location(self):
+        """Generates random, even x and y values"""
+        return random.randint(0, int((self.x_dim - 1) / 2)) * 2, random.randint(0, int((self.y_dim - 1) / 2)) * 2
     @staticmethod
     def get_directions(x, y):
         """Returns a list of the spaces from 4 directions 2 spaces from given ordered pair."""
@@ -113,17 +116,20 @@ class GridMaze:
     def dir_to_ordered_pair(x, y, direction, dist=2):
         """Returns ordered pair of direction."""
         if direction == 'N':
-            return x, y + dist
+            return x, y - dist
         elif direction == 'E':
             return x + dist, y
         elif direction == 'S':
-            return x, y - dist
+            return x, y + dist
         elif direction == 'W':
             return x - dist, y
+        else:
+            print("Error! Invalid direction!")
 
-    def loop_update(self, sleep_time=0):
+    def loop_update(self, sleep_time=0.0):
         """Updates progress reports."""
         if self.IN_BLENDER:
+            self.loops += 1
             progress = self.loops / self.estimated_loops
             self.bldr_prog.update(progress)
         else:
@@ -210,18 +216,32 @@ class GridMaze:
     def display(self, illum_list=()):
         """Prints maze to terminal or console window."""
 
-        disp = "v" * (self.x_dim + 2) + "\n"
+        # x-axis labels
+        tens_digit = [str([b for b in range(10)][int(a / 10)]) for a in range(self.x_dim)]
+        disp = "    " + "".join(tens_digit).replace("0", " ") + "\n"
+        ones_digit = [str([b for b in range(10)][a % 10]) for a in range(self.x_dim)]
+        disp += "    " + "".join(ones_digit) + "\n"
+        # x-axis arrows
+        disp += "   " + "v" * (self.x_dim + 2) + "\n"
+
         for y in range(self.y_dim):
-            disp += ">"
+            # y-axis labels and arrows
+            disp += "{:2d}".format(y) + " >"
             for x in range(self.x_dim):
+                # illuminated are shown with '$'
                 if (x, y) in illum_list:
                     disp += "$"
+                # paths are shown with ' '
                 elif self.maze[x][y]:
                     disp += " "
+                # walls are shown with '#'
                 else:
                     disp += "#"
+            # right-hand y-axis arrows and newlines
             disp += "<\n"
-        disp += "^" * (self.x_dim + 2)
+
+        # bottom x-axis arrows
+        disp += "   " + "^" * (self.x_dim + 2)
         print(disp)
 
 
@@ -241,20 +261,22 @@ class PrimsGridMaze(GridMaze):
 
 
 class BinaryTreeGridMaze(GridMaze):
-    def __init__(self, debug, x_dim, y_dim, directions='RANDOM'):
+    def __init__(self, debug, x_dim, y_dim, directions='RANDOM', tileable=False):
 
         # parse 'directions' to make tuple
         if directions == 'NE':
-            self.directions = ('N', 'E')
+            self.directions = ['N', 'E']
         elif directions == 'NW':
-            self.directions = ('N', 'W')
+            self.directions = ['N', 'W']
         elif directions == 'SE':
-            self.directions = ('S', 'E')
+            self.directions = ['S', 'E']
         elif directions == 'SW':
-            self.directions = ('S', 'W')
+            self.directions = ['S', 'W']
         else:
-            possible_dirs = [('N', 'E'), ('N', 'W'), ('S', 'E'), ('S', 'W')]
+            possible_dirs = [['N', 'E'], ['N', 'W'], ['S', 'E'], ['S', 'W']]
             self.directions = random.choice(possible_dirs)
+
+        self.tileable = tileable
 
         super().__init__(debug, x_dim, y_dim)
 
@@ -262,18 +284,45 @@ class BinaryTreeGridMaze(GridMaze):
         # start in top, left corner
         for x in range(self.x_dim)[::2]:
             for y in range(self.y_dim)[::2]:
-                self.maze[x][y] = 1
 
-                d = random.choice(self.directions)
-                nx, ny = self.dir_to_ordered_pair(x, y, d, 1)
-                if self.exist_test((nx, ny)):
-                    self.maze[nx][ny] = 1
+                d = ''
+                # this controls how we handle the edges
+                if self.tileable:
+                    self.maze[x][y] = 1
+                    d = random.choice(self.directions)
+                else:
+                    temp_directions = []
+
+                    self.maze[x][y] = 1
+
+                    # y-axis
+                    if y > 0 and 'N' in self.directions:
+                        temp_directions += 'N'
+                    elif y < self.y_dim - 1 and 'S' in self.directions:
+                        temp_directions += 'S'
+
+                    # x-axis
+                    if x > 0 and 'W' in self.directions:
+                        temp_directions += 'W'
+                    elif x < self.x_dim - 1 and 'E' in self.directions:
+                        temp_directions += 'E'
+
+                    # choose direction
+                    if temp_directions:
+                        d = random.choice(temp_directions)
+                if d:
+                    nx, ny = self.dir_to_ordered_pair(x, y, d, 1)
+                    if self.exist_test((nx, ny)):
+                        self.maze[nx][ny] = 1
 
                 self.loop_update()
 
 
 def main():
-    BinaryTreeGridMaze(True, 25, 20)
+    # BinaryTreeGridMaze(True, 33, 23, 'NW')
+    # DepthFirstGridMaze(True, 50, 50)
+    PrimsGridMaze(True, 51, 51)
+    # BreadthFirstGridMaze(True, 50, 50)
 
 if __name__ == "__main__":
     main()

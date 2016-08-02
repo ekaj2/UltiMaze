@@ -74,6 +74,8 @@ class MazeGeneratorPanelMG(Panel):
         # layout settings box
         box = layout.box()
         box.label("Layout Settings", icon='SETTINGS')
+
+
         box.prop(scene, 'mg_width', slider=False, text="Width")
         box.prop(scene, 'mg_height', slider=False, text="Height")
         box.prop(scene, 'gen_3d_maze', text="Generate 3D Maze")
@@ -84,6 +86,7 @@ class MazeGeneratorPanelMG(Panel):
         box.prop(scene, 'algorithm', text="", icon="OOPS")
         if scene.algorithm == 'BINARY_TREE':
             box.prop(scene, 'binary_dir', text="", icon="MOD_DECIM")
+            box.prop(scene, 'tileable')
 
         if scene.use_list_maze:
             row.enabled = False
@@ -426,12 +429,19 @@ class MazeAddonPrefsMg(AddonPreferences):
         default=False,
         description="Show quick help")
 
+    only_odd_sizes = BoolProperty(
+        name="Only Odd Maze Sizes",
+        default=True,
+        description="Convert all even sizes to odd upon generation"
+    )
+
     def draw(self, context):
         layout = self.layout
 
         col = layout.column()
         row = col.row()
         row.prop(self, 'open_help_outbldr', text="Open Help Outside Blender")
+        row.prop(self, 'only_odd_sizes')
         row.prop(self, 'debug_mode', text="Debug")
         col.row()
         box = col.box()
@@ -857,8 +867,14 @@ def register():
                ('SE', "South-East", ""),
                ('SW', "South-West", "")],
         name="Binary Tree Direction",
-        description="Bias diagonal for binary tree maze algorithm.",
+        description="Bias diagonal for binary tree maze algorithm",
         default="RANDOM")
+
+    Scene.tileable = BoolProperty(
+        name="Tileable",
+        description="Makes resulting maze tileable",
+        default=True
+    )
 
     # ----------------------- Batch Tools -----------------------------
 
@@ -969,6 +985,7 @@ def unregister():
 
     del Scene.algorithm
     del Scene.binary_dir
+    del Scene.tileable
 
     # ----------------------- Batch Tools -----------------------------
 

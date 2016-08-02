@@ -1,5 +1,7 @@
 from time import time
 
+import bpy
+
 from maze_gen import prep_manager
 from maze_gen import txt_img_converter
 from maze_gen import auto_layout_gen
@@ -7,6 +9,14 @@ from maze_gen import tile_maze_gen
 from maze_gen import simple_maze_gen
 from maze_gen import time_log
 from maze_gen.time_display import TimeDisplay
+
+
+def morph_dimensions():
+    scene = bpy.context.scene
+    if not scene.mg_width & 1:
+        scene.mg_width += 1
+    if not scene.mg_height & 1:
+        scene.mg_height += 1
 
 
 def make_maze(context):
@@ -21,6 +31,8 @@ def make_maze(context):
         message_lvl: level to print message as, 'INFO', 'WARNING', 'ERROR'
         status: whether operator is 'FINISHED', 'CANCELLED', or other status
     """
+    addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
+
     messages = []
     message_lvls = []
     scene = context.scene
@@ -69,6 +81,8 @@ def make_maze(context):
     if scene.use_list_maze:
         maze = txt_img_converter.convert_list_maze()
     elif scene.gen_3d_maze or scene.write_list_maze:
+        if addon_prefs.only_odd_sizes:
+            morph_dimensions()
         maze = auto_layout_gen.make_list_maze()
 
     if scene.allow_loops:
