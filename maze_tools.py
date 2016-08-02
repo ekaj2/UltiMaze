@@ -1,4 +1,4 @@
-IN_BLENDER = False
+IN_BLENDER = True
 
 import random
 
@@ -10,13 +10,23 @@ else:
     from time import sleep
 
 
-class Maze:
-    """Flexible and powerful maze generation class.
+def round_avg(x1, x2):
+    return round((x1 + x2) / 2)
+
+
+class GridMaze:
+    """Flexible and powerful grid-based maze generation class.
 
     Methods:
-        __init__ - Creates maze grid and initializes variables.
+        __init__ - Initializes variables, creates maze grid, starts progress report, makes maze, ends progress report.
+        make_base_grid - Sets up self.maze with grid based on x and y dimension args.
         make - Makes a maze.
-        choose_ind -  Chooses index based on algorithm parameter.
+        get_directions - Returns a list of the spaces from 4 directions 2 spaces from given ordered pair.
+        dir_to_ordered_pair - Returns ordered pair of direction.
+        loop_update - Updates progress reports.
+        ordered_pair - Returns the ordered pair of passed index.
+        limited_paths_check - Returns True if space is neighboring more than max_allowed spaces, False otherwise.
+        choose_ind -  Chooses index...only a stub.
         exist_test - Checks if ordered pair exists within maze size.
         find_touching - Finds the spaces that touch 'space' separated by 'dist'.
         paths_only - Filters out all wall spaces from a list of spaces.
@@ -25,7 +35,7 @@ class Maze:
     """
 
     def __init__(self, debug, x_dim=10, y_dim=10):
-        """Creates maze grid and initializes variables."""
+        """Initializes variables, creates maze grid, starts progress report, makes maze, ends progress report."""
         global IN_BLENDER
         self.IN_BLENDER = IN_BLENDER
 
@@ -38,14 +48,23 @@ class Maze:
         self.loops = 0
         self.estimated_loops = int((self.x_dim * self.y_dim * 1.25))
 
-        for column in range(0, self.x_dim):
-            self.maze += [[]]
-            for row in range(0, self.y_dim):
-                self.maze[column] += [0]
+        self.make_base_grid()
 
         if self.IN_BLENDER:
             self.bldr_prog = BlenderProgress("Layout Gen", self.debug)
             self.bldr_prog.start()
+
+        self.make()
+
+        if self.IN_BLENDER:
+            self.bldr_prog.finish()
+
+    def make_base_grid(self):
+        """Sets up self.maze with grid based on x and y dimension args."""
+        for column in range(0, self.x_dim):
+            self.maze += [[]]
+            for row in range(0, self.y_dim):
+                self.maze[column] += [0]
 
     def make(self):
         """Makes a maze. Only a stub."""
@@ -71,7 +90,7 @@ class Maze:
 
                 if self.exist_test(d) and self.maze[d[0]][d[1]] == 0:
                     # space in between b/c we are doing doubles
-                    self.maze[self.round_avg(x, dx)][self.round_avg(y, dy)] = 1
+                    self.maze[round_avg(x, dx)][round_avg(y, dy)] = 1
                     # space (second one)
                     self.maze[dx][dy] = 1
                     self.cells += [(dx, dy)]
@@ -83,38 +102,45 @@ class Maze:
                 self.cells.pop(index)
 
             self.loops += 1
-            self.loop_update(index)
-
-        self.finish()
+            self.loop_update(0.1)
 
     @staticmethod
     def get_directions(x, y):
+        """Returns a list of the spaces from 4 directions 2 spaces from given ordered pair."""
         return [(x, y + 2), (x + 2, y), (x, y - 2), (x - 2, y)]
 
-    def loop_update(self, index):
+    @staticmethod
+    def dir_to_ordered_pair(x, y, direction, dist=2):
+        """Returns ordered pair of direction."""
+        if direction == 'N':
+            return x, y + dist
+        elif direction == 'E':
+            return x + dist, y
+        elif direction == 'S':
+            return x, y - dist
+        elif direction == 'W':
+            return x - dist, y
+
+    def loop_update(self, sleep_time=0):
+        """Updates progress reports."""
         if self.IN_BLENDER:
             progress = self.loops / self.estimated_loops
             self.bldr_prog.update(progress)
-        elif index is None:
+        else:
             self.display()
-            sleep(0.1)
-
-    def finish(self):
-        if self.IN_BLENDER:
-            self.bldr_prog.finish()
+            if sleep_time:
+                sleep(sleep_time)
 
     def ordered_pair(self, index):
+        """Returns the ordered pair of passed index."""
         return self.cells[index][0], self.cells[index][1]
 
     def limited_paths_check(self, space, max_allowed):
+        """Returns True if space is neighboring more than max_allowed spaces, False otherwise."""
         return len(self.paths_only(self.find_touching(space))) > max_allowed
 
-    @staticmethod
-    def round_avg(x1, x2):
-        return round((x1 + x2) / 2)
-
     def choose_ind(self):
-        """Chooses index...only a stub"""
+        """Chooses index...only a stub."""
         return 0
 
     def exist_test(self, xy):
@@ -197,33 +223,45 @@ class Maze:
         print(disp)
 
 
-class BreadthFirstMaze(Maze):
+class BreadthFirstGridMaze(GridMaze):
     def choose_ind(self):
         return 0
 
 
-class DepthFirstMaze(Maze):
+class DepthFirstGridMaze(GridMaze):
     def choose_ind(self):
         return len(self.cells) - 1
 
 
-class PrimsMaze(Maze):
+class PrimsGridMaze(GridMaze):
     def choose_ind(self):
         return random.randint(0, len(self.cells) - 1)
 
 
-class DepthPrimsMixMaze(Maze):
-    def __init__(self, debug, x_dim, y_dim, mix):
-        super(DepthPrimsMixMaze, self).__init__(debug, x_dim, y_dim)
-        self.mix = mix
+class BinaryTreeGridMaze(GridMaze):
+    def __init__(self, debug, x_dim, y_dim, directions=0):
+        if not directions:
+            possible_dirs = [('N', 'E'), ('N', 'W'), ('S', 'E'), ('S', 'W')]
+            directions = random.choice(possible_dirs)
+        self.directions = directions
+        super().__init__(debug, x_dim, y_dim)
 
-    def choose_ind(self):
-        return rand_prob([(0, 1 - self.mix), (len(self.cells) - 1, self.mix)])
+    def make(self):
+        # start in top, left corner
+        for x in range(self.x_dim)[::2]:
+            for y in range(self.y_dim)[::2]:
+                self.maze[x][y] = 1
+
+                d = random.choice(self.directions)
+                nx, ny = self.dir_to_ordered_pair(x, y, d, 1)
+                if self.exist_test((nx, ny)):
+                    self.maze[nx][ny] = 1
+
+                self.loop_update()
 
 
 def main():
-    m = DepthPrimsMixMaze(True, 25, 20, 0)
-    m.make()
+    BinaryTreeGridMaze(True, 25, 20)
 
 if __name__ == "__main__":
     main()

@@ -81,9 +81,7 @@ class MazeGeneratorPanelMG(Panel):
         row.prop(scene, 'allow_loops', text="Allow Loops")
         row.prop(scene, 'loops_chance', text="Chance")
 
-        box.prop(scene, 'algorithm1', text="", icon="OOPS")
-        box.prop(scene, 'algorithm2', text="", icon="OOPS")
-        box.prop(scene, 'algorithm_mix', text="", slider=True)
+        box.prop(scene, 'algorithm', text="", icon="OOPS")
 
         if scene.use_list_maze:
             row.enabled = False
@@ -817,29 +815,15 @@ def register():
         max=1000000,
         description="1/x chance of creating each possible loop")
     
-    Scene.algorithm1 = EnumProperty(
+    Scene.algorithm = EnumProperty(
         items=[('DEPTH_FIRST', "Depth-First", ""),
                ('BREADTH_FIRST', "Breadth-First", ""),
-               ('PRIMS', "Prim's", "")],
-        name="Algorithm 1",
+               ('PRIMS', "Prim's", ""),
+               ('BINARY_TREE', "Binary Tree", "")],
+        name="Algorithm",
         description="Algorithm to use when generating maze paths internally",
         default="DEPTH_FIRST")
-    
-    Scene.algorithm_mix = FloatProperty(
-        name="algorithm_mix",
-        default=0,
-        min=0,
-        max=1,
-        description="Random probability mix between the two algorithms:\n    0 = only algorithm 1\n    1 = only algorithm 2")
-    
-    Scene.algorithm2 = EnumProperty(
-        items=[('DEPTH_FIRST', "Depth-First", ""),
-               ('BREADTH_FIRST', "Breadth-First", ""),
-               ('PRIMS', "Prim's", "")],
-        name="Algorithm 2",
-        description="Algorithm to use when generating maze paths internally",
-        default="DEPTH_FIRST")
-    
+
     Scene.num_batch_mazes = IntProperty(
         name="num_batch_mazes",
         default=0,
@@ -934,9 +918,7 @@ def unregister():
     del Scene.allow_loops
     del Scene.loops_chance
     
-    del Scene.algorithm1
-    del Scene.algorithm2
-    del Scene.algorithm_mix
+    del Scene.algorithm
 
     del Scene.num_batch_mazes
     del Scene.batch_index

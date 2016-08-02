@@ -16,7 +16,7 @@ Available Functions:
 import random
 
 import bpy
-from maze_gen.maze_tools import Maze
+from maze_gen import maze_tools
 
 
 # here for compatibility with other modules
@@ -162,9 +162,16 @@ def make_list_maze():
     x_dim = scene.mg_width
     y_dim = scene.mg_height
     debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
-        
-    m = Maze(debug, x_dim, y_dim)
-    m.make(scene.algorithm1, scene.algorithm2, scene.algorithm_mix)
+
+    if scene.algorithm == 'BREADTH_FIRST':
+        m = maze_tools.BreadthFirstGridMaze(debug, x_dim, y_dim)
+    elif scene.algorithm == 'DEPTH_FIRST':
+        m = maze_tools.DepthFirstGridMaze(debug, x_dim, y_dim)
+    elif scene.algorithm == 'PRIMS':
+        m = maze_tools.PrimsGridMaze(debug, x_dim, y_dim)
+    elif scene.algorithm == 'BINARY_TREE':
+        m = maze_tools.BinaryTreeGridMaze(debug, x_dim, y_dim)  # TODO - add ui directions
+
     maze = m.get()
     
     # a bit of a hack for now to avoid changing the maze format everywhere just yet...converts to old style
