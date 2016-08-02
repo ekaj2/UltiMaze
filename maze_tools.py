@@ -210,8 +210,9 @@ class GridMaze:
     def display(self, illum_list=()):
         """Prints maze to terminal or console window."""
 
-        disp = ""
+        disp = "v" * (self.x_dim + 2) + "\n"
         for y in range(self.y_dim):
+            disp += ">"
             for x in range(self.x_dim):
                 if (x, y) in illum_list:
                     disp += "$"
@@ -219,7 +220,8 @@ class GridMaze:
                     disp += " "
                 else:
                     disp += "#"
-            disp += "\n"
+            disp += "<\n"
+        disp += "^" * (self.x_dim + 2)
         print(disp)
 
 
