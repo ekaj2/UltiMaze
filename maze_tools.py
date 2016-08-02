@@ -24,10 +24,10 @@ class Maze:
         display - Prints maze to terminal or console window.
     """
 
-    global IN_BLENDER
-
     def __init__(self, debug, x_dim=10, y_dim=10):
         """Creates maze grid and initializes variables."""
+        global IN_BLENDER
+        self.IN_BLENDER = IN_BLENDER
 
         self.debug = debug
         self.x_dim = x_dim
@@ -35,57 +35,43 @@ class Maze:
 
         self.maze = []
         self.cells = []
+        self.loops = 0
+        self.estimated_loops = int((self.x_dim * self.y_dim * 1.25))
 
         for column in range(0, self.x_dim):
             self.maze += [[]]
             for row in range(0, self.y_dim):
                 self.maze[column] += [0]
 
-    def make(self, algorithm1, algorithm2, mix):
-        """Makes a maze.
+        if self.IN_BLENDER:
+            self.bldr_prog = BlenderProgress("Layout Gen", self.debug)
+            self.bldr_prog.start()
 
-        Args:
-            algorithm1 - first algorithm to mix
-            algorithm2 - second algorithm to mix
-            mix - factor to mix algorithms with
-        """
-        global IN_BLENDER
+    def make(self):
+        """Makes a maze. Only a stub."""
 
-        estimated_loops = int((self.x_dim * self.y_dim * 1.25))
-
-        if IN_BLENDER:
-            bldr_prog = BlenderProgress("Layout Gen", self.debug)
-            bldr_prog.start()
-
-        # select a cell and add it to the cells list - this could be random
         x, y = random.randint(0, self.x_dim - 1), random.randint(0, self.y_dim - 1)
         self.cells += [(x, y)]
         self.maze[x][y] = 1
 
-        loops = 0
         while self.cells:
+            index = self.choose_ind()
+            x, y = self.ordered_pair(index)
 
-            # choose index from cells list
-            index = self.choose_ind(rand_prob([[algorithm1, 100 - mix * 100], [algorithm2, mix * 100]]))
-
-            # get ordered pair of selected cell
-            x, y = self.cells[index][0], self.cells[index][1]
-
-            # shuffle cardinal directions
-            directions = [(x, y + 2), (x + 2, y), (x, y - 2), (x - 2, y)]
+            directions = self.get_directions(x, y)
 
             random.shuffle(directions)
 
-            for dir in directions:
-                dx, dy = dir
+            for d in directions:
+                dx, dy = d
 
                 # check that we're not by more than 1 path cell
-                if len(self.paths_only(self.find_touching((dx, dy)))) > 1:
+                if self.limited_paths_check((dx, dy), 1):
                     continue
 
-                if self.exist_test(dir) and self.maze[dir[0]][dir[1]] == 0:
+                if self.exist_test(d) and self.maze[d[0]][d[1]] == 0:
                     # space in between b/c we are doing doubles
-                    self.maze[round((x + dx) / 2)][round((y + dy) / 2)] = 1
+                    self.maze[self.round_avg(x, dx)][self.round_avg(y, dy)] = 1
                     # space (second one)
                     self.maze[dx][dy] = 1
                     self.cells += [(dx, dy)]
@@ -96,28 +82,40 @@ class Maze:
             if index is not None:
                 self.cells.pop(index)
 
-            loops += 1
+            self.loops += 1
+            self.loop_update(index)
 
-            if IN_BLENDER:
-                progress = loops / estimated_loops
-                bldr_prog.update(progress)
+        self.finish()
 
-            else:
-                self.display()
-                sleep(0.5)
+    @staticmethod
+    def get_directions(x, y):
+        return [(x, y + 2), (x + 2, y), (x, y - 2), (x - 2, y)]
 
-        if IN_BLENDER:
-            bldr_prog.finish()
+    def loop_update(self, index):
+        if self.IN_BLENDER:
+            progress = self.loops / self.estimated_loops
+            self.bldr_prog.update(progress)
+        elif index is None:
+            self.display()
+            sleep(0.1)
 
-    def choose_ind(self, algorithm):
-        """Chooses index based on algorithm parameter."""
+    def finish(self):
+        if self.IN_BLENDER:
+            self.bldr_prog.finish()
 
-        if algorithm == 'DEPTH_FIRST':
-            return len(self.cells) - 1
-        elif algorithm == 'BREADTH_FIRST':
-            return 0
-        elif algorithm == 'PRIMS':
-            return random.randint(0, len(self.cells) - 1)
+    def ordered_pair(self, index):
+        return self.cells[index][0], self.cells[index][1]
+
+    def limited_paths_check(self, space, max_allowed):
+        return len(self.paths_only(self.find_touching(space))) > max_allowed
+
+    @staticmethod
+    def round_avg(x1, x2):
+        return round((x1 + x2) / 2)
+
+    def choose_ind(self):
+        """Chooses index...only a stub"""
+        return 0
 
     def exist_test(self, xy):
         """Checks if ordered pair exists within maze size.
@@ -199,9 +197,33 @@ class Maze:
         print(disp)
 
 
+class BreadthFirstMaze(Maze):
+    def choose_ind(self):
+        return 0
+
+
+class DepthFirstMaze(Maze):
+    def choose_ind(self):
+        return len(self.cells) - 1
+
+
+class PrimsMaze(Maze):
+    def choose_ind(self):
+        return random.randint(0, len(self.cells) - 1)
+
+
+class DepthPrimsMixMaze(Maze):
+    def __init__(self, debug, x_dim, y_dim, mix):
+        super(DepthPrimsMixMaze, self).__init__(debug, x_dim, y_dim)
+        self.mix = mix
+
+    def choose_ind(self):
+        return rand_prob([(0, 1 - self.mix), (len(self.cells) - 1, self.mix)])
+
+
 def main():
-    m = Maze(True, 25, 20)
-    m.make('PRIMS', '', 0)
+    m = DepthPrimsMixMaze(True, 25, 20, 0)
+    m.make()
 
 if __name__ == "__main__":
     main()
