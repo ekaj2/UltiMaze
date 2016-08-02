@@ -1,4 +1,4 @@
-IN_BLENDER = True
+IN_BLENDER = False
 
 import random
 
@@ -239,11 +239,21 @@ class PrimsGridMaze(GridMaze):
 
 
 class BinaryTreeGridMaze(GridMaze):
-    def __init__(self, debug, x_dim, y_dim, directions=0):
-        if not directions:
+    def __init__(self, debug, x_dim, y_dim, directions='RANDOM'):
+
+        # parse 'directions' to make tuple
+        if directions == 'NE':
+            self.directions = ('N', 'E')
+        elif directions == 'NW':
+            self.directions = ('N', 'W')
+        elif directions == 'SE':
+            self.directions = ('S', 'E')
+        elif directions == 'SW':
+            self.directions = ('S', 'W')
+        else:
             possible_dirs = [('N', 'E'), ('N', 'W'), ('S', 'E'), ('S', 'W')]
-            directions = random.choice(possible_dirs)
-        self.directions = directions
+            self.directions = random.choice(possible_dirs)
+
         super().__init__(debug, x_dim, y_dim)
 
     def make(self):

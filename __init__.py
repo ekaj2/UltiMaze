@@ -82,6 +82,8 @@ class MazeGeneratorPanelMG(Panel):
         row.prop(scene, 'loops_chance', text="Chance")
 
         box.prop(scene, 'algorithm', text="", icon="OOPS")
+        if scene.algorithm == 'BINARY_TREE':
+            box.prop(scene, 'binary_dir', text="", icon="MOD_DECIM")
 
         if scene.use_list_maze:
             row.enabled = False
@@ -659,31 +661,38 @@ classes = [GenerateMazeMG, batch_gen.BatchGenerateMazeMG,
            ShowReadmeMG, MazeAddonPrefsMg, menus.TileImportMenu, menus.EnableLayerMenu,
            EnableLayerMG, menus.SaveUserPrefsMenu]
 
+# ================== REGISTRY TABLE OF CONTENTS ===================
+#
+# ---------------------- General Settings -------------------------
+# --------------------------- Tiles -------------------------------
+# ----------------------- Tile Settings ---------------------------
+# ----------------------- List Settings ---------------------------
+# ------------------------ Loop Adding ----------------------------
+# -------------------- Algorithm Settings -------------------------
+# ----------------------- Batch Tools -----------------------------
+# -------------------- Text Find/Replace --------------------------
+# ------------------------ Image Maze -----------------------------
+# ------------------------ Help Enums -----------------------------
+
 
 def register():
     for i in classes:
         register_class(i)
 
+    # ---------------------- General Settings -------------------------
+
     Scene.mg_width = IntProperty(
         name="Width", default=25, min=3, max=1000)
+
     Scene.mg_height = IntProperty(
         name="Height", default=25, min=3, max=1000)
-    Scene.tile_based = BoolProperty(
-        name="tile_based", default=False)
 
-    Scene.export_name = StringProperty(
-        name="export_name",
-        default="MyTileSet",
-        description="Name of tile set to export")
+    Scene.gen_3d_maze = BoolProperty(
+        name="gen_3d_maze",
+        default=True)
 
-    Scene.tile_mode = EnumProperty(
-        items=[('TWELVE_TILES', "12-Piece Mode", "Use 12 tile pieces."),
-               ('SIX_TILES', "6-Piece Mode", "Use 6 tile pieces.")],
-        name="Tile Mode",
-        description="Number of tiles to use.",
-        default="TWELVE_TILES")
+    # --------------------------- Tiles -------------------------------
 
-    # wall pieces
     Scene.wall_4_sided = StringProperty(
         name="wall_4_sided",
         default="wall_4_sided",
@@ -714,7 +723,6 @@ def register():
         default="wall_corner",
         description="Wall piece with 2 adjacent sides")
 
-    # floor pieces
     Scene.floor_4_sided = StringProperty(
         name="floor_4_sided",
         default="floor_4_sided",
@@ -775,6 +783,18 @@ def register():
         default="no_path",
         description="Wall-only (0) tile")
 
+    # ----------------------- Tile Settings ---------------------------
+
+    Scene.tile_based = BoolProperty(
+        name="tile_based", default=False)
+
+    Scene.tile_mode = EnumProperty(
+        items=[('TWELVE_TILES', "12-Piece Mode", "Use 12 tile pieces."),
+               ('SIX_TILES', "6-Piece Mode", "Use 6 tile pieces.")],
+        name="Tile Mode",
+        description="Number of tiles to use.",
+        default="TWELVE_TILES")
+
     Scene.import_mat = BoolProperty(
         name="import_mat",
         default=True)
@@ -791,6 +811,8 @@ def register():
         name="apply_modifiers",
         default=True)
 
+    # ----------------------- List Settings ---------------------------
+
     Scene.list_maze = StringProperty(
         name="list_maze",
         default="")
@@ -804,17 +826,21 @@ def register():
         name="write_list_maze",
         default=False)
 
+    # ------------------------ Loop Adding ----------------------------
+
     Scene.allow_loops = BoolProperty(
         name="allow_loops",
         default=False)
-    
+
     Scene.loops_chance = IntProperty(
         name="loops_chance",
         default=3,
         min=1,
         max=1000000,
         description="1/x chance of creating each possible loop")
-    
+
+    # -------------------- Algorithm Settings -------------------------
+
     Scene.algorithm = EnumProperty(
         items=[('DEPTH_FIRST', "Depth-First", ""),
                ('BREADTH_FIRST', "Breadth-First", ""),
@@ -823,6 +849,18 @@ def register():
         name="Algorithm",
         description="Algorithm to use when generating maze paths internally",
         default="DEPTH_FIRST")
+
+    Scene.binary_dir = EnumProperty(
+        items=[('RANDOM', "Random", ""),
+               ('NE', "North-East", ""),
+               ('NW', "North-West", ""),
+               ('SE', "South-East", ""),
+               ('SW', "South-West", "")],
+        name="Binary Tree Direction",
+        description="Bias diagonal for binary tree maze algorithm.",
+        default="RANDOM")
+
+    # ----------------------- Batch Tools -----------------------------
 
     Scene.num_batch_mazes = IntProperty(
         name="num_batch_mazes",
@@ -838,9 +876,7 @@ def register():
         max=1000000,
         description="Batch index to load stored setting")
 
-    Scene.gen_3d_maze = BoolProperty(
-        name="gen_3d_maze",
-        default=True)
+    # -------------------- Text Find/Replace --------------------------
 
     Scene.text1_mg = StringProperty(
         name="text1_mg",
@@ -850,11 +886,14 @@ def register():
         name="text2_mg",
         default="")
 
+    # ------------------------ Image Maze -----------------------------
+
     Scene.maze_image = StringProperty(
         name="maze_image",
         default="")
 
-    # help enums
+    # ------------------------ Help Enums -----------------------------
+
     Scene.generation_desire = EnumProperty(
         items=[('SIMP_3D', "Simple 3D Maze", ""),
                ('TILE_MAZE', "Tile Maze", ""),
@@ -877,12 +916,13 @@ def unregister():
     for i in classes:
         unregister_class(i)
 
+    # ---------------------- General Settings -------------------------
+
     del Scene.mg_width
     del Scene.mg_height
-    del Scene.tile_based
+    del Scene.gen_3d_maze
 
-    del Scene.export_name
-    del Scene.tile_mode
+    # --------------------------- Tiles -------------------------------
 
     del Scene.wall_4_sided
     del Scene.wall_3_sided
@@ -905,30 +945,46 @@ def unregister():
     del Scene.dead_end
     del Scene.no_path
 
-    del Scene.import_mat
+    # ----------------------- Tile Settings ---------------------------
 
+    del Scene.tile_based
+    del Scene.tile_mode
+    del Scene.import_mat
     del Scene.merge_objects
     del Scene.apply_modifiers
     del Scene.remove_doubles_merge
+
+    # ----------------------- List Settings ---------------------------
 
     del Scene.list_maze
     del Scene.use_list_maze
     del Scene.write_list_maze
 
+    # ------------------------ Loop Adding ----------------------------
+
     del Scene.allow_loops
     del Scene.loops_chance
-    
+
+    # -------------------- Algorithm Settings -------------------------
+
     del Scene.algorithm
+    del Scene.binary_dir
+
+    # ----------------------- Batch Tools -----------------------------
 
     del Scene.num_batch_mazes
     del Scene.batch_index
 
-    del Scene.gen_3d_maze
+    # -------------------- Text Find/Replace --------------------------
 
     del Scene.text1_mg
     del Scene.text2_mg
 
+    # ------------------------ Image Maze -----------------------------
+
     del Scene.maze_image
+
+    # ------------------------ Help Enums -----------------------------
 
     del Scene.generation_desire
     del Scene.user_provision

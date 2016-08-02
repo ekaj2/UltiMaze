@@ -170,7 +170,7 @@ def make_list_maze():
     elif scene.algorithm == 'PRIMS':
         m = maze_tools.PrimsGridMaze(debug, x_dim, y_dim)
     elif scene.algorithm == 'BINARY_TREE':
-        m = maze_tools.BinaryTreeGridMaze(debug, x_dim, y_dim)  # TODO - add ui directions
+        m = maze_tools.BinaryTreeGridMaze(debug, x_dim, y_dim, scene.binary_dir)
 
     maze = m.get()
     
