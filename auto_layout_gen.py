@@ -164,13 +164,32 @@ def make_list_maze():
     debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
 
     if scene.algorithm == 'BREADTH_FIRST':
-        m = maze_tools.BreadthFirstGridMaze(debug, x_dim, y_dim)
+        m = maze_tools.BreadthFirstMaze(debug=debug,
+                                        width=x_dim,
+                                        height=y_dim,
+                                        bias_direction=scene.bias_direction,
+                                        bias=scene.bias)
+
     elif scene.algorithm == 'DEPTH_FIRST':
-        m = maze_tools.DepthFirstGridMaze(debug, x_dim, y_dim)
+        m = maze_tools.DepthFirstMaze(debug=debug,
+                                      width=x_dim,
+                                      height=y_dim,
+                                      bias_direction=scene.bias_direction,
+                                      bias=scene.bias)
+
     elif scene.algorithm == 'PRIMS':
-        m = maze_tools.PrimsGridMaze(debug, x_dim, y_dim)
+        m = maze_tools.PrimsMaze(debug=debug,
+                                 width=x_dim,
+                                 height=y_dim,
+                                 bias_direction=scene.bias_direction,
+                                 bias=scene.bias)
+
     elif scene.algorithm == 'BINARY_TREE':
-        m = maze_tools.BinaryTreeGridMaze(debug, x_dim, y_dim, scene.binary_dir, scene.tileable)
+        m = maze_tools.BinaryTreeMaze(debug=debug,
+                                      width=x_dim,
+                                      height=y_dim,
+                                      directions=scene.binary_dir,
+                                      tileable=scene.tileable)
 
     maze = m.get()
     

@@ -74,8 +74,6 @@ class MazeGeneratorPanelMG(Panel):
         # layout settings box
         box = layout.box()
         box.label("Layout Settings", icon='SETTINGS')
-
-
         box.prop(scene, 'mg_width', slider=False, text="Width")
         box.prop(scene, 'mg_height', slider=False, text="Height")
         box.prop(scene, 'gen_3d_maze', text="Generate 3D Maze")
@@ -87,6 +85,10 @@ class MazeGeneratorPanelMG(Panel):
         if scene.algorithm == 'BINARY_TREE':
             box.prop(scene, 'binary_dir', text="", icon="MOD_DECIM")
             box.prop(scene, 'tileable')
+
+        if scene.algorithm in ['PRIMS', 'DEPTH_FIRST', 'BREADTH_FIRST', 'KRUSKALS']:
+            box.prop(scene, 'bias_direction', text="", icon="ALIGN")
+            box.prop(scene, 'bias', slider=True)
 
         if scene.use_list_maze:
             row.enabled = False
@@ -873,8 +875,22 @@ def register():
     Scene.tileable = BoolProperty(
         name="Tileable",
         description="Makes resulting maze tileable",
-        default=True
-    )
+        default=True)
+
+    Scene.bias_direction = EnumProperty(
+        items=[('RANDOM', "Random", ""),
+               ('X', "X-Axis", ""),
+               ('Y', "Y-Axis", "")],
+        name="Bias Direction",
+        description="Bias direction for graph theory based algorithms",
+        default="RANDOM")
+
+    Scene.bias = FloatProperty(
+        name="Bias",
+        description="Amount of bias for graph theory based algorithms:\n    0 = no bias\n    1 = high bias",
+        default=0,
+        min=0,
+        max=1)
 
     # ----------------------- Batch Tools -----------------------------
 
@@ -986,6 +1002,8 @@ def unregister():
     del Scene.algorithm
     del Scene.binary_dir
     del Scene.tileable
+    del Scene.bias_direction
+    del Scene.bias
 
     # ----------------------- Batch Tools -----------------------------
 
