@@ -1,4 +1,4 @@
-IN_BLENDER = True
+IN_BLENDER = False
 
 import random
 
@@ -127,15 +127,10 @@ class OrthogonalMaze:
     @staticmethod
     def dir_to_ordered_pair(x, y, direction, dist=2):
         """Returns ordered pair of direction."""
-        if direction == 'N':
-            return x, y - dist
-        elif direction == 'E':
-            return x + dist, y
-        elif direction == 'S':
-            return x, y + dist
-        elif direction == 'W':
-            return x - dist, y
-        else:
+        a = {'N': (x, y - dist), 'E': (x + dist, y), 'S': (x, y + dist), 'W': (x - dist, y)}
+        try:
+            return a[direction]
+        except KeyError:
             print("Error! Invalid direction!")
 
     def loop_update(self, sleep_time=0.0):
@@ -298,12 +293,6 @@ class PrimsMaze(GraphTheoryMaze):
         return random.randint(0, len(self.cells) - 1)
 
 
-# just a stub
-class KruskalsMaze(GraphTheoryMaze):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-
 class BinaryTreeMaze(PassageCarverMaze):
     def __init__(self, directions='RANDOM', tileable=False, **kwargs):
 
@@ -362,8 +351,33 @@ class BinaryTreeMaze(PassageCarverMaze):
                 self.loop_update()
 
 
+class SetBasedMaze(OrthogonalMaze):
+    def combine_sets(self, x1, x2):
+        # combine setts
+        mi = min(self.x_sets[x1], self.x_sets[x2])
+        ma = max(self.x_sets[x1], self.x_sets[x2])
+        self.x_sets[x1] = mi
+        self.x_sets[x2] = mi
+
+        # update ALL occurrences
+        for i in range(len(self.x_sets)):
+            if self.x_sets[i] == ma:
+                self.x_sets[i] = mi
+
+        # knock out wall between on maze
+        self.knock_out_wall(x1, x2)
+
+    def knock_out_wall(self, x1, x2):
+        self.maze[int(avg(x1, x2) * 2)][self.y] = 1
+
+
 # just a stub
-class EllersGridMaze(PassageCarverMaze):
+class KruskalsMaze(GraphTheoryMaze, SetBasedMaze):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class EllersGridMaze(PassageCarverMaze, SetBasedMaze):
     def __init__(self, bias=0.0, **kwargs):
         self.bias = bias
         self.x_sets = []
@@ -393,38 +407,14 @@ class EllersGridMaze(PassageCarverMaze):
                 if random.random() > 1 - self.bias:
                     self.combine_sets(i, i + 1)
 
-                print(self.x_sets)
                 self.loop_update()
 
             # drop down sets - use drop_down_chance?
             if y < self.height - 1:
-                print("Dropping...")
                 self.drop_down()
-            else:
-                print("LESS!")
 
         # knock out walls in the bottom row to remove isolated regions
         self.finish_bottom()
-
-    def combine_sets(self, x1, x2):
-        # combine setts
-        mi = min(self.x_sets[x1], self.x_sets[x2])
-        ma = max(self.x_sets[x1], self.x_sets[x2])
-        self.x_sets[x1] = mi
-        self.x_sets[x2] = mi
-
-        # update ALL occurrences
-        for i in range(len(self.x_sets)):
-            if self.x_sets[i] == ma:
-                self.x_sets[i] = mi
-
-        print(self.x_sets[x1], self.x_sets[x2])
-
-        # knock out wall between on maze
-        self.knock_out_wall(x1, x2)
-
-    def knock_out_wall(self, x1, x2):
-        self.maze[int(avg(x1, x2) * 2)][self.y] = 1
 
     def drop_down(self):
         def drop(x, st):
