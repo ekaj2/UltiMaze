@@ -352,6 +352,10 @@ class BinaryTreeMaze(PassageCarverMaze):
 
 
 class SetBasedMaze(OrthogonalMaze):
+    def __init__(self, **kwargs):
+        self.x_sets = []
+        super().__init__(**kwargs)
+
     def combine_sets(self, x1, x2):
         # combine setts
         mi = min(self.x_sets[x1], self.x_sets[x2])
@@ -380,7 +384,6 @@ class KruskalsMaze(GraphTheoryMaze, SetBasedMaze):
 class EllersGridMaze(PassageCarverMaze, SetBasedMaze):
     def __init__(self, bias=0.0, **kwargs):
         self.bias = bias
-        self.x_sets = []
         self.y = 0
         super().__init__(**kwargs)
 
