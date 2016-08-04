@@ -86,8 +86,11 @@ class MazeGeneratorPanelMG(Panel):
             box.prop(scene, 'binary_dir', text="", icon="MOD_DECIM")
             box.prop(scene, 'tileable')
 
-        if scene.algorithm in ['PRIMS', 'DEPTH_FIRST', 'BREADTH_FIRST', 'KRUSKALS']:
+        elif scene.algorithm in ['PRIMS', 'DEPTH_FIRST', 'BREADTH_FIRST', 'KRUSKALS']:
             box.prop(scene, 'bias_direction', text="", icon="ALIGN")
+            box.prop(scene, 'bias', slider=True)
+
+        elif scene.algorithm == 'ELLERS':
             box.prop(scene, 'bias', slider=True)
 
         if scene.use_list_maze:
@@ -661,17 +664,41 @@ class GenerateMazeMG(Operator):
 
 
 # classes to register
-classes = [GenerateMazeMG, batch_gen.BatchGenerateMazeMG,
-           batch_gen.StoreBatchMazeMG, batch_gen.ClearBatchMazesMG,
-           batch_gen.RefreshBatchMazesMG, batch_gen.LoadBatchMazeMG,
-           batch_gen.DeleteBatchMazeMG, time_log.EstimateTimeMG,
-           MazeGeneratorPanelMG, ImageConverterPanelMG, MazeTilesPanelMG,
-           BatchGeneratorPanelMG, InfoPanelMG, HelpPanelMG, DemoTilesImportMG,
-           MazeGeneratorTextToolsPanelMG, text_tools.ReplaceTextMG,
-           text_tools.InvertTextMG, txt_img_converter.ConvertMazeImageMG,
-           txt_img_converter.CreateImageFromListMG, ShowHelpDiagramMG,
-           ShowReadmeMG, MazeAddonPrefsMg, menus.TileImportMenu, menus.EnableLayerMenu,
-           EnableLayerMG, menus.SaveUserPrefsMenu]
+classes = [MazeAddonPrefsMg,
+           # Main
+           GenerateMazeMG,
+           DemoTilesImportMG,
+           ShowHelpDiagramMG,
+           ShowReadmeMG,
+           # Batch Generation
+           batch_gen.BatchGenerateMazeMG,
+           batch_gen.StoreBatchMazeMG,
+           batch_gen.ClearBatchMazesMG,
+           batch_gen.RefreshBatchMazesMG,
+           batch_gen.LoadBatchMazeMG,
+           batch_gen.DeleteBatchMazeMG,
+           # Time Log
+           time_log.EstimateTimeMG,
+           # UI Panels
+           MazeGeneratorPanelMG,
+           ImageConverterPanelMG,
+           MazeTilesPanelMG,
+           BatchGeneratorPanelMG,
+           InfoPanelMG,
+           HelpPanelMG,
+           MazeGeneratorTextToolsPanelMG,
+           # Text Tools
+           text_tools.ReplaceTextMG,
+           text_tools.InvertTextMG,
+           # Text/Image Conversion
+           txt_img_converter.ConvertMazeImageMG,
+           txt_img_converter.CreateImageFromListMG,
+           # Specials
+           EnableLayerMG,
+           # Menus
+           menus.TileImportMenu,
+           menus.EnableLayerMenu,
+           menus.SaveUserPrefsMenu]
 
 # ================== REGISTRY TABLE OF CONTENTS ===================
 #
@@ -689,6 +716,7 @@ classes = [GenerateMazeMG, batch_gen.BatchGenerateMazeMG,
 
 def register():
     for i in classes:
+        print(i)
         register_class(i)
 
     # ---------------------- General Settings -------------------------
@@ -857,7 +885,8 @@ def register():
         items=[('DEPTH_FIRST', "Depth-First", ""),
                ('BREADTH_FIRST', "Breadth-First", ""),
                ('PRIMS', "Prim's", ""),
-               ('BINARY_TREE', "Binary Tree", "")],
+               ('BINARY_TREE', "Binary Tree", ""),
+               ('ELLERS', "Eller's", "")],
         name="Algorithm",
         description="Algorithm to use when generating maze paths internally",
         default="DEPTH_FIRST")

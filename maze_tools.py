@@ -14,6 +14,14 @@ def round_avg(x1, x2):
     return round((x1 + x2) / 2)
 
 
+def avg(x1, x2):
+    return (x1 + x2) / 2
+
+
+def find_all(lst, value):
+    return [i for i, a in enumerate(lst) if a == value]
+
+
 class OrthogonalMaze:
     """Flexible and powerful grid-based maze generation class.
 
@@ -59,6 +67,8 @@ class OrthogonalMaze:
 
         if self.IN_BLENDER:
             self.bldr_prog.finish()
+        else:
+            self.display()
 
     def make_base_grid(self):
         """Sets up self.maze with grid based on x and y dimension args."""
@@ -354,14 +364,101 @@ class BinaryTreeMaze(PassageCarverMaze):
 
 # just a stub
 class EllersGridMaze(PassageCarverMaze):
-    def __init__(self, junct_random_fac=0, **kwargs):
-        self.junct_random_fac = junct_random_fac
+    def __init__(self, bias=0.0, **kwargs):
+        self.bias = bias
+        self.x_sets = []
+        self.y = 0
         super().__init__(**kwargs)
+
+    def make(self):
+        self.x_sets = [a for a in range(self.width)[::2]]
+        for y in range(self.height)[::2]:
+            self.y = y  # update here so we don't have to keep passing it as an arg
+
+            # makes a dot grid of paths on the evens (row by row that is)
+            for x, s in enumerate(self.x_sets):
+                self.maze[x * 2][y] = 1
+
+            # combine sets - use bias
+            for i, s in enumerate(self.x_sets):
+
+                # check for index out of range exception
+                if len(self.x_sets) <= i + 1:
+                    continue
+
+                # if they are already the same set type we would introduce a loop
+                if self.x_sets[i] == self.x_sets[i + 1]:
+                    continue
+
+                if random.random() > 1 - self.bias:
+                    self.combine_sets(i, i + 1)
+
+                print(self.x_sets)
+                self.loop_update()
+
+            # drop down sets - use drop_down_chance?
+            if y < self.height - 1:
+                print("Dropping...")
+                self.drop_down()
+            else:
+                print("LESS!")
+
+        # knock out walls in the bottom row to remove isolated regions
+        self.finish_bottom()
+
+    def combine_sets(self, x1, x2):
+        # combine setts
+        mi = min(self.x_sets[x1], self.x_sets[x2])
+        ma = max(self.x_sets[x1], self.x_sets[x2])
+        self.x_sets[x1] = mi
+        self.x_sets[x2] = mi
+
+        # update ALL occurrences
+        for i in range(len(self.x_sets)):
+            if self.x_sets[i] == ma:
+                self.x_sets[i] = mi
+
+        print(self.x_sets[x1], self.x_sets[x2])
+
+        # knock out wall between on maze
+        self.knock_out_wall(x1, x2)
+
+    def knock_out_wall(self, x1, x2):
+        self.maze[int(avg(x1, x2) * 2)][self.y] = 1
+
+    def drop_down(self):
+        def drop(x, st):
+            self.x_sets[x] = st
+            if self.exist_test((x * 2, self.y + 1)):
+                self.maze[x * 2][self.y + 1] = 1
+
+        old_x_sets = self.x_sets
+        self.x_sets = [-1 for _ in old_x_sets]
+        no_repeat = set(list(old_x_sets))
+
+        for s in no_repeat:
+            # drop AT LEAST one from each set...
+            matching = find_all(old_x_sets, s)
+            for _ in matching:
+                drop(random.choice(matching), s)
+
+        # assign the unassigned cells to their own sets
+        k = max(self.x_sets) + 1
+        for i, s in enumerate(self.x_sets):
+            if s == -1:
+                self.x_sets[i] = k
+            k += 1
+
+    def finish_bottom(self):
+        for x in range(len(self.x_sets) - 1):
+            if self.x_sets[x] != self.x_sets[x + 1]:
+                self.combine_sets(x, x + 1)
 
 
 def main():
     # BinaryTreeMaze('NW', debug=True, width=33, height=23)
-    DepthFirstMaze(bias_direction='Y', bias=0.5, debug=True, width=35, height=21)
+    # DepthFirstMaze(bias_direction='Y', bias=0.5, debug=True, width=35, height=21)
+    EllersGridMaze(bias=0.5, debug=True, width=35, height=21)
 
 if __name__ == "__main__":
     main()
