@@ -1,0 +1,209 @@
+class Tree:
+    def __init__(self):
+        self.nodes = {}
+
+    def __str__(self):
+        ret = ""
+        for lvl in range(self.num_levels()):
+            lvl_names = self.get_level(lvl)
+            for name in lvl_names:
+                ret += str(name) + ", "
+            ret += "\n"
+        return ret
+
+    def __repr__(self):
+        ret = ""
+        for node in self.nodes:
+            ret += str(node) + ": " + str(self.nodes[node]) + "\n"
+        return ret
+
+    def new_node(self, name='root', parent=None):
+        """Adds a new node to the tree."""
+
+        # create a new key/value for the node
+        self.nodes[name] = {'parent': parent, 'children': set()}
+        if parent is not None:
+            self.parent(name, parent)
+
+    def delete_node(self, node):
+        this_node = self.nodes[node]
+
+        # remove from parent's children list
+        self.nodes[this_node['parent']]['children'].remove(node)
+
+        # set all children as roots
+        for child in this_node['children']:
+            self.nodes[child]['parent'] = None
+
+        # delete node
+        del this_node
+
+    def child_of(self, child, parent):
+        """Returns True of child is a child of parent, False otherwise."""
+        node = child
+        while True:
+            node = self.nodes[node]['parent']
+            if node == parent:
+                return True
+            elif node is None:
+                return False
+
+    def parent(self, child, parent):
+        # fix for 'looping' parents
+        if self.nodes[parent]['parent'] == child:
+            self.nodes[parent]['parent'] = None
+        self.nodes[parent]['children'].add(child)
+        self.nodes[child]['parent'] = parent
+
+    def unparent(self, child):
+        parent = self.nodes[child]['parent']
+        if parent is not None:
+            self.nodes[parent]['children'].remove(child)
+            self.nodes[child]['parent'] = None
+        else:
+            pass  # todo - logging
+
+    def insert_parent(self, parent, child):
+        print("Only a stub")
+
+    def child_shift_detach(self, node):
+        parent = self.nodes[node]['parent']
+
+        # attach children to parent
+        for c in self.nodes[node]['children']:
+            if parent is not None:
+                self.nodes[parent]['children'].add(c)
+            self.nodes[c]['parent'] = parent
+
+        self.nodes[node]['children'].clear()
+
+        # remove from parent's children list and set as root
+        if parent is not None:
+            self.nodes[parent]['children'].remove(node)
+            self.nodes[node]['parent'] = None
+        else:
+            pass  # todo - logging
+
+    def replacement_child_shift_detach(self, node):
+        children = self.nodes[node]['children']
+        if children:
+
+            # unparent the first child...must be done differently b/c of pop()
+            first_child = children.pop()
+            self.nodes[first_child]['parent'] = None
+
+            # if the node that is being detached has a parent...parent the first child to that parent
+            if self.nodes[node]['parent'] is not None:
+                self.parent(first_child, self.nodes[node]['parent'])
+
+            # for rest of the children: unparent them from the detachee then parent to first child
+            for child in children:
+                self.unparent(node)
+                self.parent(child, first_child)
+        # detach node (should have no children now)
+        self.unparent(node)
+
+    def prune_leaves(self, iterations):
+        for i in range(iterations):
+            leaves = self.get_leaves()
+            for leaf_node in leaves:
+                parent = self.nodes[leaf_node]['parent']
+                try:
+                    self.nodes[parent]['children'].remove(leaf_node)
+                except KeyError:
+                    print("Removing root from its parent's children list failed: roots don't have parents!")
+                del self.nodes[leaf_node]
+
+    def prune_roots(self, iterations):
+        for i in range(iterations):
+            roots = self.get_roots()
+            for root_node in roots:
+                children = self.nodes[root_node]['children']
+                for child in children:
+                    self.nodes[child]['parent'] = None
+                del self.nodes[root_node]
+
+    def num_levels(self):
+        old_lvl_nodes = self.get_roots()
+        # the '[] + ' is to keep it from referencing the same value in memory
+        curr_lvl_nodes = [] + old_lvl_nodes
+        lvls = 0
+        while curr_lvl_nodes:
+            curr_lvl_nodes = []
+            for node in old_lvl_nodes:
+                for child in self.nodes[node]['children']:
+                    curr_lvl_nodes += [child]
+            old_lvl_nodes = curr_lvl_nodes
+            lvls += 1
+        return lvls
+
+    def get_level(self, lvl):
+        """Returns [nodes] at lvl where lvl = 0 returns roots."""
+        old_lvl_nodes = self.get_roots()
+        # the '[] + ' is to keep it from referencing the same value in memory
+        curr_lvl_nodes = [] + old_lvl_nodes
+        for i in range(lvl):
+            curr_lvl_nodes = []
+            for node in old_lvl_nodes:
+                for child in self.nodes[node]['children']:
+                    curr_lvl_nodes += [child]
+            old_lvl_nodes = curr_lvl_nodes
+        return curr_lvl_nodes
+
+    def get_root(self, child):
+        node = child
+        while True:
+            if self.nodes[node]['parent'] is None:
+                return node
+            node = self.nodes[node]['parent']
+
+    def get_nodes(self):
+        return [a for a in self.nodes]
+
+    def get_leaves(self):
+        return [a for a in self.nodes if not self.nodes[a]['children']]
+
+    def get_roots(self):
+        return [a for a in self.nodes if self.nodes[a]['parent'] is None]
+
+    def clear(self):
+        self.nodes = {}
+
+    def unparent_children(self, parent):
+        # set all children as roots
+        for child in self.nodes[parent]['children']:
+            self.nodes[child]['parent'] = None
+
+        # remove from parent's children list
+        self.nodes[parent]['children'] = set()
+
+
+def main():
+    tree = Tree()
+    tree.new_node(name='root')
+    tree.new_node(name='trunk', parent='root')
+    for i in range(3):
+        tree.new_node(name='branch' + str(i+1), parent='trunk')
+
+    print(tree.child_of('branch1', 'root'))
+    tree.unparent('branch1')
+    print(tree.get_roots())
+    print(tree.get_leaves())
+    print(tree.get_nodes())
+    tree.parent('branch1', 'branch2')
+    print(tree.child_of('branch1', 'branch3'))
+    print(tree.get_root('branch1'))
+
+    print(tree)
+
+    print("\n" + "*" * 25 + "\n")
+
+    tree.prune_leaves(0)
+    print(tree)
+
+    tree.delete_node('branch2')
+    print(tree.get_level(0))
+    print(tree)
+
+if __name__ == "__main__":
+    main()
