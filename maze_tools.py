@@ -4,9 +4,11 @@ import random
 
 if IN_BLENDER:
     from maze_gen import weira
+    from maze_gen.trees import Tree
     from maze_gen.progress_display import BlenderProgress
 else:
     import weira
+    from trees import Tree
     from time import sleep
 
 
@@ -243,7 +245,7 @@ class OrthogonalMaze:
                     disp += " "
                 # walls are shown with '#'
                 else:
-                    disp += "#"
+                    disp += "\u2588"
             # right-hand y-axis arrows and newlines
             disp += "<\n"
 
@@ -353,26 +355,19 @@ class BinaryTreeMaze(PassageCarverMaze):
 
 class SetBasedMaze(OrthogonalMaze):
     def __init__(self, **kwargs):
-        self.x_sets = []
+        self.tree = Tree()
         super().__init__(**kwargs)
 
     def combine_sets(self, x1, x2):
-        # combine setts
-        mi = min(self.x_sets[x1], self.x_sets[x2])
-        ma = max(self.x_sets[x1], self.x_sets[x2])
-        self.x_sets[x1] = mi
-        self.x_sets[x2] = mi
-
-        # update ALL occurrences
-        for i in range(len(self.x_sets)):
-            if self.x_sets[i] == ma:
-                self.x_sets[i] = mi
+        # self.tree.unparent(x2)
+        root = self.tree.get_root(x2)
+        self.tree.parent(root, x1)
 
         # knock out wall between on maze
         self.knock_out_wall(x1, x2)
 
     def knock_out_wall(self, x1, x2):
-        self.maze[int(avg(x1, x2) * 2)][self.y] = 1
+        self.maze[round(avg(x1, x2))][self.y] = 1
 
 
 # just a stub
@@ -388,27 +383,33 @@ class EllersGridMaze(PassageCarverMaze, SetBasedMaze):
         super().__init__(**kwargs)
 
     def make(self):
-        self.x_sets = [a for a in range(self.width)[::2]]
+        # create all nodes we will ever need to use (we only build one row at a time)
+        for a in range(self.width)[::2]:
+            self.tree.new_node(name=a)
+
+        # make all of these paths
+        for x in self.tree.get_nodes():
+            self.maze[x][0] = 1
+
+        # loop over every other y-value so if height = 5 we loop: 0, 2, 4 as y
         for y in range(self.height)[::2]:
             self.y = y  # update here so we don't have to keep passing it as an arg
 
-            # makes a dot grid of paths on the evens (row by row that is)
-            for x, s in enumerate(self.x_sets):
-                self.maze[x * 2][y] = 1
-
             # combine sets - use bias
-            for i, s in enumerate(self.x_sets):
+            for node in self.tree.get_nodes():
+                neighbor = node + 2
 
-                # check for index out of range exception
-                if len(self.x_sets) <= i + 1:
+                # this must be tried b/c neighbor +2 (so out of range of keys)...dict is
+                # unordered so we can't use slicing to skip the last one :(
+                try:
+                    # if they are already the same set type we would introduce a loop
+                    if self.tree.get_root(node) == self.tree.get_root(neighbor):
+                        continue
+                except KeyError:
                     continue
 
-                # if they are already the same set type we would introduce a loop
-                if self.x_sets[i] == self.x_sets[i + 1]:
-                    continue
-
-                if random.random() > 1 - self.bias:
-                    self.combine_sets(i, i + 1)
+                if random.random() > 1 - self.bias and y < self.height - 1:
+                    self.combine_sets(node, neighbor)
 
                 self.loop_update()
 
@@ -420,38 +421,41 @@ class EllersGridMaze(PassageCarverMaze, SetBasedMaze):
         self.finish_bottom()
 
     def drop_down(self):
-        def drop(x, st):
-            self.x_sets[x] = st
-            if self.exist_test((x * 2, self.y + 1)):
-                self.maze[x * 2][self.y + 1] = 1
+        def drop(x):
+            if self.exist_test((x, self.y + 1)):
+                self.maze[x][self.y + 1] = 1
+                self.maze[x][self.y + 2] = 1
+            return x
 
-        old_x_sets = self.x_sets
-        self.x_sets = [-1 for _ in old_x_sets]
-        no_repeat = set(list(old_x_sets))
+        dropped = []
+        for root in self.tree.get_roots():
+            nodes_on_rt = [a for a in self.tree.get_nodes() if self.tree.child_of(a, root)] + [root]
+            # drop AT LEAST one from each 'root'...
+            for _ in nodes_on_rt:
+                dropped += [drop(random.choice(nodes_on_rt))]
 
-        for s in no_repeat:
-            # drop AT LEAST one from each set...
-            matching = find_all(old_x_sets, s)
-            for _ in matching:
-                drop(random.choice(matching), s)
-
-        # assign the unassigned cells to their own sets
-        k = max(self.x_sets) + 1
-        for i, s in enumerate(self.x_sets):
-            if s == -1:
-                self.x_sets[i] = k
-            k += 1
+        # make the rest become roots
+        for leaf in self.tree.get_nodes():
+            if leaf not in dropped:
+                self.tree.replacement_child_shift_detach(leaf)
+                self.maze[leaf][self.y + 2] = 1
 
     def finish_bottom(self):
-        for x in range(len(self.x_sets) - 1):
-            if self.x_sets[x] != self.x_sets[x + 1]:
-                self.combine_sets(x, x + 1)
+        for node in self.tree.get_nodes():
+            neighbor = node + 2
+            # this must be tried b/c neighbor +2 (so out of range of keys)...dict is
+            # unordered so we can't use slicing to skip the last one :(
+            try:
+                if self.tree.get_root(node) != self.tree.get_root(neighbor):
+                    self.combine_sets(node, neighbor)
+            except KeyError:
+                continue
 
 
 def main():
     # BinaryTreeMaze('NW', debug=True, width=33, height=23)
-    # DepthFirstMaze(bias_direction='Y', bias=0.5, debug=True, width=35, height=21)
-    EllersGridMaze(bias=0.5, debug=True, width=35, height=21)
+    # DepthFirstMaze(bias_direction='Y', bias=0.5, debug=True, width=99, height=45)
+    EllersGridMaze(bias=0.75, debug=True, width=99, height=45)
 
 if __name__ == "__main__":
     main()
