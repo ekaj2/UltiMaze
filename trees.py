@@ -1,3 +1,19 @@
+class LoopInTreeError(Exception):
+    def __init__(self, nodes, parent, child):
+        self.nodes = nodes
+        self.parent = parent
+        self.child = child
+
+    def __str__(self):
+        return repr(self)
+
+    def __repr__(self):
+        ret = "\n"
+        ret += str(self.parent) + ": " + str(self.nodes[self.parent]) + "\n"
+        ret += str(self.child) + ": " + str(self.nodes[self.child])
+        return ret
+
+
 class Tree:
     def __init__(self):
         self.nodes = {}
@@ -16,6 +32,12 @@ class Tree:
         for node in self.nodes:
             ret += str(node) + ": " + str(self.nodes[node]) + "\n"
         return ret
+
+    def check_for_looping_dependencies(self):
+        for node in self.get_nodes():
+            for child in self.nodes[node]['children']:
+                if self.nodes[child]['parent'] != node:
+                    raise LoopInTreeError(self.nodes, node, child)
 
     def new_node(self, name='root', parent=None):
         """Adds a new node to the tree."""
@@ -94,11 +116,13 @@ class Tree:
 
             # if the node that is being detached has a parent...parent the first child to that parent
             if self.nodes[node]['parent'] is not None:
+                self.unparent(first_child)  # todo - figure out if this is needed
                 self.parent(first_child, self.nodes[node]['parent'])
 
             # for rest of the children: unparent them from the detachee then parent to first child
-            for child in children:
-                self.unparent(node)
+            # the children need to be copied to a list b/c the set doesn't support the children count changing
+            for child in list(children):
+                self.unparent(child)
                 self.parent(child, first_child)
         # detach node (should have no children now)
         self.unparent(node)

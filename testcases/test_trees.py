@@ -49,7 +49,7 @@ def add_shem_nodes(tree):
 
 
 class TestNewNode(unittest.TestCase):
-    maxDiff = None
+    maxDiff = 10000
 
     def test_simple_addition(self):
         tree = Tree()
@@ -105,7 +105,7 @@ class TestNewNode(unittest.TestCase):
 
 
 class TestParenting(unittest.TestCase):
-    maxDiff = None
+    maxDiff = 10000
 
     def test_unparent_leaf_child(self):
         tree = Tree()
@@ -223,9 +223,65 @@ class TestParenting(unittest.TestCase):
                           "Joktan": {'children': set(), 'parent': "Eber"}
                           })
 
+    def test_bad_parent_reference(self):
+        tree = Tree()
+        with self.assertRaises(KeyError):
+            tree.new_node("Joe", "Bob")
+
 
 class TestDetaching(unittest.TestCase):
-    maxDiff = None
+    maxDiff = 10000
+
+    def test_detach_salah(self):
+        tree = Tree()
+        tree = add_shem_nodes(tree)
+        tree.replacement_child_shift_detach("Salah")
+
+        self.assertEqual(tree.nodes,
+                         {"Shem": {'children': set(["Aram", "Elam", "Asshur", "Arphaxad", "Lud"]), 'parent': None},
+                          # Shem's Kids
+                          "Aram": {'children': set(["Uz", "Hul", "Mash", "Gether"]), 'parent': "Shem"},
+                          "Elam": {'children': set(), 'parent': "Shem"},
+                          "Asshur": {'children': set(), 'parent': "Shem"},
+                          "Arphaxad": {'children': set(["Eber"]), 'parent': "Shem"},
+                          "Lud": {'children': set(), 'parent': "Shem"},
+                          # Aram's Kids
+                          "Uz": {'children': set(), 'parent': "Aram"},
+                          "Hul": {'children': set(), 'parent': "Aram"},
+                          "Mash": {'children': set(), 'parent': "Aram"},
+                          "Gether": {'children': set(), 'parent': "Aram"},
+                          # Arphaxad's Lineage
+                          "Salah": {'children': set(), 'parent': None},
+                          "Eber": {'children': set(["Peleg", "Joktan"]), 'parent': "Arphaxad"},
+                          "Peleg": {'children': set(), 'parent': "Eber"},
+                          "Joktan": {'children': set(), 'parent': "Eber"}
+                          })
+
+    def test_detach_multiple(self):
+        tree = Tree()
+        tree = add_shem_nodes(tree)
+        tree.replacement_child_shift_detach("Salah")
+        tree.replacement_child_shift_detach("Salah")
+
+        self.assertEqual(tree.nodes,
+                         {"Shem": {'children': set(["Aram", "Elam", "Asshur", "Arphaxad", "Lud"]), 'parent': None},
+                          # Shem's Kids
+                          "Aram": {'children': set(["Uz", "Hul", "Mash", "Gether"]), 'parent': "Shem"},
+                          "Elam": {'children': set(), 'parent': "Shem"},
+                          "Asshur": {'children': set(), 'parent': "Shem"},
+                          "Arphaxad": {'children': set(["Eber"]), 'parent': "Shem"},
+                          "Lud": {'children': set(), 'parent': "Shem"},
+                          # Aram's Kids
+                          "Uz": {'children': set(), 'parent': "Aram"},
+                          "Hul": {'children': set(), 'parent': "Aram"},
+                          "Mash": {'children': set(), 'parent': "Aram"},
+                          "Gether": {'children': set(), 'parent': "Aram"},
+                          # Arphaxad's Lineage
+                          "Salah": {'children': set(), 'parent': None},
+                          "Eber": {'children': set(["Peleg", "Joktan"]), 'parent': "Arphaxad"},
+                          "Peleg": {'children': set(), 'parent': "Eber"},
+                          "Joktan": {'children': set(), 'parent': "Eber"}
+                          })
 
     def test_shift_detach_arphaxad(self):
         tree = Tree()
@@ -298,8 +354,33 @@ class TestDetaching(unittest.TestCase):
         self.assertEqual(1, len(leaves))
         self.assertIn(leaves[0], ["Peleg", "Joktan"])
 
+    def test_reparenting_bug(self):
+        """This is the result of a nasty bug that caused looping:
+        when this would happen b/c 2 would not be unparented from 1 :(
+
+        Update: actually it doesn't seem to be catching that bug :|
+            this thing is SO elusive
+
+        0       1  0
+        |       | /
+        1   ->  2
+        |
+        2
+
+        """
+        tree = Tree()
+        tree.new_node(0)
+        tree.new_node(1, 0)
+        tree.new_node(2, 1)
+        tree.replacement_child_shift_detach(1)
+        print(repr(tree))
+        self.assertEqual(tree.nodes[1]['children'], set())
+        self.assertEqual(tree.nodes[2]['parent'], 0)
+
 
 class TestNumLevels(unittest.TestCase):
+    maxDiff = 10000
+
     def test_no_levels(self):
         tree = Tree()
         self.assertEqual(tree.num_levels(), 0)
@@ -315,6 +396,98 @@ class TestNumLevels(unittest.TestCase):
             tree.new_node("root" + str(i))
             tree.new_node("branch" + str(i), "root" + str(i))
         self.assertEqual(tree.num_levels(), 2)
+
+
+class TestChildOf(unittest.TestCase):
+    maxDiff = 10000
+
+    def test_root_child_of_leaf(self):
+        tree = Tree()
+        tree = add_shem_nodes(tree)
+        self.assertFalse(tree.child_of("Shem", "Peleg"))
+
+    def test_leaf_child_of_root(self):
+        tree = Tree()
+        tree = add_shem_nodes(tree)
+        self.assertTrue(tree.child_of("Peleg", "Shem"))
+
+    def test_leaf_child_of_other_leaf(self):
+        tree = Tree()
+        tree = add_shem_nodes(tree)
+        self.assertFalse(tree.child_of("Peleg", "Lud"))
+
+
+class TestGetRootsNodesAndLeaves(unittest.TestCase):
+    maxDiff = 10000
+
+    def test_get_roots(self):
+        tree = Tree()
+        tree = add_shem_nodes(tree)
+        tree.unparent("Eber")
+        self.assertEqual(set(tree.get_roots()), set(["Shem", "Eber"]))
+
+    def test_get_nodes(self):
+        tree = Tree()
+        tree = add_adam_nodes(tree)
+        self.assertEqual(set(tree.get_nodes()), set(["Adam", "Cain", "Abel", "Seth", "Enoch"]))
+
+    def test_get_leaves(self):
+        tree = Tree()
+        tree = add_adam_nodes(tree)
+        self.assertEqual(set(tree.get_leaves()), set(["Seth", "Abel", "Enoch"]))
+
+
+class TestGetRoot(unittest.TestCase):
+    maxDiff = 10000
+
+    def test_get_enochs_root(self):
+        tree = Tree()
+        tree = add_adam_nodes(tree)
+        self.assertEqual(tree.get_root("Enoch"), "Adam")
+
+    def test_get_invalid_node_root(self):
+        tree = Tree()
+        tree = add_adam_nodes(tree)
+        with self.assertRaises(KeyError):
+            tree.get_root("Esau")
+
+    def test_get_adams_root(self):
+        tree = Tree()
+        tree = add_adam_nodes(tree)
+        self.assertEqual(tree.get_root("Adam"), "Adam")
+
+
+class TestClear(unittest.TestCase):
+    maxDiff = 10000
+
+    def test_with_tree(self):
+        tree = Tree()
+        tree = add_adam_nodes(tree)
+        tree.clear()
+        self.assertEqual(tree.nodes, {})
+
+    def test_without_tree(self):
+        tree = Tree()
+        tree.clear()
+        self.assertEqual(tree.nodes, {})
+
+
+class TestGetLevels(unittest.TestCase):
+    maxDiff = 10000
+
+    def test_empty_tree(self):
+        tree = Tree()
+        self.assertEqual(tree.get_level(10), [])
+
+    def test_get_roots(self):
+        tree = Tree()
+        self.assertEqual(tree.get_level(0), tree.get_roots())
+
+    def test_get_enoch(self):
+        tree = Tree()
+        tree = add_adam_nodes(tree)
+        self.assertEqual(tree.get_level(2), ["Enoch"])
+
 
 if __name__ == "__main__":
     unittest.main()
