@@ -455,7 +455,7 @@ class EllersMaze(PassageCarverMaze, SetBasedMaze):
                 except KeyError:
                     continue
 
-                if random.random() > 1 - self.bias and y < self.height - 1:
+                if random.random() > 1 - (1 - self.bias) and y < self.height - 1:
                     self.combine_sets(node, neighbor)
 
                 self.loop_update()
