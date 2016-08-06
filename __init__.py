@@ -86,7 +86,7 @@ class MazeGeneratorPanelMG(Panel):
             box.prop(scene, 'binary_dir', text="", icon="MOD_DECIM")
             box.prop(scene, 'tileable')
 
-        elif scene.algorithm in ['PRIMS', 'DEPTH_FIRST', 'BREADTH_FIRST', 'KRUSKALS']:
+        elif scene.algorithm in ['PRIMS', 'DEPTH_FIRST', 'BREADTH_FIRST']:
             box.prop(scene, 'bias_direction', text="", icon="ALIGN")
             box.prop(scene, 'bias', slider=True)
 
@@ -886,6 +886,7 @@ def register():
                ('BREADTH_FIRST', "Breadth-First", ""),
                ('PRIMS', "Prim's", ""),
                ('BINARY_TREE', "Binary Tree", ""),
+               ('KRUSKALS', "Kruskal's", ""),
                ('ELLERS', "Eller's", "")],
         name="Algorithm",
         description="Algorithm to use when generating maze paths internally",

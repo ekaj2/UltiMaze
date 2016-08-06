@@ -191,11 +191,16 @@ def make_list_maze():
                                       directions=scene.binary_dir,
                                       tileable=scene.tileable)
 
+    elif scene.algorithm == 'KRUSKALS':
+        m = maze_tools.KruskalsMaze(debug=debug,
+                                    width=x_dim,
+                                    height=y_dim)
+
     elif scene.algorithm == 'ELLERS':
-        m = maze_tools.EllersGridMaze(debug=debug,
-                                      width=x_dim,
-                                      height=y_dim,
-                                      bias=scene.bias)
+        m = maze_tools.EllersMaze(debug=debug,
+                                  width=x_dim,
+                                  height=y_dim,
+                                  bias=scene.bias)
 
     maze = m.get()
     

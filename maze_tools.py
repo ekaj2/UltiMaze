@@ -1,4 +1,4 @@
-IN_BLENDER = False
+IN_BLENDER = True
 
 import random
 
@@ -266,14 +266,13 @@ class GraphTheoryMaze(PassageCarverMaze):
         super().__init__(**kwargs)
 
     def shuffle_directions(self, directions):
-        if self.bias_direction == 'RANDOM':
-            bias_direction = random.choice(['X', 'Y'])
-        else:
-            bias_direction = self.bias_direction
+        choices = ['X', 'Y']
+        if self.bias_direction not in choices:
+            self.bias_direction = random.choice(choices)
 
-        if bias_direction == 'X':
+        if self.bias_direction == 'X':
             w_dirs = list(zip(directions, [0, 0, 1, 1]))
-        elif bias_direction == 'Y':
+        elif self.bias_direction == 'Y':
             w_dirs = list(zip(directions, [1, 1, 0, 0]))
         else:
             w_dirs = list(zip(directions, [1, 1, 1, 1]))
@@ -358,25 +357,73 @@ class SetBasedMaze(OrthogonalMaze):
         self.tree = Tree()
         super().__init__(**kwargs)
 
-    def combine_sets(self, x1, x2):
-        # self.tree.unparent(x2)
-        root = self.tree.get_root(x2)
-        self.tree.parent(root, x1)
-
-        # knock out wall between on maze
-        self.knock_out_wall(x1, x2)
-
     def knock_out_wall(self, x1, x2):
         self.maze[round(avg(x1, x2))][self.y] = 1
 
 
-# just a stub
-class KruskalsMaze(GraphTheoryMaze, SetBasedMaze):
+class KruskalsMaze(PassageCarverMaze, SetBasedMaze):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def make(self):
+        """Relies on odd dimensions:
 
-class EllersGridMaze(PassageCarverMaze, SetBasedMaze):
+        +-------------------+
+        | 0 |   | 0 |   | 0 |
+        +---+---+---+---+---+
+        |   | X |   | X |   |
+        +---+---+---+---+---+
+        | 0 |   | 0 |   | 0 |
+        +---+---+---+---+---+
+        |   | X |   | X |   |
+        +---+---+---+---+---+
+        | 0 |   | 0 |   | 0 |
+        +-------------------+
+
+        Notes:
+            1. the X's are always walls
+            2. the ' 's are sometimes walls
+            3. the 0's are always paths
+
+        """
+
+        # create the tree and carve out the 0's
+        self.tree = Tree()
+        for x in range(self.width)[::2]:
+            for y in range(self.height)[::2]:
+                self.tree.new_node((x, y))
+                self.maze[x][y] = 1
+
+        # create a list of all the walls
+        walls = []
+        for y in range(self.height):
+            for x in range(self.width)[::2]:
+                if y & 1:
+                    walls += [(x, y)]
+                else:
+                    if x + 1 < self.width:
+                        walls += [(x + 1, y)]
+
+        random.shuffle(walls)
+
+        while walls:
+            w = walls.pop()
+            print(w)
+            # if the wall's y-value is odd, the paths will be up and down
+            if w[1] & 1:
+                if self.tree.get_root((w[0], w[1] + 1)) != self.tree.get_root((w[0], w[1] - 1)):
+                    self.maze[w[0]][w[1]] = 1
+                    # parent the roots of the two path spaces to each other
+                    self.tree.parent(self.tree.get_root((w[0], w[1] + 1)), self.tree.get_root((w[0], w[1] - 1)))
+            else:
+                if self.tree.get_root((w[0] + 1, w[1])) != self.tree.get_root((w[0] - 1, w[1])):
+                    self.maze[w[0]][w[1]] = 1
+                    self.tree.parent(self.tree.get_root((w[0] + 1, w[1])), self.tree.get_root((w[0] - 1, w[1])))
+
+            self.loop_update()
+
+
+class EllersMaze(PassageCarverMaze, SetBasedMaze):
     def __init__(self, bias=0.0, **kwargs):
         self.bias = bias
         self.y = 0
@@ -420,6 +467,14 @@ class EllersGridMaze(PassageCarverMaze, SetBasedMaze):
         # knock out walls in the bottom row to remove isolated regions
         self.finish_bottom()
 
+    def combine_sets(self, x1, x2):
+        # self.tree.unparent(x2)
+        root = self.tree.get_root(x2)
+        self.tree.parent(root, x1)
+
+        # knock out wall between on maze
+        self.knock_out_wall(x1, x2)
+
     def drop_down(self):
         def drop(x):
             if self.exist_test((x, self.y + 1)):
@@ -454,8 +509,9 @@ class EllersGridMaze(PassageCarverMaze, SetBasedMaze):
 
 def main():
     # BinaryTreeMaze('NW', debug=True, width=33, height=23)
-    # DepthFirstMaze(bias_direction='Y', bias=0.5, debug=True, width=99, height=45)
-    EllersGridMaze(bias=0.75, debug=True, width=99, height=45)
+    # DepthFirstMaze(bias_direction='RANDOM', bias=.5, debug=True, width=99, height=45)
+    # EllersMaze(bias=0.75, debug=True, width=99, height=45)
+    KruskalsMaze(debug=True, width=99, height=45)
 
 if __name__ == "__main__":
     main()
