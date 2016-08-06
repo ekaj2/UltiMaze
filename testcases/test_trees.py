@@ -1,5 +1,6 @@
 import unittest
 
+from trees import LoopInTreeError, RebelChildError
 from trees import Tree
 
 
@@ -257,6 +258,8 @@ class TestDetaching(unittest.TestCase):
                           "Joktan": {'children': set(), 'parent': "Eber"}
                           })
 
+        tree.check_for_bad_dependencies()
+
     def test_detach_multiple(self):
         tree = Tree()
         tree = add_shem_nodes(tree)
@@ -283,6 +286,8 @@ class TestDetaching(unittest.TestCase):
                           "Joktan": {'children': set(), 'parent': "Eber"}
                           })
 
+        tree.check_for_bad_dependencies()
+
     def test_shift_detach_arphaxad(self):
         tree = Tree()
         tree = add_shem_nodes(tree)
@@ -308,7 +313,9 @@ class TestDetaching(unittest.TestCase):
                           "Joktan": {'children': set(), 'parent': "Eber"}
                           })
 
-    def test_replacement_shift_detach_arphaxad(self):
+        tree.check_for_bad_dependencies()
+
+    def test_replacement_shift_detach_with_one_child(self):
         tree = Tree()
         tree = add_shem_nodes(tree)
         tree.replacement_child_shift_detach("Arphaxad")
@@ -333,7 +340,14 @@ class TestDetaching(unittest.TestCase):
                           "Joktan": {'children': set(), 'parent': "Eber"}
                           })
 
-    def test_replacement_shift_detach_eber(self):
+        tree.check_for_bad_dependencies()
+
+    def test_replacement_shift_detach_with_two_children(self):
+        """Tests for detaching Eber from Shem's family tree.
+
+        This is harder to test b/c it is essentially random because the children are stored in a set,
+        and Peleg OR Joktan can be chosen.
+        """
         tree = Tree()
         tree = add_shem_nodes(tree)
         tree.replacement_child_shift_detach("Eber")
@@ -346,13 +360,15 @@ class TestDetaching(unittest.TestCase):
         self.assertEqual(set(tree.get_roots()), set(["Shem", "Eber"]))
 
         leaves = tree.get_leaves()
-        names = ["Uz", "Hul", "Mash", "Gether", "Lud", "Asshur", "Elam"]
+        names = ["Uz", "Hul", "Mash", "Gether", "Lud", "Asshur", "Elam", "Eber"]  # Eber is a node, root, AND leaf
         self.assertEqual(len(names) + 1, len(leaves))
         for name in names:
             self.assertIn(name, leaves)
             leaves.remove(name)
         self.assertEqual(1, len(leaves))
         self.assertIn(leaves[0], ["Peleg", "Joktan"])
+
+        tree.check_for_bad_dependencies()
 
     def test_reparenting_bug(self):
         """This is the result of a nasty bug that caused looping:
@@ -373,9 +389,10 @@ class TestDetaching(unittest.TestCase):
         tree.new_node(1, 0)
         tree.new_node(2, 1)
         tree.replacement_child_shift_detach(1)
-        print(repr(tree))
         self.assertEqual(tree.nodes[1]['children'], set())
         self.assertEqual(tree.nodes[2]['parent'], 0)
+
+        tree.check_for_bad_dependencies()
 
 
 class TestNumLevels(unittest.TestCase):
@@ -487,6 +504,74 @@ class TestGetLevels(unittest.TestCase):
         tree = Tree()
         tree = add_adam_nodes(tree)
         self.assertEqual(tree.get_level(2), ["Enoch"])
+
+
+class TestLoopingDependenciesCheck(unittest.TestCase):
+    maxDiff = 10000
+
+    def test_empty_tree(self):
+        tree = Tree()
+        tree.check_for_bad_dependencies()
+
+    def test_rebellious_child(self):
+        tree = Tree()
+        tree.new_node("Parent")
+        tree.new_node("Child")
+
+        # never access tree.nodes outside of test cases!\
+        tree.nodes["Parent"]['children'].add("Child")
+
+        with self.assertRaises(RebelChildError):
+            tree.check_for_bad_dependencies()
+
+    def test_parented_to_self(self):
+        tree = Tree()
+        tree.new_node("A")
+
+        # never access tree.nodes outside of test cases!
+        tree.nodes["A"]['parent'] = "A"
+
+        with self.assertRaises(LoopInTreeError):
+            tree.check_for_bad_dependencies()
+
+    def test_two_node_loop(self):
+        tree = Tree()
+        tree.new_node("A")
+        tree.new_node("B")
+
+        # never access tree.nodes outside of test cases!
+        tree.nodes["A"]['parent'] = "B"
+        tree.nodes["B"]['parent'] = "A"
+
+        with self.assertRaises(LoopInTreeError):
+            tree.check_for_bad_dependencies()
+
+    def test_three_node_loop(self):
+        """
+        Should be:
+
+        A --> B --> C
+
+        But it's a cyclic loop instead:
+
+        A --> B --> C
+        |           |
+        +-----<-----+
+
+        This is what we should be checking for :)
+        """
+        tree = Tree()
+        tree.new_node("A")
+        tree.new_node("B")
+        tree.new_node("C")
+
+        # never access tree.nodes outside of test cases!
+        tree.nodes["A"]['parent'] = "B"
+        tree.nodes["B"]['parent'] = "C"
+        tree.nodes["C"]['parent'] = "A"
+
+        with self.assertRaises(LoopInTreeError):
+            tree.check_for_bad_dependencies()
 
 
 if __name__ == "__main__":

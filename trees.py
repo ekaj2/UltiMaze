@@ -1,4 +1,4 @@
-class LoopInTreeError(Exception):
+class RebelChildError(Exception):
     def __init__(self, nodes, parent, child):
         self.nodes = nodes
         self.parent = parent
@@ -11,6 +11,25 @@ class LoopInTreeError(Exception):
         ret = "\n"
         ret += str(self.parent) + ": " + str(self.nodes[self.parent]) + "\n"
         ret += str(self.child) + ": " + str(self.nodes[self.child])
+        return ret
+
+
+class LoopInTreeError(Exception):
+    def __init__(self, nodes, looping):
+        self.nodes = nodes
+        self.looping = looping
+
+    def __str__(self):
+
+        ret = "\n\n" + "+" * 50 + "\n\n"
+        ret += "Nodes:\n\n" + "\n".join([str(self.nodes[a]) for a in self.nodes])
+        ret += "\n\nLooping Nodes:\n\n" + str(self.looping)
+        ret += "\n\n" + "-" * 50 + "\n\n"
+
+        return ret
+
+    def __repr__(self):
+        ret = "\n" + str(self.nodes) + "\n\n" + str(self.looping) + "\n"
         return ret
 
 
@@ -33,11 +52,27 @@ class Tree:
             ret += str(node) + ": " + str(self.nodes[node]) + "\n"
         return ret
 
-    def check_for_looping_dependencies(self):
-        for node in self.get_nodes():
-            for child in self.nodes[node]['children']:
-                if self.nodes[child]['parent'] != node:
-                    raise LoopInTreeError(self.nodes, node, child)
+    def check_for_bad_dependencies(self):
+        def check_for_rebellious_child():
+            # check for when a node's child doesn't recognize it as a parent
+            for node in self.get_nodes():
+                for child in self.nodes[node]['children']:
+                    if self.nodes[child]['parent'] != node:
+                        raise RebelChildError(self.nodes, node, child)
+
+        def check_for_loops():
+            # check for when a node is parented to it's parent
+            for node in self.get_nodes():
+                nodes_parent = self.nodes[node]['parent']
+                nodes = [node]
+                while nodes_parent is not None:
+                    nodes += [nodes_parent]
+                    if self.nodes[nodes_parent]['parent'] == node:
+                        raise LoopInTreeError(self.nodes, nodes)
+                    nodes_parent = self.nodes[nodes_parent]['parent']
+
+        check_for_rebellious_child()
+        check_for_loops()
 
     def new_node(self, name='root', parent=None):
         """Adds a new node to the tree."""
