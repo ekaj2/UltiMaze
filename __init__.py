@@ -1,19 +1,18 @@
 # TODO - LEGAL
 
 """
-===== MAZE GENERATOR [PRO] V.1.0 =====
+===== MAZE GENERATOR [PRO] V.1.2 =====
 This __init__ module handles some UI and also registers all
 classes and properties.
-
-Available Functions:
-    import_mat - Imports material if not in .blend
 """
 import os
 import sys
 import subprocess
 
 import bpy
-from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty
+from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty
+from bpy.types import Operator, Panel, Scene, AddonPreferences
+from bpy.utils import register_class, unregister_class
 
 from maze_gen import maze_gen
 from maze_gen import batch_gen
@@ -55,7 +54,7 @@ def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
 
 # UI Classes
 # 3D View
-class MazeGeneratorPanelMG(bpy.types.Panel):
+class MazeGeneratorPanelMG(Panel):
     bl_label = "Maze Generator"
     bl_idname = "3D_VIEW_PT_layout_MazeGenerator"
     bl_space_type = 'VIEW_3D'
@@ -82,8 +81,17 @@ class MazeGeneratorPanelMG(bpy.types.Panel):
         row.prop(scene, 'allow_loops', text="Allow Loops")
         row.prop(scene, 'loops_chance', text="Chance")
 
-        row = box.row()
-        row.prop(scene, 'allow_islands', text="Allow 'Islands'")
+        box.prop(scene, 'algorithm', text="", icon="OOPS")
+        if scene.algorithm == 'BINARY_TREE':
+            box.prop(scene, 'binary_dir', text="", icon="MOD_DECIM")
+            box.prop(scene, 'tileable')
+
+        elif scene.algorithm in ['PRIMS', 'DEPTH_FIRST', 'BREADTH_FIRST']:
+            box.prop(scene, 'bias_direction', text="", icon="ALIGN")
+            box.prop(scene, 'bias', slider=True)
+
+        elif scene.algorithm == 'ELLERS':
+            box.prop(scene, 'bias', slider=True)
 
         if scene.use_list_maze:
             row.enabled = False
@@ -99,7 +107,7 @@ class MazeGeneratorPanelMG(bpy.types.Panel):
         box.prop(scene, 'write_list_maze', text="Write Maze List")
 
 
-class ImageConverterPanelMG(bpy.types.Panel):
+class ImageConverterPanelMG(Panel):
     bl_label = "Image Converter [PRO]"
     bl_idname = "3D_VIEW_PT_layout_ImageConverter"
     bl_space_type = 'VIEW_3D'
@@ -123,7 +131,7 @@ class ImageConverterPanelMG(bpy.types.Panel):
         box.prop_search(scene, 'list_maze', bpy.data, "texts", "List Maze")
 
 
-class MazeTilesPanelMG(bpy.types.Panel):
+class MazeTilesPanelMG(Panel):
     bl_label = "Maze Tiles [PRO]"
     bl_idname = "3D_VIEW_PT_layout_MazeTiles"
     bl_space_type = 'VIEW_3D'
@@ -186,7 +194,7 @@ class MazeTilesPanelMG(bpy.types.Panel):
                 col.prop_search(scene, 'no_path', bpy.data, "objects", "Wall Only")
 
 
-class BatchGeneratorPanelMG(bpy.types.Panel):
+class BatchGeneratorPanelMG(Panel):
     bl_label = "Batch Gen [PRO]"
     bl_idname = "3D_VIEW_PT_layout_BatchGenerator"
     bl_space_type = 'VIEW_3D'
@@ -222,7 +230,7 @@ class BatchGeneratorPanelMG(bpy.types.Panel):
         box.operator("maze_gen.delete_batch_maze", icon="X")
 
 
-class InfoPanelMG(bpy.types.Panel):
+class InfoPanelMG(Panel):
     bl_label = "Info"
     bl_idname = "3D_VIEW_PT_layout_Info_mg"
     bl_space_type = 'VIEW_3D'
@@ -248,7 +256,7 @@ class InfoPanelMG(bpy.types.Panel):
         col.operator("maze_gen.estimate_time_mg", icon="QUESTION")
 
 
-class HelpPanelMG(bpy.types.Panel):
+class HelpPanelMG(Panel):
     bl_label = "Help"
     bl_idname = "3D_VIEW_PT_layout_Help_mg"
     bl_space_type = 'VIEW_3D'
@@ -378,7 +386,7 @@ class HelpPanelMG(bpy.types.Panel):
             row.label("2. Hit convert to image")
 
 
-class MazeAddonPrefsMg(bpy.types.AddonPreferences):
+class MazeAddonPrefsMg(AddonPreferences):
     bl_idname = __name__
 
     open_help_outbldr = BoolProperty(
@@ -426,12 +434,19 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
         default=False,
         description="Show quick help")
 
+    only_odd_sizes = BoolProperty(
+        name="Only Odd Maze Sizes",
+        default=True,
+        description="Convert all even sizes to odd upon generation"
+    )
+
     def draw(self, context):
         layout = self.layout
 
         col = layout.column()
         row = col.row()
         row.prop(self, 'open_help_outbldr', text="Open Help Outside Blender")
+        row.prop(self, 'only_odd_sizes')
         row.prop(self, 'debug_mode', text="Debug")
         col.row()
         box = col.box()
@@ -508,7 +523,7 @@ class MazeAddonPrefsMg(bpy.types.AddonPreferences):
 
 
 # Text Editor
-class MazeGeneratorTextToolsPanelMG(bpy.types.Panel):
+class MazeGeneratorTextToolsPanelMG(Panel):
     bl_label = "Maze Generator Tools"
     bl_idname = "TEXT_EDITOR_PT_layout_MazeGenerator"
     bl_space_type = 'TEXT_EDITOR'
@@ -538,7 +553,7 @@ def open_file(filename):
         subprocess.call([opener, filename])
 
 
-class ShowHelpDiagramMG(bpy.types.Operator):
+class ShowHelpDiagramMG(Operator):
     bl_label = "Workflows Diagram"
     bl_idname = "maze_gen.show_workflows_image"
     bl_description = "Shows a workflow diagram in the image editor"
@@ -563,7 +578,7 @@ class ShowHelpDiagramMG(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class ShowReadmeMG(bpy.types.Operator):
+class ShowReadmeMG(Operator):
     bl_label = "Readme"
     bl_idname = "maze_gen.show_readme_text"
     bl_description = "Shows readme in the text editor"
@@ -585,7 +600,7 @@ class ShowReadmeMG(bpy.types.Operator):
 
 
 # demo tile objects generation
-class DemoTilesImportMG(bpy.types.Operator):
+class DemoTilesImportMG(Operator):
     bl_label = "Generate Tiles"
     bl_idname = "maze_gen.import_tileset"
     bl_description = "Imports tiles."
@@ -613,7 +628,7 @@ class DemoTilesImportMG(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class EnableLayerMG(bpy.types.Operator):
+class EnableLayerMG(Operator):
     bl_label = "Enable First Layer"
     bl_idname = "maze_gen.enable_layer"
     bl_description = "Enables first layer so UltiMaze can work :)"
@@ -625,7 +640,7 @@ class EnableLayerMG(bpy.types.Operator):
 
 
 # main maze gen controller
-class GenerateMazeMG(bpy.types.Operator):
+class GenerateMazeMG(Operator):
     bl_label = "Generate Maze"
     bl_idname = "maze_gen.generate_maze"
     bl_description = "Generates a 3D maze"
@@ -649,211 +664,299 @@ class GenerateMazeMG(bpy.types.Operator):
 
 
 # classes to register
-classes = [GenerateMazeMG, batch_gen.BatchGenerateMazeMG,
-           batch_gen.StoreBatchMazeMG, batch_gen.ClearBatchMazesMG,
-           batch_gen.RefreshBatchMazesMG, batch_gen.LoadBatchMazeMG,
-           batch_gen.DeleteBatchMazeMG, time_log.EstimateTimeMG,
-           MazeGeneratorPanelMG, ImageConverterPanelMG, MazeTilesPanelMG,
-           BatchGeneratorPanelMG, InfoPanelMG, HelpPanelMG, DemoTilesImportMG,
-           MazeGeneratorTextToolsPanelMG, text_tools.ReplaceTextMG,
-           text_tools.InvertTextMG, txt_img_converter.ConvertMazeImageMG,
-           txt_img_converter.CreateImageFromListMG, ShowHelpDiagramMG,
-           ShowReadmeMG, MazeAddonPrefsMg, menus.TileImportMenu, menus.EnableLayerMenu,
-           EnableLayerMG, menus.SaveUserPrefsMenu]
+classes = [MazeAddonPrefsMg,
+           # Main
+           GenerateMazeMG,
+           DemoTilesImportMG,
+           ShowHelpDiagramMG,
+           ShowReadmeMG,
+           # Batch Generation
+           batch_gen.BatchGenerateMazeMG,
+           batch_gen.StoreBatchMazeMG,
+           batch_gen.ClearBatchMazesMG,
+           batch_gen.RefreshBatchMazesMG,
+           batch_gen.LoadBatchMazeMG,
+           batch_gen.DeleteBatchMazeMG,
+           # Time Log
+           time_log.EstimateTimeMG,
+           # UI Panels
+           MazeGeneratorPanelMG,
+           ImageConverterPanelMG,
+           MazeTilesPanelMG,
+           BatchGeneratorPanelMG,
+           InfoPanelMG,
+           HelpPanelMG,
+           MazeGeneratorTextToolsPanelMG,
+           # Text Tools
+           text_tools.ReplaceTextMG,
+           text_tools.InvertTextMG,
+           # Text/Image Conversion
+           txt_img_converter.ConvertMazeImageMG,
+           txt_img_converter.CreateImageFromListMG,
+           # Specials
+           EnableLayerMG,
+           # Menus
+           menus.TileImportMenu,
+           menus.EnableLayerMenu,
+           menus.SaveUserPrefsMenu]
+
+# ================== REGISTRY TABLE OF CONTENTS ===================
+#
+# ---------------------- General Settings -------------------------
+# --------------------------- Tiles -------------------------------
+# ----------------------- Tile Settings ---------------------------
+# ----------------------- List Settings ---------------------------
+# ------------------------ Loop Adding ----------------------------
+# -------------------- Algorithm Settings -------------------------
+# ----------------------- Batch Tools -----------------------------
+# -------------------- Text Find/Replace --------------------------
+# ------------------------ Image Maze -----------------------------
+# ------------------------ Help Enums -----------------------------
 
 
 def register():
     for i in classes:
-        bpy.utils.register_class(i)
+        print(i)
+        register_class(i)
 
-    bpy.types.Scene.mg_width = bpy.props.IntProperty(
+    # ---------------------- General Settings -------------------------
+
+    Scene.mg_width = IntProperty(
         name="Width", default=25, min=3, max=1000)
-    bpy.types.Scene.mg_height = bpy.props.IntProperty(
+
+    Scene.mg_height = IntProperty(
         name="Height", default=25, min=3, max=1000)
-    bpy.types.Scene.tile_based = bpy.props.BoolProperty(
+
+    Scene.gen_3d_maze = BoolProperty(
+        name="gen_3d_maze",
+        default=True)
+
+    # --------------------------- Tiles -------------------------------
+
+    Scene.wall_4_sided = StringProperty(
+        name="wall_4_sided",
+        default="wall_4_sided",
+        description="Wall piece with 4 sides")
+
+    Scene.wall_3_sided = StringProperty(
+        name="wall_3_sided",
+        default="wall_3_sided",
+        description="Wall piece with 3 sides")
+
+    Scene.wall_2_sided = StringProperty(
+        name="wall_2_sided",
+        default="wall_2_sided",
+        description="Wall piece with 2 opposite sides")
+
+    Scene.wall_1_sided = StringProperty(
+        name="wall_1_sided",
+        default="wall_1_sided",
+        description="Wall piece with 1 side")
+
+    Scene.wall_0_sided = StringProperty(
+        name="wall_0_sided",
+        default="wall_0_sided",
+        description="Wall piece with 0 sides")
+
+    Scene.wall_corner = StringProperty(
+        name="wall_corner",
+        default="wall_corner",
+        description="Wall piece with 2 adjacent sides")
+
+    Scene.floor_4_sided = StringProperty(
+        name="floor_4_sided",
+        default="floor_4_sided",
+        description="Floor piece with 4 sides")
+
+    Scene.floor_3_sided = StringProperty(
+        name="floor_3_sided",
+        default="floor_3_sided",
+        description="Floor piece with 3 sides")
+
+    Scene.floor_2_sided = StringProperty(
+        name="floor_2_sided",
+        default="floor_2_sided",
+        description="Floor piece with 2 opposite sides")
+
+    Scene.floor_1_sided = StringProperty(
+        name="floor_1_sided",
+        default="floor_1_sided",
+        description="Floor piece with 1 side")
+
+    Scene.floor_0_sided = StringProperty(
+        name="floor_0_sided",
+        default="floor_0_sided",
+        description="Floor piece with 0 sides")
+
+    Scene.floor_corner = StringProperty(
+        name="floor_corner",
+        default="floor_corner",
+        description="Floor piece with 2 adjacent sides")
+
+    Scene.four_way = StringProperty(
+        name="four_way",
+        default="four_way",
+        description="4-way (+) intersection")
+
+    Scene.t_int = StringProperty(
+        name="t_int",
+        default="t_int",
+        description="3-way (T) intersection")
+
+    Scene.turn = StringProperty(
+        name="turn",
+        default="turn",
+        description="2-way (L) intersection")
+
+    Scene.dead_end = StringProperty(
+        name="dead_end",
+        default="dead_end",
+        description="Dead-end (]) tile")
+
+    Scene.straight = StringProperty(
+        name="straight",
+        default="straight",
+        description="Straight (|) tile")
+
+    Scene.no_path = StringProperty(
+        name="no_path",
+        default="no_path",
+        description="Wall-only (0) tile")
+
+    # ----------------------- Tile Settings ---------------------------
+
+    Scene.tile_based = BoolProperty(
         name="tile_based", default=False)
 
-    bpy.types.Scene.export_name = StringProperty(
-        name="export_name",
-        default="MyTileSet",
-        description="Name of tile set to export")
-
-    bpy.types.Scene.tile_mode = bpy.props.EnumProperty(
+    Scene.tile_mode = EnumProperty(
         items=[('TWELVE_TILES', "12-Piece Mode", "Use 12 tile pieces."),
                ('SIX_TILES', "6-Piece Mode", "Use 6 tile pieces.")],
         name="Tile Mode",
         description="Number of tiles to use.",
         default="TWELVE_TILES")
 
-    # wall pieces
-    bpy.types.Scene.wall_4_sided = bpy.props.StringProperty(
-        name="wall_4_sided",
-        default="wall_4_sided",
-        description="Wall piece with 4 sides")
-
-    bpy.types.Scene.wall_3_sided = bpy.props.StringProperty(
-        name="wall_3_sided",
-        default="wall_3_sided",
-        description="Wall piece with 3 sides")
-
-    bpy.types.Scene.wall_2_sided = bpy.props.StringProperty(
-        name="wall_2_sided",
-        default="wall_2_sided",
-        description="Wall piece with 2 opposite sides")
-
-    bpy.types.Scene.wall_1_sided = bpy.props.StringProperty(
-        name="wall_1_sided",
-        default="wall_1_sided",
-        description="Wall piece with 1 side")
-
-    bpy.types.Scene.wall_0_sided = bpy.props.StringProperty(
-        name="wall_0_sided",
-        default="wall_0_sided",
-        description="Wall piece with 0 sides")
-
-    bpy.types.Scene.wall_corner = bpy.props.StringProperty(
-        name="wall_corner",
-        default="wall_corner",
-        description="Wall piece with 2 adjacent sides")
-
-    # floor pieces
-    bpy.types.Scene.floor_4_sided = bpy.props.StringProperty(
-        name="floor_4_sided",
-        default="floor_4_sided",
-        description="Floor piece with 4 sides")
-
-    bpy.types.Scene.floor_3_sided = bpy.props.StringProperty(
-        name="floor_3_sided",
-        default="floor_3_sided",
-        description="Floor piece with 3 sides")
-
-    bpy.types.Scene.floor_2_sided = bpy.props.StringProperty(
-        name="floor_2_sided",
-        default="floor_2_sided",
-        description="Floor piece with 2 opposite sides")
-
-    bpy.types.Scene.floor_1_sided = bpy.props.StringProperty(
-        name="floor_1_sided",
-        default="floor_1_sided",
-        description="Floor piece with 1 side")
-
-    bpy.types.Scene.floor_0_sided = bpy.props.StringProperty(
-        name="floor_0_sided",
-        default="floor_0_sided",
-        description="Floor piece with 0 sides")
-
-    bpy.types.Scene.floor_corner = bpy.props.StringProperty(
-        name="floor_corner",
-        default="floor_corner",
-        description="Floor piece with 2 adjacent sides")
-
-    bpy.types.Scene.four_way = bpy.props.StringProperty(
-        name="four_way",
-        default="four_way",
-        description="4-way (+) intersection")
-
-    bpy.types.Scene.t_int = bpy.props.StringProperty(
-        name="t_int",
-        default="t_int",
-        description="3-way (T) intersection")
-
-    bpy.types.Scene.turn = bpy.props.StringProperty(
-        name="turn",
-        default="turn",
-        description="2-way (L) intersection")
-
-    bpy.types.Scene.dead_end = bpy.props.StringProperty(
-        name="dead_end",
-        default="dead_end",
-        description="Dead-end (]) tile")
-
-    bpy.types.Scene.straight = bpy.props.StringProperty(
-        name="straight",
-        default="straight",
-        description="Straight (|) tile")
-
-    bpy.types.Scene.no_path = bpy.props.StringProperty(
-        name="no_path",
-        default="no_path",
-        description="Wall-only (0) tile")
-
-    bpy.types.Scene.import_mat = bpy.props.BoolProperty(
+    Scene.import_mat = BoolProperty(
         name="import_mat",
         default=True)
 
-    bpy.types.Scene.merge_objects = bpy.props.BoolProperty(
+    Scene.merge_objects = BoolProperty(
         name="merge_objects",
         default=True)
 
-    bpy.types.Scene.remove_doubles_merge = bpy.props.BoolProperty(
+    Scene.remove_doubles_merge = BoolProperty(
         name="remove_doubles_merge",
         default=True)
 
-    bpy.types.Scene.apply_modifiers = bpy.props.BoolProperty(
+    Scene.apply_modifiers = BoolProperty(
         name="apply_modifiers",
         default=True)
 
-    bpy.types.Scene.list_maze = bpy.props.StringProperty(
+    # ----------------------- List Settings ---------------------------
+
+    Scene.list_maze = StringProperty(
         name="list_maze",
         default="")
 
-    bpy.types.Scene.use_list_maze = bpy.props.BoolProperty(
+    Scene.use_list_maze = BoolProperty(
         name="use_list_maze",
         default=False,
         description="Generate maze from 1s and 0s from text data block")
 
-    bpy.types.Scene.write_list_maze = bpy.props.BoolProperty(
+    Scene.write_list_maze = BoolProperty(
         name="write_list_maze",
         default=False)
 
-    bpy.types.Scene.allow_loops = bpy.props.BoolProperty(
+    # ------------------------ Loop Adding ----------------------------
+
+    Scene.allow_loops = BoolProperty(
         name="allow_loops",
         default=False)
 
-    bpy.types.Scene.allow_islands = bpy.props.BoolProperty(
-        name="allow_islands",
-        default=False,
-        description="Allow pieces connected only by a corner")
-
-    bpy.types.Scene.loops_chance = bpy.props.IntProperty(
+    Scene.loops_chance = IntProperty(
         name="loops_chance",
         default=3,
         min=1,
         max=1000000,
         description="1/x chance of creating each possible loop")
 
-    bpy.types.Scene.num_batch_mazes = bpy.props.IntProperty(
+    # -------------------- Algorithm Settings -------------------------
+
+    Scene.algorithm = EnumProperty(
+        items=[('DEPTH_FIRST', "Depth-First", ""),
+               ('BREADTH_FIRST', "Breadth-First", ""),
+               ('PRIMS', "Prim's", ""),
+               ('BINARY_TREE', "Binary Tree", ""),
+               ('KRUSKALS', "Kruskal's", ""),
+               ('ELLERS', "Eller's", "")],
+        name="Algorithm",
+        description="Algorithm to use when generating maze paths internally",
+        default="DEPTH_FIRST")
+
+    Scene.binary_dir = EnumProperty(
+        items=[('RANDOM', "Random", ""),
+               ('NE', "North-East", ""),
+               ('NW', "North-West", ""),
+               ('SE', "South-East", ""),
+               ('SW', "South-West", "")],
+        name="Binary Tree Direction",
+        description="Bias diagonal for binary tree maze algorithm",
+        default="RANDOM")
+
+    Scene.tileable = BoolProperty(
+        name="Tileable",
+        description="Makes resulting maze tileable",
+        default=True)
+
+    Scene.bias_direction = EnumProperty(
+        items=[('RANDOM', "Random", ""),
+               ('X', "X-Axis", ""),
+               ('Y', "Y-Axis", "")],
+        name="Bias Direction",
+        description="Bias direction for graph theory based algorithms",
+        default="RANDOM")
+
+    Scene.bias = FloatProperty(
+        name="Bias",
+        description="Amount of bias for graph theory based algorithms:\n    0 = no bias\n    1 = high bias",
+        default=0,
+        min=0,
+        max=1)
+
+    # ----------------------- Batch Tools -----------------------------
+
+    Scene.num_batch_mazes = IntProperty(
         name="num_batch_mazes",
         default=0,
         min=0,
         max=1000000,
         description="Number of mazes to batch generate")
 
-    bpy.types.Scene.batch_index = bpy.props.IntProperty(
+    Scene.batch_index = IntProperty(
         name="batch_index",
         default=1,
         min=1,
         max=1000000,
         description="Batch index to load stored setting")
 
-    bpy.types.Scene.gen_3d_maze = bpy.props.BoolProperty(
-        name="gen_3d_maze",
-        default=True)
+    # -------------------- Text Find/Replace --------------------------
 
-    bpy.types.Scene.text1_mg = bpy.props.StringProperty(
+    Scene.text1_mg = StringProperty(
         name="text1_mg",
         default="")
 
-    bpy.types.Scene.text2_mg = bpy.props.StringProperty(
+    Scene.text2_mg = StringProperty(
         name="text2_mg",
         default="")
 
-    bpy.types.Scene.maze_image = bpy.props.StringProperty(
+    # ------------------------ Image Maze -----------------------------
+
+    Scene.maze_image = StringProperty(
         name="maze_image",
         default="")
 
-    # help enums
-    bpy.types.Scene.generation_desire = bpy.props.EnumProperty(
+    # ------------------------ Help Enums -----------------------------
+
+    Scene.generation_desire = EnumProperty(
         items=[('SIMP_3D', "Simple 3D Maze", ""),
                ('TILE_MAZE', "Tile Maze", ""),
                ('TEXT_MAZE', "Text Maze", ""),
@@ -862,7 +965,7 @@ def register():
         description="What would you like to have?",
         default="SIMP_3D")
 
-    bpy.types.Scene.user_provision = bpy.props.EnumProperty(
+    Scene.user_provision = EnumProperty(
         items=[('SETTINGS', "Layout Settings", ""),
                ('IMAGE_MAZE', "Image Maze", ""),
                ('TEXT_MAZE', "Text Maze", "")],
@@ -873,62 +976,83 @@ def register():
 
 def unregister():
     for i in classes:
-        bpy.utils.unregister_class(i)
+        unregister_class(i)
 
-    del bpy.types.Scene.mg_width
-    del bpy.types.Scene.mg_height
-    del bpy.types.Scene.tile_based
+    # ---------------------- General Settings -------------------------
 
-    del bpy.types.Scene.export_name
-    del bpy.types.Scene.tile_mode
+    del Scene.mg_width
+    del Scene.mg_height
+    del Scene.gen_3d_maze
 
-    del bpy.types.Scene.wall_4_sided
-    del bpy.types.Scene.wall_3_sided
-    del bpy.types.Scene.wall_2_sided
-    del bpy.types.Scene.wall_1_sided
-    del bpy.types.Scene.wall_0_sided
-    del bpy.types.Scene.wall_corner
+    # --------------------------- Tiles -------------------------------
 
-    del bpy.types.Scene.floor_4_sided
-    del bpy.types.Scene.floor_3_sided
-    del bpy.types.Scene.floor_2_sided
-    del bpy.types.Scene.floor_1_sided
-    del bpy.types.Scene.floor_0_sided
-    del bpy.types.Scene.floor_corner
+    del Scene.wall_4_sided
+    del Scene.wall_3_sided
+    del Scene.wall_2_sided
+    del Scene.wall_1_sided
+    del Scene.wall_0_sided
+    del Scene.wall_corner
 
-    del bpy.types.Scene.four_way
-    del bpy.types.Scene.t_int
-    del bpy.types.Scene.turn
-    del bpy.types.Scene.straight
-    del bpy.types.Scene.dead_end
-    del bpy.types.Scene.no_path
+    del Scene.floor_4_sided
+    del Scene.floor_3_sided
+    del Scene.floor_2_sided
+    del Scene.floor_1_sided
+    del Scene.floor_0_sided
+    del Scene.floor_corner
 
-    del bpy.types.Scene.import_mat
+    del Scene.four_way
+    del Scene.t_int
+    del Scene.turn
+    del Scene.straight
+    del Scene.dead_end
+    del Scene.no_path
 
-    del bpy.types.Scene.merge_objects
-    del bpy.types.Scene.apply_modifiers
-    del bpy.types.Scene.remove_doubles_merge
+    # ----------------------- Tile Settings ---------------------------
 
-    del bpy.types.Scene.list_maze
-    del bpy.types.Scene.use_list_maze
-    del bpy.types.Scene.write_list_maze
+    del Scene.tile_based
+    del Scene.tile_mode
+    del Scene.import_mat
+    del Scene.merge_objects
+    del Scene.apply_modifiers
+    del Scene.remove_doubles_merge
 
-    del bpy.types.Scene.allow_loops
-    del bpy.types.Scene.allow_islands
-    del bpy.types.Scene.loops_chance
+    # ----------------------- List Settings ---------------------------
 
-    del bpy.types.Scene.num_batch_mazes
-    del bpy.types.Scene.batch_index
+    del Scene.list_maze
+    del Scene.use_list_maze
+    del Scene.write_list_maze
 
-    del bpy.types.Scene.gen_3d_maze
+    # ------------------------ Loop Adding ----------------------------
 
-    del bpy.types.Scene.text1_mg
-    del bpy.types.Scene.text2_mg
+    del Scene.allow_loops
+    del Scene.loops_chance
 
-    del bpy.types.Scene.maze_image
+    # -------------------- Algorithm Settings -------------------------
 
-    del bpy.types.Scene.generation_desire
-    del bpy.types.Scene.user_provision
+    del Scene.algorithm
+    del Scene.binary_dir
+    del Scene.tileable
+    del Scene.bias_direction
+    del Scene.bias
+
+    # ----------------------- Batch Tools -----------------------------
+
+    del Scene.num_batch_mazes
+    del Scene.batch_index
+
+    # -------------------- Text Find/Replace --------------------------
+
+    del Scene.text1_mg
+    del Scene.text2_mg
+
+    # ------------------------ Image Maze -----------------------------
+
+    del Scene.maze_image
+
+    # ------------------------ Help Enums -----------------------------
+
+    del Scene.generation_desire
+    del Scene.user_provision
 
 
 if __name__ == "__main__":

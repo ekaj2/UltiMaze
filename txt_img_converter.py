@@ -11,30 +11,11 @@ Available Functions:
     convert_list_maze - Convert text maze into a Python list maze
 """
 
-import sys
-from time import time
-
 import bpy
 from maze_gen import prep_manager
 
-
-def console_prog(job, progress, total_time="?"):
-    """Displays progress in the console.
-
-    Args:
-        job - name of the job
-        progress - progress as a decimal number
-        total_time (optional) - the total amt of time the job
-                                took for final display
-    """
-    length = 20
-    block = int(round(length * progress))
-    message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#" * block, "-" * (length - block), progress)
-    # progress is complete
-    if progress >= 1:
-        message = "\r{} DONE IN {} SECONDS{}".format(job.upper(), total_time, " " * 12)
-    sys.stdout.write(message)
-    sys.stdout.flush()
+from maze_gen.progress_display import BlenderProgress
+from maze_gen.time_display import TimeDisplay
 
 
 def write_to_text(text):
@@ -134,7 +115,7 @@ def convert_list_maze():
     for y in range(0, y_dim):
         for x in range(0, x_dim):
             # [[space in maze(ordered pair),is path,is walkable,active path]]
-            maze_addition = [[(x, y), False, True, False]]
+            maze_addition = [[(x, y), False]]
             maze += maze_addition
 
     index = 0
@@ -261,7 +242,8 @@ class CreateImageFromListMG(bpy.types.Operator):
                         "valid path or disable save texts in user prefs")
             return {'CANCELLED'}
 
-        s_time = time()
+        bldr_prog = BlenderProgress("Text to Image", debug)
+        bldr_prog.start()
 
         # get list maze as string
         str_list_maze = bpy.data.texts[scene.list_maze].as_string()
@@ -279,11 +261,6 @@ class CreateImageFromListMG(bpy.types.Operator):
             name="Maze",
             width=scene.mg_width,
             height=scene.mg_height)
-
-        # start progress report
-        bpy.context.window_manager.progress_begin(1, 100)
-
-        last_percent = None
 
         image_row = scene.mg_height - 1
         count = 0
@@ -305,28 +282,20 @@ class CreateImageFromListMG(bpy.types.Operator):
                                        image_col * 4 + 3)] = 1
 
                 # report progress if changed
-                percent = round((count / area) * 100)
-                if percent != last_percent and percent < 100:
-                    bpy.context.window_manager.progress_update(percent)
-                    if not debug:
-                        # new print out technique
-                        console_prog("Text to Image", count / area)
-
-                last_percent = percent
+                progress = count / area
+                bldr_prog.update(progress)
 
                 image_col += 1
                 count += 1
             image_row -= 1
-        if not debug:
-            # printout finished
-            console_prog("Text to Image", 1, time() - s_time)
-            print("\n")
 
-        # stop progress report
-        bpy.context.window_manager.progress_end()
+        bldr_prog.finish()
 
-        self.report({'INFO'}, "Finished generating 2d maze in " +
-                    str(time() - s_time) + " seconds")
+        time_log.log_time(bldr_prog.elapsed())
+        time_disp = TimeDisplay()
+        time_disp.convert(elapsed_time)
+
+        self.report({'INFO'}, "Finished generating 2d maze in " + str(time_disp))
 
         self.report({'INFO'}, "See '" + image_maze.name +
                     "' in the image editor")

@@ -1,4 +1,6 @@
-import time
+from time import time
+
+import bpy
 
 from maze_gen import prep_manager
 from maze_gen import txt_img_converter
@@ -6,6 +8,15 @@ from maze_gen import auto_layout_gen
 from maze_gen import tile_maze_gen
 from maze_gen import simple_maze_gen
 from maze_gen import time_log
+from maze_gen.time_display import TimeDisplay
+
+
+def morph_dimensions():
+    scene = bpy.context.scene
+    if not scene.mg_width & 1:
+        scene.mg_width += 1
+    if not scene.mg_height & 1:
+        scene.mg_height += 1
 
 
 def make_maze(context):
@@ -20,10 +31,12 @@ def make_maze(context):
         message_lvl: level to print message as, 'INFO', 'WARNING', 'ERROR'
         status: whether operator is 'FINISHED', 'CANCELLED', or other status
     """
+    addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
+
     messages = []
     message_lvls = []
     scene = context.scene
-    time_start = time.time()
+    time_start = time()
 
     # check that all needed tiles and lists have been provided
     if scene.tile_based and scene.gen_3d_maze:
@@ -67,7 +80,9 @@ def make_maze(context):
 
     if scene.use_list_maze:
         maze = txt_img_converter.convert_list_maze()
-    elif scene.gen_3d_maze or scene.use_list_maze or scene.write_list_maze:
+    elif scene.gen_3d_maze or scene.write_list_maze:
+        if addon_prefs.only_odd_sizes:
+            morph_dimensions()
         maze = auto_layout_gen.make_list_maze()
 
     if scene.allow_loops:
@@ -83,8 +98,11 @@ def make_maze(context):
     scene.apply_modifiers = apply_mods
 
     if scene.gen_3d_maze or scene.write_list_maze:
-        time_log.log_time(time.time() - time_start)
-        messages += ["Finished generating maze in " + str(time.time() - time_start) + " seconds"]
+        elapsed_time = time() - time_start
+        time_log.log_time(elapsed_time)
+        time_disp = TimeDisplay()
+        time_disp.convert(elapsed_time)
+        messages += ["Finished generating maze in " + str(time_disp)]
         message_lvls += ['INFO']
 
     # write list maze if enabled

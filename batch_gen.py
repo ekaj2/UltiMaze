@@ -6,7 +6,6 @@ Available Functions:
 """
 
 import os
-import time
 
 import bpy
 
