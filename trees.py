@@ -1,3 +1,13 @@
+IN_BLENDER = False
+
+import logging
+
+if IN_BLENDER:
+    from maze_gen.logging_setup import setup_logger
+else:
+    from logging_setup import setup_logger
+
+
 class RebelChildError(Exception):
     def __init__(self, nodes, parent, child):
         self.nodes = nodes
@@ -34,6 +44,8 @@ class LoopInTreeError(Exception):
 
 
 class Tree:
+    setup_logger(__name__)
+
     def __init__(self):
         self.nodes = {}
 
@@ -118,7 +130,8 @@ class Tree:
             self.nodes[parent]['children'].remove(child)
             self.nodes[child]['parent'] = None
         else:
-            pass  # todo - logging
+            logger = logging.getLogger(__name__)
+            logger.warning("Node {} is a root! Cannot unparent root!".format(child))
 
     def insert_parent(self, parent, child):
         print("Only a stub")
@@ -139,7 +152,8 @@ class Tree:
             self.nodes[parent]['children'].remove(node)
             self.nodes[node]['parent'] = None
         else:
-            pass  # todo - logging
+            logger = logging.getLogger(__name__)
+            logger.info("Node {} is a root already".format(node))
 
     def replacement_child_shift_detach(self, node):
         children = self.nodes[node]['children']

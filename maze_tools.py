@@ -1,15 +1,18 @@
-IN_BLENDER = True
+IN_BLENDER = False
 
 import random
+import logging
 
 if IN_BLENDER:
     from maze_gen import weira
     from maze_gen.trees import Tree
     from maze_gen.progress_display import BlenderProgress
+    from maze_gen.logging_setup import setup_logger
 else:
     import weira
     from trees import Tree
     from time import sleep
+    from logging_setup import setup_logger
 
 
 def round_avg(x1, x2):
@@ -44,11 +47,16 @@ class OrthogonalMaze:
         get - Returns maze.
         display - Prints maze to terminal or console window.
     """
+    setup_logger(__name__)
 
     def __init__(self, debug, width=10, height=10):
         """Initializes variables, creates maze grid, starts progress report, makes maze, ends progress report."""
         global IN_BLENDER
         self.IN_BLENDER = IN_BLENDER
+
+        if not width & 1 or not height & 1:
+            logger = logging.getLogger(__name__)
+            logger.critical("Even maze dimension(s) w={}, h={}! Will likely crash!".format(width, height))
 
         self.debug = debug
         self.width = width
