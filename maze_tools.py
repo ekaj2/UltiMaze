@@ -458,7 +458,6 @@ class KruskalsMaze(PassageCarverMaze, SetBasedMaze):
 
         while walls:
             w = walls.pop()
-            print(w)
             # if the wall's y-value is odd, the paths will be up and down
             if w[1] & 1:
                 if self.tree.get_root((w[0], w[1] + 1)) != self.tree.get_root((w[0], w[1] - 1)):
