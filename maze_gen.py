@@ -95,6 +95,8 @@ def make_maze(context):
         else:
             make_3dmaze(maze)
 
+        bpy.ops.view3d.snap_selected_to_cursor(use_offset=False)
+
     scene.apply_modifiers = apply_mods
 
     if scene.gen_3d_maze or scene.write_list_maze:

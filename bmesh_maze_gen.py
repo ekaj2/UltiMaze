@@ -63,7 +63,7 @@ def make_3dmaze(maze):
                 faces.append([vert_ind, vert_ind + 1, vert_ind + 2, vert_ind + 3])
 
                 for i, d in enumerate(maze.find_touching(x, y)):
-                    if maze.exist_test(d):
+                    if maze.exist_test(d[0], d[1]):
                         if maze.is_path(d[0], d[1]):
                             # check for on x-axis!...y-axis
                             if d[0] == x:
