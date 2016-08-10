@@ -285,7 +285,7 @@ def choose_tile_twelve(maze, space_index):
             return tile, rotation
 
 
-def choose_tile_six(maze, space_index):  # TODO - Get working!
+def choose_tile_six(maze, space_index):
     """Chooses what tile to add based on surrounding spaces in maze.
 
     Args:

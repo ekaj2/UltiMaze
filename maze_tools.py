@@ -1,4 +1,4 @@
-IN_BLENDER = False
+IN_BLENDER = True
 
 import random
 import logging
@@ -25,6 +25,51 @@ def avg(x1, x2):
 
 def find_all(lst, value):
     return [i for i, a in enumerate(lst) if a == value]
+
+
+class Maze:
+    """The wrapper object for storing a maze."""
+    def __init__(self, width, height, maze):
+        self.maze = maze
+        self.width = width
+        self.height = height
+
+    def __len__(self):
+        return len(self.maze)
+
+    def get_maze(self):
+        return self.maze
+
+    def is_path(self, x, y):
+        return self.maze[x][y]
+
+    def make_path(self, x, y):
+        self.maze[x][y] = 1
+
+    def make_wall(self, x, y):
+        self.maze[x][y] = 0
+
+    @staticmethod
+    def find_touching(x, y):
+        return [(x, y + 1), (x - 1, y), (x + 1, y), (x, y - 1)]
+
+    def exist_test(self, xy):
+        """Checks if ordered pair exists within maze size.
+
+        Args:
+            xy - the ordered pair to check: <tuple> (x, y)
+
+        Returns:
+            boolean exists
+        """
+        x, y = xy
+        exists = False
+
+        # check that x and y are within maze bounds
+        if self.width > x >= 0 and self.height > y >= 0:
+            exists = True
+
+        return exists
 
 
 class OrthogonalMaze:
@@ -166,6 +211,7 @@ class OrthogonalMaze:
         """Chooses index...only a stub."""
         return 0
 
+    # remove when updating to new maze storage class
     def exist_test(self, xy):
         """Checks if ordered pair exists within maze size.
 
@@ -228,7 +274,7 @@ class OrthogonalMaze:
 
     def get(self):
         """Returns maze."""
-        return self.maze
+        return Maze(self.width, self.height, self.maze)
 
     def display(self, illum_list=()):
         """Prints maze to terminal or console window."""

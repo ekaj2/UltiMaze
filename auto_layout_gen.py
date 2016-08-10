@@ -203,12 +203,5 @@ def make_list_maze():
                                   bias=scene.bias)
 
     maze = m.get()
-    
-    # a bit of a hack for now to avoid changing the maze format everywhere just yet...converts to old style
-    old_maze = []
-    for y in range(0, y_dim):
-        for x in range(0, x_dim):
-            # [[space in maze(ordered pair),is path]]
-            old_maze += [[(x, y), maze[x][y]]]
 
-    return old_maze
+    return maze
