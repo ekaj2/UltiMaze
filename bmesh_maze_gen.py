@@ -28,76 +28,78 @@ def quad_mesh_builder(verts, faces):
     bm.free()  # free and prevent further access
 
 
-def make_3dmaze(maze):
-    """Makes basic 3D maze from python list."""
-    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+class Make3DMaze:
+    def __init__(self, maze):
+        self.verts = []
+        self.faces = []
 
-    bldr_prog = BlenderProgress("3D Maze Gen", debug)
-    bldr_prog.start()
-    maze_length = len(maze)
+        self.make_3dmaze(maze)
 
-    loops = 0
+    def add_hor_plane(self, x, y, z):
+        vert_ind = len(self.verts)
+        self.verts.append((x - 0.5, -(y + 0.5), z))
+        self.verts.append((x + 0.5, -(y + 0.5), z))
+        self.verts.append((x + 0.5, -(y - 0.5), z))
+        self.verts.append((x - 0.5, -(y - 0.5), z))
 
-    verts = []
-    faces = []
+        self.faces.append([vert_ind, vert_ind + 1, vert_ind + 2, vert_ind + 3])
 
-    # iterate over every space in the maze
-    for x in range(maze.width):
-        for y in range(maze.height):
-            if maze.is_path(x, y):
-                vert_ind = len(verts)
-                verts.append((x - 0.5, -(y + 0.5), 0))  # make these a func for adding a plane...
-                verts.append((x + 0.5, -(y + 0.5), 0))  # see if list.append(item) returns the item
-                verts.append((x + 0.5, -(y - 0.5), 0))
-                verts.append((x - 0.5, -(y - 0.5), 0))
+    def make_3dmaze(self, maze):
+        """Makes basic 3D maze from python list."""
 
-                faces.append([vert_ind, vert_ind + 1, vert_ind + 2, vert_ind + 3])
+        debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
 
-            else:
-                vert_ind = len(verts)
-                verts.append((x - 0.5, -(y + 0.5), 1))
-                verts.append((x + 0.5, -(y + 0.5), 1))
-                verts.append((x + 0.5, -(y - 0.5), 1))
-                verts.append((x - 0.5, -(y - 0.5), 1))
+        bldr_prog = BlenderProgress("3D Maze Gen", debug)
+        bldr_prog.start()
+        maze_length = len(maze)
 
-                faces.append([vert_ind, vert_ind + 1, vert_ind + 2, vert_ind + 3])
+        loops = 0
 
-                for i, d in enumerate(maze.find_touching(x, y)):
-                    if maze.exist_test(d[0], d[1]):
-                        if maze.is_path(d[0], d[1]):
-                            # check for on x-axis!...y-axis
-                            if d[0] == x:
-                                y_avg = -((d[1] + y) / 2)
-                                vert_ind = len(verts)
+        # iterate over every space in the maze
+        for x in range(maze.width):
+            for y in range(maze.height):
+                if maze.is_path(x, y):
+                    self.add_hor_plane(x, y, 0)
 
-                                verts.append((d[0] - 0.5, y_avg, 1))
-                                verts.append((d[0] + 0.5, y_avg, 1))
-                                verts.append((d[0] + 0.5, y_avg, 0))
-                                verts.append((d[0] - 0.5, y_avg, 0))
+                else:
+                    self.add_hor_plane(x, y, 1)
 
-                                faces.append([vert_ind, vert_ind + 1, vert_ind + 2, vert_ind + 3])
+                    for i, d in enumerate(maze.find_touching(x, y)):
+                        if maze.exist_test(d[0], d[1]):
+                            if maze.is_path(d[0], d[1]):
+                                # check for on x-axis!...y-axis
+                                if d[0] == x:
+                                    y_avg = -((d[1] + y) / 2)
+                                    vert_ind = len(self.verts)
 
-                            else:
-                                x_avg = (d[0] + x) / 2
-                                vert_ind = len(verts)
+                                    self.verts.append((d[0] - 0.5, y_avg, 1))
+                                    self.verts.append((d[0] + 0.5, y_avg, 1))
+                                    self.verts.append((d[0] + 0.5, y_avg, 0))
+                                    self.verts.append((d[0] - 0.5, y_avg, 0))
 
-                                verts.append((x_avg, -(d[1] - 0.5), 1))
-                                verts.append((x_avg, -(d[1] + 0.5), 1))
-                                verts.append((x_avg, -(d[1] + 0.5), 0))
-                                verts.append((x_avg, -(d[1] - 0.5), 0))
+                                    self.faces.append([vert_ind, vert_ind + 1, vert_ind + 2, vert_ind + 3])
 
-                                faces.append([vert_ind, vert_ind + 1, vert_ind + 2, vert_ind + 3])
+                                else:
+                                    x_avg = (d[0] + x) / 2
+                                    vert_ind = len(self.verts)
 
-            progress = loops / maze_length
-            bldr_prog.update(progress)
+                                    self.verts.append((x_avg, -(d[1] - 0.5), 1))
+                                    self.verts.append((x_avg, -(d[1] + 0.5), 1))
+                                    self.verts.append((x_avg, -(d[1] + 0.5), 0))
+                                    self.verts.append((x_avg, -(d[1] - 0.5), 0))
 
-    quad_mesh_builder(verts, faces)
+                                    self.faces.append([vert_ind, vert_ind + 1, vert_ind + 2, vert_ind + 3])
 
-    bldr_prog.finish()
+                progress = loops / maze_length
+                bldr_prog.update(progress)
 
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.mesh.remove_doubles()
-    bpy.ops.mesh.normals_make_consistent(inside=True)
-    bpy.ops.mesh.select_all(action='DESELECT')
-    bpy.ops.object.mode_set(mode='OBJECT')
+        quad_mesh_builder(self.verts, self.faces)
+
+        bldr_prog.finish()
+
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles()
+        bpy.ops.mesh.normals_make_consistent(inside=True)
+        bpy.ops.mesh.select_all(action='DESELECT')
+        bpy.ops.object.mode_set(mode='OBJECT')

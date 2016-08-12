@@ -99,6 +99,19 @@ class Maze:
 
         return exists
 
+    def find_touching_path_dirs(self, x, y, dist=1):
+        touching = self.find_touching(x, y, dist)
+        dirs = ('N', 'W', 'E', 'S')
+        directions = []
+        for i, t in enumerate(touching):
+            # verify existence to avoid IOR Error
+            if not self.exist_test(t[0], t[1]):
+                continue
+            # add the corresponding direction to the list
+            if self.is_path(t[0], t[1]):
+                directions += dirs[i]
+        return directions
+
     def find_exist_touching(self, x, y, dist=1):
         """Finds the spaces that touch 'space' separated by 'dist'.
 

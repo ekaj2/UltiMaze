@@ -7,7 +7,7 @@ from maze_gen import txt_img_converter
 from maze_gen import auto_layout_gen
 from maze_gen import tile_maze_gen
 from maze_gen import time_log
-from maze_gen.bmesh_maze_gen import make_3dmaze
+from maze_gen.bmesh_maze_gen import Make3DMaze
 from maze_gen.time_display import TimeDisplay
 
 
@@ -93,7 +93,7 @@ def make_maze(context):
         if scene.tile_based:
             tile_maze_gen.make_tile_maze(maze)
         else:
-            make_3dmaze(maze)
+            Make3DMaze(maze)
 
         bpy.ops.view3d.snap_selected_to_cursor(use_offset=False)
 
