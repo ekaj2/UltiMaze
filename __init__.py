@@ -722,10 +722,10 @@ def register():
     # ---------------------- General Settings -------------------------
 
     Scene.mg_width = IntProperty(
-        name="Width", default=25, min=3, max=1000)
+        name="Width", default=25, min=3, max=999)
 
     Scene.mg_height = IntProperty(
-        name="Height", default=25, min=3, max=1000)
+        name="Height", default=25, min=3, max=999)
 
     Scene.gen_3d_maze = BoolProperty(
         name="gen_3d_maze",
