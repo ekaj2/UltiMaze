@@ -442,6 +442,12 @@ class MazeAddonPrefsMg(AddonPreferences):
         description="Convert all even sizes to odd upon generation"
     )
 
+    show_advanced_settings = BoolProperty(
+        name="Show Advanced Settings",
+        default=False,
+        description="WARNING: Only for advanced users! Don't go in here!"
+    )
+
     def draw(self, context):
         layout = self.layout
 
@@ -521,6 +527,15 @@ class MazeAddonPrefsMg(AddonPreferences):
         # e-mail
         row.operator("wm.url_open", text="Support E-Mail", icon='LINENUMBERS_ON').url = "mailto: assetsupport@integrity-sg.com"
 
+        layout.row()
+
+        box = layout.box()
+        row = box.row()
+        row.prop(self, "show_advanced_settings", toggle=True)
+        if self.show_advanced_settings:
+            row = box.row()
+            row.prop(self, 'only_odd_sizes')
+            row.prop(self, 'debug_mode', text="Debug")
 
 # Text Editor
 class MazeGeneratorTextToolsPanelMG(Panel):
