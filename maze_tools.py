@@ -14,6 +14,8 @@ else:
     from time import sleep
     from logging_setup import setup_logger
 
+setup_logger(__name__)
+
 
 def round_avg(x1, x2):
     return round((x1 + x2) / 2)
@@ -51,6 +53,12 @@ class Maze:
 
     def is_path(self, x, y):
         return self.maze[x][y]
+
+    def is_path_exist_check(self, x, y):
+        if self.exist_test(x, y):
+            return self.maze[x][y]
+        else:
+            return 1
 
     def make_path(self, x, y):
         self.maze[x][y] = 1
@@ -161,7 +169,6 @@ class OrthogonalMaze:
         get - Returns maze.
         display - Prints maze to terminal or console window.
     """
-    setup_logger(__name__)
 
     def __init__(self, debug, width=10, height=10):
         """Initializes variables, creates maze grid, starts progress report, makes maze, ends progress report."""

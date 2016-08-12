@@ -10,12 +10,17 @@ Available Functions:
     str_list_maze - Converts a python maze into a text block
     convert_list_maze - Convert text maze into a Python list maze
 """
+import logging
 
 import bpy
-from maze_gen import prep_manager
 
+from maze_gen import prep_manager
+from maze_gen.maze_tools import Maze
 from maze_gen.progress_display import BlenderProgress
 from maze_gen.time_display import TimeDisplay
+from maze_gen.logging_setup import setup_logger
+
+setup_logger(__name__)
 
 
 def write_to_text(text):
@@ -79,15 +84,12 @@ def str_list_maze(maze):
         actual name of text block it wrote to
     """
     str_maze = ""
-    for i, space in enumerate(maze):
-        if maze[i][1]:
-            new_space = "1"
-            old_str_maze = str_maze
-            str_maze = old_str_maze + new_space
-        else:
-            new_space = "0"
-            old_str_maze = str_maze
-            str_maze = old_str_maze + new_space
+    for row in range(maze.height):
+        for column in range(maze.width):
+            if maze.is_path(column, row):
+                str_maze += "1"
+            else:
+                str_maze += "0"
 
     text_block_name = write_to_text(str_maze)
 
@@ -102,36 +104,28 @@ def convert_list_maze():
             [[(space in maze - x, y), is path, is walkable, active path],
             [(space in maze - x, y), is path, is walkable, active path], ...]
     """
+
     list_maze = bpy.context.scene.list_maze
-    str_list_maze = bpy.data.texts[list_maze].as_string()
+    str_maze = bpy.data.texts[list_maze].as_string()
 
     # replace "\n" with ""
-    str_list_maze = str_list_maze.replace("\n", "")
+    str_maze = str_maze.replace("\n", "")
 
     x_dim = bpy.context.scene.mg_width
     y_dim = bpy.context.scene.mg_height
 
-    maze = []
-    for y in range(0, y_dim):
-        for x in range(0, x_dim):
-            # [[space in maze(ordered pair),is path,is walkable,active path]]
-            maze_addition = [[(x, y), False]]
-            maze += maze_addition
-
-    index = 0
-    for space in maze:
-        # if nothing in list make all false, if list
-        # runs out use last element in list for the rest
-        if len(str_list_maze) > 0:
-            if str_list_maze[index] == "1":
-                space[1] = True
-            else:
-                space[1] = False
-        else:
-            space[1] = False
-
-        if index < (len(str_list_maze) - 1):
-            index += 1
+    maze = Maze(x_dim, y_dim)
+    for y in range(maze.height):
+        for x in range(maze.width):
+            index = y * maze.width + x
+            try:
+                if str_maze[index] == "1":
+                    maze.make_path(x, y)
+            except IndexError:
+                logger = logging.getLogger(__name__)
+                logger.warning("IndexError when trying to access a text file's string for converting "
+                               "to a list maze...index={}, maze.width={}, maze.height={}".format(
+                                                                                index, maze.width, maze.height))
 
     return maze
 
@@ -290,10 +284,8 @@ class CreateImageFromListMG(bpy.types.Operator):
             image_row -= 1
 
         bldr_prog.finish()
-
-        time_log.log_time(bldr_prog.elapsed())
         time_disp = TimeDisplay()
-        time_disp.convert(elapsed_time)
+        time_disp.convert(bldr_prog.elapsed_time())
 
         self.report({'INFO'}, "Finished generating 2d maze in " + str(time_disp))
 

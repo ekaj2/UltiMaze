@@ -78,28 +78,27 @@ def make_maze(context):
         # if merging is disabled (because group is not made)
         scene.apply_modifiers = False
 
-    if scene.use_list_maze:
-        maze = txt_img_converter.convert_list_maze()
-    elif scene.gen_3d_maze or scene.write_list_maze:
+    if scene.gen_3d_maze or scene.write_list_maze:
         if addon_prefs.only_odd_sizes:
             morph_dimensions()
-        maze = auto_layout_gen.make_list_maze()
-
-    if scene.allow_loops:
-        maze = auto_layout_gen.add_loops(maze)
-
-    # 3D generation
-    if scene.gen_3d_maze:
-        if scene.tile_based:
-            tile_maze_gen.make_tile_maze(maze)
+        if scene.use_list_maze:
+            maze = txt_img_converter.convert_list_maze()
         else:
-            Make3DMaze(maze)
+            maze = auto_layout_gen.make_list_maze()
 
-        bpy.ops.view3d.snap_selected_to_cursor(use_offset=False)
+        if scene.allow_loops:
+            maze = auto_layout_gen.add_loops(maze)
 
-    scene.apply_modifiers = apply_mods
+        # 3D generation
+        if scene.gen_3d_maze:
+            bpy.ops.object.select_all(action='DESELECT')
+            if scene.tile_based:
+                tile_maze_gen.make_tile_maze(maze)
+            else:
+                Make3DMaze(maze)
 
-    if scene.gen_3d_maze or scene.write_list_maze:
+            bpy.ops.view3d.snap_selected_to_cursor(use_offset=False)
+
         elapsed_time = time() - time_start
         time_log.log_time(elapsed_time)
         time_disp = TimeDisplay()
@@ -107,10 +106,12 @@ def make_maze(context):
         messages += ["Finished generating maze in " + str(time_disp)]
         message_lvls += ['INFO']
 
-    # write list maze if enabled
-    if scene.write_list_maze:
-        text_block_name = txt_img_converter.str_list_maze(maze)
-        messages += ["See '" + str(text_block_name) + "' in the text editor"]
-        message_lvls += ['INFO']
+        # write list maze if enabled
+        if scene.write_list_maze:
+            text_block_name = txt_img_converter.str_list_maze(maze)
+            messages += ["See '" + str(text_block_name) + "' in the text editor"]
+            message_lvls += ['INFO']
+
+    scene.apply_modifiers = apply_mods
 
     return messages, message_lvls, 'FINISHED'
