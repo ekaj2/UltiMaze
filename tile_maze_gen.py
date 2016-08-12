@@ -194,7 +194,7 @@ def choose_tile(maze, x, y):
             ('W', 'S'): ('wall_corner', 180),
         }
 
-        if maze.is_path(x, y):
+        if maze.exist_test(x, y) and maze.is_path(x, y):
             return floor_possibilities[tuple(directions)]
         else:
             return wall_possibilities[tuple(directions)]
@@ -247,9 +247,9 @@ def make_tile_maze(maze):
     for row in range(maze.height):
         for column in range(maze.width):
             # choose tile
-            tile, rotation = choose_tile(maze, row, column)
+            tile, rotation = choose_tile(maze, column, row)
             if tile:
-                add_tile(tile, row, column, rotation)
+                add_tile(tile, column, row, rotation)
 
             genloops += 1
             progress = genloops / len(maze)
