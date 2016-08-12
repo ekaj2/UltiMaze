@@ -30,6 +30,7 @@ def refresh_batch_max():
     else:
         bpy.context.scene.num_batch_mazes = len(split_settings)
 
+
 def load_batch_settings(context, maze_setup):
     scene = context.scene
     for slot in maze_setup:
@@ -46,14 +47,24 @@ def load_batch_settings(context, maze_setup):
             scene.allow_loops = bool(int(parts[1]))
         elif parts[0] == "lc":
             scene.loops_chance = int(parts[1])
-        elif parts[0] == "ai":
-            scene.allow_islands = bool(int(parts[1]))
         elif parts[0] == "fl":
             scene.use_list_maze = bool(int(parts[1]))
         elif parts[0] == "lm":
             scene.list_maze = parts[1]
         elif parts[0] == "wl":
             scene.write_list_maze = bool(int(parts[1]))
+
+        # algorithm settings
+        elif parts[0] == 'ag':
+            scene.algorithm = parts[1]
+        elif parts[0] == 'br':
+            scene.bias_direction = parts[1]
+        elif parts[0] == 'bd':
+            scene.binary_dir = parts[1]
+        elif parts[0] == 'ti':
+            scene.tileable = bool(int(parts[1]))
+        elif parts[0] == 'bi':
+            scene.bias = float(parts[1])
 
         # tile settings
         elif parts[0] == "tb":
@@ -118,21 +129,26 @@ class StoreBatchMazeMG(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        # TODO - save 6 tiles as well as tile mode
-        settings_text = (" && wd,{};ht,{};3d,{};al,{};lc,{};ai,{}"
-                         ";fl,{};lm,{};wl,{};tb,{};im,{};mo,{};am,{};rd,{}"
-                         ";w0,{};w1,{};w2,{};w3,{};w4,{};wc,{}"
-                         ";f0,{};f1,{};f2,{};f3,{};f4,{};fc,{}"
-                         ";tm,{};4w,{};3w,{};2t,{};de,{};2s,{};np,{}".format(
+        settings_text = (" && wd,{};ht,{};3d,{};al,{};lc,{};"
+                         "fl,{};lm,{};wl,{};"
+                         "ag,{};br,{};bd,{};ti,{};bi,{};"
+                         "tb,{};im,{};mo,{};am,{};rd,{};"
+                         "w0,{};w1,{};w2,{};w3,{};w4,{};wc,{};"
+                         "f0,{};f1,{};f2,{};f3,{};f4,{};fc,{};"
+                         "tm,{};4w,{};3w,{};2t,{};de,{};2s,{};np,{}".format(
                             scene.mg_width,
                             scene.mg_height,
                             int(scene.gen_3d_maze),
                             int(scene.allow_loops),
                             scene.loops_chance,
-                            int(scene.allow_islands),
                             int(scene.use_list_maze),
                             scene.list_maze,
                             int(scene.write_list_maze),
+                            scene.algorithm,
+                            scene.bias_direction,
+                            scene.binary_dir,
+                            int(scene.tileable),
+                            scene.bias,
                             int(scene.tile_based),
                             int(scene.import_mat),
                             int(scene.merge_objects),
