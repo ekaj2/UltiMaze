@@ -26,12 +26,12 @@ def console_prog(job, progress, total_time="?"):
     sys.stdout.flush()
 
 
-class BlenderProgress():
+class BlenderProgress:
     def __init__(self, job, debug=True):
         self.job = job
         self.last_percent = None
         self.debug = debug
-        self.elapsed_time = 0
+        self.elapsed_time_bp = 0
 
         self.s_time = 0
 
@@ -50,11 +50,11 @@ class BlenderProgress():
         self.last_percent = percent
 
     def finish(self):
-        self.elapsed_time = time() - self.s_time
+        self.elapsed_time_bp = time() - self.s_time
         if not self.debug:
-            console_prog(self.job, 1, self.elapsed_time)
+            console_prog(self.job, 1, self.elapsed_time_bp)
             print("\n")
         bpy.context.window_manager.progress_end()
 
     def elapsed_time(self):
-        return self.elapsed_time
+        return self.elapsed_time_bp

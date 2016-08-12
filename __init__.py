@@ -77,26 +77,28 @@ class MazeGeneratorPanelMG(Panel):
         box.prop(scene, 'mg_width', slider=False, text="Width")
         box.prop(scene, 'mg_height', slider=False, text="Height")
         box.prop(scene, 'gen_3d_maze', text="Generate 3D Maze")
-        row = box.row()
+
+        col = box.box()
+
+        if scene.use_list_maze:
+            col.enabled = False
+        else:
+            col.enabled = True
+        row = col.row()
         row.prop(scene, 'allow_loops', text="Allow Loops")
         row.prop(scene, 'loops_chance', text="Chance")
 
-        box.prop(scene, 'algorithm', text="", icon="OOPS")
+        col.prop(scene, 'algorithm', text="", icon="OOPS")
         if scene.algorithm == 'BINARY_TREE':
-            box.prop(scene, 'binary_dir', text="", icon="MOD_DECIM")
-            box.prop(scene, 'tileable')
+            col.prop(scene, 'binary_dir', text="", icon="MOD_DECIM")
+            col.prop(scene, 'tileable')
 
         elif scene.algorithm in ['PRIMS', 'DEPTH_FIRST', 'BREADTH_FIRST']:
-            box.prop(scene, 'bias_direction', text="", icon="ALIGN")
-            box.prop(scene, 'bias', slider=True)
+            col.prop(scene, 'bias_direction', text="", icon="ALIGN")
+            col.prop(scene, 'bias', slider=True)
 
         elif scene.algorithm == 'ELLERS':
-            box.prop(scene, 'bias', slider=True)
-
-        if scene.use_list_maze:
-            row.enabled = False
-        else:
-            row.enabled = True
+            col.prop(scene, 'bias', slider=True)
 
         box.prop(scene, 'use_list_maze', text="Generate Maze From List")
         if scene.use_list_maze:
@@ -430,7 +432,7 @@ class MazeAddonPrefsMg(AddonPreferences):
                     "time-consuming operations")
 
     show_quickhelp = BoolProperty(
-        name="show_quickhelp",
+        name="Quick Help",
         default=False,
         description="Show quick help")
 
@@ -438,6 +440,12 @@ class MazeAddonPrefsMg(AddonPreferences):
         name="Only Odd Maze Sizes",
         default=True,
         description="Convert all even sizes to odd upon generation"
+    )
+
+    show_advanced_settings = BoolProperty(
+        name="Show Advanced Settings",
+        default=False,
+        description="WARNING: Only for advanced users! Don't go in here!"
     )
 
     def draw(self, context):
@@ -463,11 +471,9 @@ class MazeAddonPrefsMg(AddonPreferences):
         layout.row()
         # quick help box
         box = layout.box()
-        show_help_text = "Show Quick Help"
         row = box.row()
-        row.prop(self, "show_quickhelp", text=show_help_text, toggle=True)
+        row.prop(self, "show_quickhelp", toggle=True)
         if self.show_quickhelp:
-            show_help_text = "Hide Quick Help"
             box.row()
             row = box.row()
             row.scale_y = 0.5
@@ -521,6 +527,15 @@ class MazeAddonPrefsMg(AddonPreferences):
         # e-mail
         row.operator("wm.url_open", text="Support E-Mail", icon='LINENUMBERS_ON').url = "mailto: assetsupport@integrity-sg.com"
 
+        layout.row()
+
+        box = layout.box()
+        row = box.row()
+        row.prop(self, "show_advanced_settings", toggle=True)
+        if self.show_advanced_settings:
+            row = box.row()
+            row.prop(self, 'only_odd_sizes')
+            row.prop(self, 'debug_mode', text="Debug")
 
 # Text Editor
 class MazeGeneratorTextToolsPanelMG(Panel):

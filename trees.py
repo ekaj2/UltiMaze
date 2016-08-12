@@ -7,6 +7,8 @@ if IN_BLENDER:
 else:
     from logging_setup import setup_logger
 
+setup_logger(__name__)
+
 
 class RebelChildError(Exception):
     def __init__(self, nodes, parent, child):
@@ -44,8 +46,6 @@ class LoopInTreeError(Exception):
 
 
 class Tree:
-    setup_logger(__name__)
-
     def __init__(self):
         self.nodes = {}
 

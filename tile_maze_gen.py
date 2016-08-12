@@ -137,13 +137,13 @@ def choose_tile(maze, x, y):
     Returns:
         tile name, rotation tile should have
     """
-
     # find out how many spaces that are touching are paths
     directions = maze.find_touching_path_dirs(x, y)
 
     tm = bpy.context.scene.tile_mode
 
     if tm == "TWELVE_TILES":
+
         floor_possibilities = {
             # four-way floor
             ('N', 'W', 'E', 'S'): ('floor_4_sided', 0),
@@ -194,12 +194,13 @@ def choose_tile(maze, x, y):
             ('W', 'S'): ('wall_corner', 180),
         }
 
-        if maze.is_path(x, y):
+        if maze.exist_test(x, y) and maze.is_path(x, y):
             return floor_possibilities[tuple(directions)]
         else:
             return wall_possibilities[tuple(directions)]
 
     elif tm == 'SIX_TILES':
+
         possibilities = {
             # four-way floor
             ('N', 'W', 'E', 'S'): ('four_way', 0),
@@ -224,9 +225,8 @@ def choose_tile(maze, x, y):
             ('N', 'W'): ('turn', 270),
             ('W', 'S'): ('turn', 180),
         }
-
         # to add in six tile mode the space must be a path and it's x and y must both be even
-        if maze.is_path(x, y) and not x & 1 and not y & 1:
+        if maze.exist_test(x, y) and maze.is_path(x, y) and not x & 1 and not y & 1:
             return possibilities[tuple(directions)]
         else:
             return "", 0  # empty tile to show not to add anything
@@ -244,12 +244,12 @@ def make_tile_maze(maze):
 
     bldr_prog = BlenderProgress("Tile Maze Gen", debug)
     genloops = 0
-    for row in range(maze.width):
-        for column in range(maze.height):
+    for row in range(maze.height):
+        for column in range(maze.width):
             # choose tile
-            tile, rotation = choose_tile(maze, row, column)
+            tile, rotation = choose_tile(maze, column, row)
             if tile:
-                add_tile(tile, row, column, rotation)
+                add_tile(tile, column, row, rotation)
 
             genloops += 1
             progress = genloops / len(maze)
