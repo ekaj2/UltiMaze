@@ -432,7 +432,7 @@ class MazeAddonPrefsMg(AddonPreferences):
                     "time-consuming operations")
 
     show_quickhelp = BoolProperty(
-        name="show_quickhelp",
+        name="Quick Help",
         default=False,
         description="Show quick help")
 
@@ -465,11 +465,9 @@ class MazeAddonPrefsMg(AddonPreferences):
         layout.row()
         # quick help box
         box = layout.box()
-        show_help_text = "Show Quick Help"
         row = box.row()
-        row.prop(self, "show_quickhelp", text=show_help_text, toggle=True)
+        row.prop(self, "show_quickhelp", toggle=True)
         if self.show_quickhelp:
-            show_help_text = "Hide Quick Help"
             box.row()
             row = box.row()
             row.scale_y = 0.5
