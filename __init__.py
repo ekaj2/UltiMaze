@@ -24,7 +24,7 @@ from maze_gen import menus
 bl_info = {
     "name": "UltiMaze [PRO]",
     "author": "Jake Dube",
-    "version": (1, 0),
+    "version": (2, 0),
     "blender": (2, 76, 0),
     "location": "3D View > Tools > Maze Gen",
     "description": "Generates 3-dimensional mazes.",
@@ -454,8 +454,6 @@ class MazeAddonPrefsMg(AddonPreferences):
         col = layout.column()
         row = col.row()
         row.prop(self, 'open_help_outbldr', text="Open Help Outside Blender")
-        row.prop(self, 'only_odd_sizes')
-        row.prop(self, 'debug_mode', text="Debug")
         col.row()
         box = col.box()
         box.prop(self, 'use_custom_tile_path', text="Use Custom Path")

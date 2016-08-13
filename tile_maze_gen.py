@@ -243,6 +243,7 @@ def make_tile_maze(maze):
     debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
 
     bldr_prog = BlenderProgress("Tile Maze Gen", debug)
+    bldr_prog.start()
     genloops = 0
     for row in range(maze.height):
         for column in range(maze.width):
@@ -252,8 +253,10 @@ def make_tile_maze(maze):
                 add_tile(tile, column, row, rotation)
 
             genloops += 1
-            progress = genloops / len(maze)
+            progress = genloops / (maze.width * maze.height)
             bldr_prog.update(progress)
+
+    bldr_prog.finish()
 
     # make sure there is an active object
     bpy.context.scene.objects.active = bpy.context.selected_objects[0]
@@ -308,5 +311,3 @@ def make_tile_maze(maze):
             bpy.ops.object.editmode_toggle()
             bpy.ops.mesh.select_all(action='DESELECT')
             bpy.ops.object.editmode_toggle()
-
-    bldr_prog.finish()
