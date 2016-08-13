@@ -454,8 +454,6 @@ class MazeAddonPrefsMg(AddonPreferences):
         col = layout.column()
         row = col.row()
         row.prop(self, 'open_help_outbldr', text="Open Help Outside Blender")
-        row.prop(self, 'only_odd_sizes')
-        row.prop(self, 'debug_mode', text="Debug")
         col.row()
         box = col.box()
         box.prop(self, 'use_custom_tile_path', text="Use Custom Path")
