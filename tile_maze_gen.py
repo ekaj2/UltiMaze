@@ -9,33 +9,12 @@ Available Functions:
 """
 
 import math
-import sys
-from time import time
 
 import bpy
-from maze_gen import auto_layout_gen
+from maze_gen.progress_display import BlenderProgress
 
 
-def console_prog(job, progress, total_time="?"):
-    """Displays progress in the console.
-
-    Args:
-        job - name of the job
-        progress - progress as a decimal number
-        total_time (optional) - the total amt of time the job
-                                took for final display
-    """
-    length = 20
-    block = int(round(length * progress))
-    message = "\r{0}: [{1}{2}] {3:.0%}".format(job, "#" * block, "-" * (length - block), progress)
-    # progress is complete
-    if progress >= 1:
-        message = "\r{} DONE IN {} SECONDS{}".format(job.upper(), total_time, " " * 12)
-    sys.stdout.write(message)
-    sys.stdout.flush()
-
-
-def add_tile(tile, location, rotation):
+def add_tile(tile, x_location, y_location, rotation):
     """Adds a tile object to the scene at certain transform.
 
     Args:
@@ -43,8 +22,6 @@ def add_tile(tile, location, rotation):
         location - location component of desired transform
         rotation - rotation component of desired transform
     """
-    x_transform = location[0]
-    y_transform = location[1]
 
     # setup tiles for reference
     # 12 tile gen
@@ -140,270 +117,119 @@ def add_tile(tile, location, rotation):
 
     tile_parent = bpy.context.scene.objects.active
 
-    tile_parent.location[0] = x_transform
-    tile_parent.location[1] = -y_transform
+    tile_parent.location[0] = x_location
+    tile_parent.location[1] = -y_location
     tile_parent.rotation_euler[2] = math.radians(rotation)
 
     if bpy.context.scene.merge_objects:
-        # add to group MazeGenerator
+        # add to group MazeGeneratorDoNotTouch
         for active in bpy.context.selected_objects:
             bpy.context.scene.objects.active = active
             try:
                 bpy.ops.object.group_link(group='MazeGeneratorDoNotTouch')
-            except:
+            except TypeError:
                 bpy.ops.group.create(name='MazeGeneratorDoNotTouch')
 
 
-def choose_tile_twelve(maze, space_index):
+def choose_tile(maze, x, y):
     """Chooses what tile to add based on surrounding spaces in maze.
-
-    Args:
-        maze - python list in the format:
-            [[(space in maze - x, y), is path, is walkable, active path],
-            [(space in maze - x, y), is path, is walkable, active path], ...]
-        space_index - index of space to find tile for
 
     Returns:
         tile name, rotation tile should have
     """
-    rotation = 0
-
     # find out how many spaces that are touching are paths
-    paths_found = 0
-    touching, directions, _ = auto_layout_gen.find_touching(maze, space_index)
-    for touching_space in touching:
-        if maze[touching_space][1]:
-            paths_found += 1
+    directions = maze.find_touching_path_dirs(x, y)
 
-    # FLOOR PIECES!
+    tm = bpy.context.scene.tile_mode
 
-    # start with floor pieces
-    if maze[space_index][1]:
-        if paths_found == 4:
-            tile = 'floor_4_sided'
-            return tile, rotation
+    if tm == "TWELVE_TILES":
 
-        elif paths_found == 3:
-            tile = 'floor_3_sided'
+        floor_possibilities = {
+            # four-way floor
+            ('N', 'W', 'E', 'S'): ('floor_4_sided', 0),
+            # three-way floor
+            ('W', 'E', 'S'): ('floor_3_sided', 180),
+            ('N', 'E', 'S'): ('floor_3_sided', 90),
+            ('N', 'W', 'E'): ('floor_3_sided', 0),
+            ('N', 'W', 'S'): ('floor_3_sided', 270),
+            # dead-end floor
+            ('S',): ('floor_1_sided', 180),
+            ('E',): ('floor_1_sided', 90),
+            ('N',): ('floor_1_sided', 0),
+            ('W',): ('floor_1_sided', 270),
+            # solitary floor
+            (): ('floor_0_sided', 0),
+            # straight path floor
+            ('N', 'S'): ('floor_2_sided', 0),
+            ('W', 'E'): ('floor_2_sided', 90),
+            # turn floor
+            ('E', 'S'): ('floor_corner', 90),
+            ('N', 'E'): ('floor_corner', 0),
+            ('N', 'W'): ('floor_corner', 270),
+            ('W', 'S'): ('floor_corner', 180),
+        }
 
-            # determine rotation (don't know if this translates directly)
-            if directions == ['Up', 'Right', 'Down']:
-                rotation = 90
-            elif directions == ['Up', 'Right', 'Left']:
-                rotation = 180
-            elif directions == ['Up', 'Down', 'Left']:
-                rotation = 270
+        wall_possibilities = {
+            # solitary wall
+            ('N', 'W', 'E', 'S'): ('wall_4_sided', 0),
+            # end of wall
+            ('W', 'E', 'S'): ('wall_3_sided', 180),
+            ('N', 'E', 'S'): ('wall_3_sided', 90),
+            ('N', 'W', 'E'): ('wall_3_sided', 0),
+            ('N', 'W', 'S'): ('wall_3_sided', 270),
+            # side of wall block
+            ('S',): ('wall_1_sided', 180),
+            ('E',): ('wall_1_sided', 90),
+            ('N',): ('wall_1_sided', 0),
+            ('W',): ('wall_1_sided', 270),
+            # center of wall block
+            (): ('wall_0_sided', 0),
+            # straight wall between two paths
+            ('N', 'S'): ('wall_2_sided', 0),
+            ('W', 'E'): ('wall_2_sided', 90),
+            # corner wall
+            ('E', 'S'): ('wall_corner', 90),
+            ('N', 'E'): ('wall_corner', 0),
+            ('N', 'W'): ('wall_corner', 270),
+            ('W', 'S'): ('wall_corner', 180),
+        }
 
-            return tile, rotation
-
-        elif paths_found == 1:
-            tile = 'floor_1_sided'
-
-            # determine rotation
-            if directions == ['Right']:
-                rotation = 90
-            elif directions == ['Up']:
-                rotation = 180
-            elif directions == ['Left']:
-                rotation = 270
-
-            return tile, rotation
-
-        elif paths_found == 0:
-            tile = 'floor_0_sided'
-
-            return tile, rotation
-
-        # if 2 paths determine corner or straight
-        elif paths_found == 2:
-
-            # determine tile: first straight, then corner
-            if directions == ['Up', 'Down'] or directions == ['Right', 'Left']:
-                tile = 'floor_2_sided'
-
-                # determine rotation
-                if directions == ['Right', 'Left']:
-                    rotation = 90
-
-                return tile, rotation
-
-            else:
-                tile = 'floor_corner'
-
-                # determine rotation
-                if directions == ['Up', 'Right']:
-                    rotation = 90
-                elif directions == ['Up', 'Left']:
-                    rotation = 180
-                elif directions == ['Down', 'Left']:
-                    rotation = 270
-
-                return tile, rotation
-
-    # WALL PIECES!
-
-    # rule out pieces by number of paths_found (2 paths is in next block)
-    if paths_found == 4:
-        tile = 'wall_4_sided'
-        return tile, rotation
-
-    elif paths_found == 3:
-        tile = 'wall_3_sided'
-
-        # determine rotation
-        if directions == ['Up', 'Right', 'Down']:
-            rotation = 90
-        elif directions == ['Up', 'Right', 'Left']:
-            rotation = 180
-        elif directions == ['Up', 'Down', 'Left']:
-            rotation = 270
-
-        return tile, rotation
-
-    elif paths_found == 1:
-        tile = 'wall_1_sided'
-
-        # determine rotation
-        if directions == ['Right']:
-            rotation = 90
-        elif directions == ['Up']:
-            rotation = 180
-        elif directions == ['Left']:
-            rotation = 270
-
-        return tile, rotation
-
-    elif paths_found == 0:
-        tile = 'wall_0_sided'
-
-        return tile, rotation
-
-    # if 2 paths determine corner or straight
-    elif paths_found == 2:
-
-        # determine tile: first straight, then corner
-        if directions == ['Up', 'Down'] or directions == ['Right', 'Left']:
-            tile = 'wall_2_sided'
-
-            # determine rotation
-            if directions == ['Right', 'Left']:
-                rotation = 90
-
-            return tile, rotation
-
+        if maze.exist_test(x, y) and maze.is_path(x, y):
+            return floor_possibilities[tuple(directions)]
         else:
-            tile = 'wall_corner'
+            return wall_possibilities[tuple(directions)]
 
-            # determine rotation
-            if directions == ['Up', 'Right']:
-                rotation = 90
-            elif directions == ['Up', 'Left']:
-                rotation = 180
-            elif directions == ['Down', 'Left']:
-                rotation = 270
+    elif tm == 'SIX_TILES':
 
-            return tile, rotation
-
-
-def choose_tile_six(maze, space_index):  # TODO - Get working!
-    """Chooses what tile to add based on surrounding spaces in maze.
-
-    Args:
-        maze - python list in the format:
-            [[(space in maze - x, y), is path, is walkable, active path],
-            [(space in maze - x, y), is path, is walkable, active path], ...]
-        space_index - index of space to find tile for
-
-    Returns:
-        tile name, rotation tile should have
-    """
-    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
-
-    rotation = 0
-
-    # find out how many spaces that are touching are paths
-    paths_found = 0
-    touching, directions, _ = auto_layout_gen.find_touching(maze, space_index)
-    touching2, directions2, _ = auto_layout_gen.find_touching(maze, space_index, 2)
-    if debug:
-        print("t: {}, t2: {}, d: {}, d2: {}".format(touching, touching2, directions, directions2))
-        print("Choosing tile at {}".format(maze[space_index]))
-    for i, touching_space in enumerate(touching):
-        if debug:
-            print("Touching:", maze[touching_space])
-        if maze[touching_space][1] and maze[touching2[i]][1]:
-            paths_found += 1
-
-    # FLOOR PIECES!
-    dirs = [a for a in directions if a in directions2]
-    # start with floor pieces
-    if maze[space_index][1]:
-        if paths_found == 4:
-            tile = 'four_way'
-            return tile, rotation
-
-        elif paths_found == 3:
-            tile = 't_int'
-
-            # determine rotation (don't know if this translates directly)
-            if dirs == ['Up', 'Right', 'Down']:
-                rotation = 90
-            elif dirs == ['Up', 'Right', 'Left']:
-                rotation = 180
-            elif dirs == ['Up', 'Down', 'Left']:
-                rotation = 270
-
-            return tile, rotation
-
-        elif paths_found == 1:
-            tile = 'dead_end'
-
-            # determine rotation
-            if dirs == ['Right']:
-                rotation = 90
-            elif dirs == ['Up']:
-                rotation = 180
-            elif dirs == ['Left']:
-                rotation = 270
-
-            return tile, rotation
-
-        elif paths_found == 0:
-            tile = 'no_path'
-
-            return tile, rotation
-
-        # if 2 paths determine corner or straight
-        elif paths_found == 2:
-
-            # determine tile: first straight, then corner
-            if dirs == ['Up', 'Down'] or dirs == ['Right', 'Left']:
-                tile = 'straight'
-
-                # determine rotation
-                if dirs == ['Right', 'Left']:
-                    rotation = 90
-
-                return tile, rotation
-
-            else:
-                tile = 'turn'
-
-                # determine rotation
-                if dirs == ['Up', 'Right']:
-                    rotation = 90
-                elif dirs == ['Up', 'Left']:
-                    rotation = 180
-                elif dirs == ['Down', 'Left']:
-                    rotation = 270
-
-                return tile, rotation
-
-    # move on to wall pieces
-    elif not maze[space_index][1]:
-        tile = 'no_path'
-
-        return tile, rotation
+        possibilities = {
+            # four-way floor
+            ('N', 'W', 'E', 'S'): ('four_way', 0),
+            # three-way floor
+            ('W', 'E', 'S'): ('t_int', 180),
+            ('N', 'E', 'S'): ('t_int', 90),
+            ('N', 'W', 'E'): ('t_int', 0),
+            ('N', 'W', 'S'): ('t_int', 270),
+            # dead-end floor
+            ('S',): ('dead_end', 180),
+            ('E',): ('dead_end', 90),
+            ('N',): ('dead_end', 0),
+            ('W',): ('dead_end', 270),
+            # solitary wall
+            (): ('no_path', 0),
+            # straight path floor
+            ('N', 'S'): ('straight', 0),
+            ('W', 'E'): ('straight', 90),
+            # turn floor
+            ('E', 'S'): ('turn', 90),
+            ('N', 'E'): ('turn', 0),
+            ('N', 'W'): ('turn', 270),
+            ('W', 'S'): ('turn', 180),
+        }
+        # to add in six tile mode the space must be a path and it's x and y must both be even
+        if maze.exist_test(x, y) and maze.is_path(x, y) and not x & 1 and not y & 1:
+            return possibilities[tuple(directions)]
+        else:
+            return "", 0  # empty tile to show not to add anything
 
 
 def make_tile_maze(maze):
@@ -416,40 +242,26 @@ def make_tile_maze(maze):
     """
     debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
 
-    s_time = time()
-
-    bpy.context.window_manager.progress_begin(1, 100)
+    bldr_prog = BlenderProgress("Tile Maze Gen", debug)
+    bldr_prog.start()
     genloops = 0
-    last_percent = None
-    for i, space in enumerate(maze):
-        # choose tile
-        tm = bpy.context.scene.tile_mode
-        if tm == "TWELVE_TILES":
-            tile, rotation = choose_tile_twelve(maze, i)
-            add_tile(tile, maze[i][0], rotation)
-        elif tm == "SIX_TILES":
-            if maze[i][0][0] % 2 == 0 and maze[i][0][1] % 2 == 0:
-                t = choose_tile_six(maze, i)
-                if t:
-                    tile, rotation = t
-                    add_tile(tile, (maze[i][0][0], maze[i][0][1]), rotation)  # TODO - clean up loc tuple
+    for row in range(maze.height):
+        for column in range(maze.width):
+            # choose tile
+            tile, rotation = choose_tile(maze, column, row)
+            if tile:
+                add_tile(tile, column, row, rotation)
 
-        genloops += 1
-        percent = round((genloops / len(maze)) * 100)
-        if percent != last_percent and percent < 100:
-            bpy.context.window_manager.progress_update(percent)
-            if not debug:
-                console_prog("Tile Maze Gen", genloops / len(maze))
-            last_percent = percent
+            genloops += 1
+            progress = genloops / (maze.width * maze.height)
+            bldr_prog.update(progress)
 
-    if not debug:
-        # printout finished
-        console_prog("Tile Maze Gen", 1, time() - s_time)
-        print("\n")
+    bldr_prog.finish()
 
-    for active in bpy.context.selected_objects:
-        bpy.context.scene.objects.active = active
-        bpy.ops.object.select_grouped(type='GROUP')
+    # make sure there is an active object
+    bpy.context.scene.objects.active = bpy.context.selected_objects[0]
+    # select all objects in that group
+    bpy.ops.object.select_grouped(type='GROUP')
 
     if bpy.context.scene.apply_modifiers:
         # apply modifiers
@@ -499,5 +311,3 @@ def make_tile_maze(maze):
             bpy.ops.object.editmode_toggle()
             bpy.ops.mesh.select_all(action='DESELECT')
             bpy.ops.object.editmode_toggle()
-
-    bpy.context.window_manager.progress_end()
