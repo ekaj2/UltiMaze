@@ -158,9 +158,9 @@ class MazeTilesPanelMG(Panel):
             sub_box.menu('maze_gen.tile_import_menu', text="Import Tile Set")
 
             sub_box = box.box()
+            sub_box.prop(scene, 'apply_modifiers', text="Apply Modifiers")
             sub_box.prop(scene, 'merge_objects', text="Merge Objects")
             if scene.merge_objects:
-                sub_box.prop(scene, 'apply_modifiers', text="Apply Modifiers")
                 sub_box.prop(scene, 'remove_doubles_merge', text="Remove Doubles")
 
             row = layout.row()

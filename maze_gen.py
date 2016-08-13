@@ -72,12 +72,6 @@ def make_maze(context):
         message_lvls += ['ERROR']
         return messages, message_lvls, 'CANCELLED'
 
-    apply_mods = scene.apply_modifiers
-    if not scene.merge_objects:
-        # fix to make sure not applying modifiers
-        # if merging is disabled (because group is not made)
-        scene.apply_modifiers = False
-
     if scene.gen_3d_maze or scene.write_list_maze:
         if addon_prefs.only_odd_sizes:
             morph_dimensions()
@@ -111,7 +105,5 @@ def make_maze(context):
             text_block_name = txt_img_converter.str_list_maze(maze)
             messages += ["See '" + str(text_block_name) + "' in the text editor"]
             message_lvls += ['INFO']
-
-    scene.apply_modifiers = apply_mods
 
     return messages, message_lvls, 'FINISHED'
