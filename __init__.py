@@ -24,7 +24,7 @@ from maze_gen import menus
 bl_info = {
     "name": "UltiMaze [PRO]",
     "author": "Jake Dube",
-    "version": (1, 0),
+    "version": (2, 0),
     "blender": (2, 76, 0),
     "location": "3D View > Tools > Maze Gen",
     "description": "Generates 3-dimensional mazes.",
