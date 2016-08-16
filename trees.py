@@ -1,4 +1,4 @@
-IN_BLENDER = True
+IN_BLENDER = False
 
 import logging
 

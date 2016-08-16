@@ -1,4 +1,4 @@
-IN_BLENDER = True
+IN_BLENDER = False
 
 import random
 import logging
@@ -30,44 +30,61 @@ def find_all(lst, value):
 
 
 class Maze:
-    """The wrapper object for storing a maze."""
-    def __init__(self, width, height):
+    """The wrapper object for storing a maze.
+
+    Methods:
+        __init__ - Sets up maze, width, and height, then calls make_base_grid to setup grid.
+        __len__ - Override for python len().
+        make_base_grid - Sets up self.maze with grid based on x and y dimensions.
+        get_maze - Returns maze.
+        is_path - Returns if space defined by x and y is a path.
+        make_path - Makes the space defined by x and y a path.
+        make_wall - Makes the space defined by x and y a wall.
+        find_touching - (static) Finds the spaces that touch x and y separated by 'dist'.
+        exist_test - Checks if ordered pair exists within maze size.
+        find_touching_path_dirs - Returns the directions in which there is a path adjacent to space (x, y), separated by given distance.
+        find_exist_touching - Finds the spaces that touch x and y separated by 'dist'.
+    """
+    def __init__(self, width, height, walls=True):
+        """Sets up maze, width, and height, then calls make_base_grid to setup grid."""
         self.maze = []
         self.width = width
         self.height = height
 
-        self.make_base_grid()
+        self.make_base_grid(walls)
 
     def __len__(self):
+        """Override for python len()."""
         return len(self.maze)
 
-    def make_base_grid(self):
-        """Sets up self.maze with grid based on x and y dimension args."""
+    def make_base_grid(self, walls):
+        """Sets up self.maze with grid based on x and y dimensions.
+
+        Args:
+            walls - make all spaces in the grid walls, False = make all spaces paths
+        """
         for column in range(0, self.width):
-            self.maze += [[]]
+            self.maze.append([])
             for row in range(0, self.height):
-                self.maze[column] += [0]
+                if walls:
+                    self.maze[column].append(0)
+                else:
+                    self.maze[column].append(1)
 
     def get_maze(self):
+        """Returns maze."""
         return self.maze
 
     def is_path(self, x, y):
-        """Returns if space defined by x and y is a path"""
+        """Returns if space defined by x and y is a path."""
         return self.maze[x][y]
-
-    def is_path_exist_check(self, x, y):
-        """Returns True if space defined by x and y is a path or is non-existent, False otherwise."""
-        if self.exist_test(x, y):
-            return self.maze[x][y]
-        else:
-            return True  # space is non-existent
 
     def make_path(self, x, y):
         """Makes the space defined by x and y a path."""
         self.maze[x][y] = 1
 
     def make_wall(self, x, y):
-        """Makes the space defined by x and y a wall"""
+        """Makes the space defined by x and y a wall."""
         self.maze[x][y] = 0
 
     @staticmethod
@@ -164,7 +181,7 @@ class Maze:
         touching_xy = []
         for d in directions:
             if self.exist_test(d[0], d[1]):
-                touching_xy += [d]
+                touching_xy.append(d)
 
         return touching_xy
 
@@ -221,7 +238,7 @@ class OrthogonalMaze:
 
         # generate random, but even x and y start location
         x, y = self.start_location()
-        self.cells += [(x, y)]
+        self.cells.append((x, y))
         self.maze.make_path(x, y)
 
         while self.cells:
@@ -241,7 +258,7 @@ class OrthogonalMaze:
                     self.maze.make_path(round_avg(x, dx), round_avg(y, dy))
                     # space (second one)
                     self.maze.make_path(dx, dy)
-                    self.cells += [(dx, dy)]
+                    self.cells.append((dx, dy))
                     index = None
                     break
 
@@ -302,7 +319,7 @@ class OrthogonalMaze:
         for space in spaces:
             x, y = space
             if self.maze.is_path(x, y):
-                path_spaces += [space]
+                path_spaces.append(space)
         return path_spaces
 
     def get(self):
@@ -311,7 +328,6 @@ class OrthogonalMaze:
 
     def display(self, illum_list=()):
         """Prints maze to terminal or console window."""
-
         # x-axis labels
         tens_digit = [str([b for b in range(10)][int(a / 10)]) for a in range(self.width)]
         disp = "    " + "".join(tens_digit).replace("0", " ") + "\n"
@@ -486,10 +502,10 @@ class KruskalsMaze(PassageCarverMaze, SetBasedMaze):
         for y in range(self.height):
             for x in range(self.width)[::2]:
                 if y & 1:
-                    walls += [(x, y)]
+                    walls.append((x, y))
                 else:
                     if x + 1 < self.width:
-                        walls += [(x + 1, y)]
+                        walls.append((x + 1, y))
 
         random.shuffle(walls)
 
@@ -573,7 +589,7 @@ class EllersMaze(PassageCarverMaze, SetBasedMaze):
             nodes_on_rt = [a for a in self.tree.get_nodes() if self.tree.child_of(a, root)] + [root]
             # drop AT LEAST one from each 'root'...
             for _ in nodes_on_rt:
-                dropped += [drop(random.choice(nodes_on_rt))]
+                dropped.append(drop(random.choice(nodes_on_rt)))
 
         # make the rest become roots
         for leaf in self.tree.get_nodes():
@@ -597,8 +613,8 @@ def main():
     # BinaryTreeMaze('NW', debug=True, width=33, height=23)
     # DepthFirstMaze(bias_direction='RANDOM', bias=.5, debug=True, width=99, height=45)
     # PrimsMaze(bias_direction='RANDOM', bias=.5, debug=True, width=99, height=45)
-    BreadthFirstMaze(bias_direction='RANDOM', bias=.5, debug=True, width=99, height=45)
-    # EllersMaze(bias=0.75, debug=True, width=99, height=45)
+    # BreadthFirstMaze(bias_direction='RANDOM', bias=.5, debug=True, width=99, height=45)
+    EllersMaze(bias=0.75, debug=True, width=99, height=45)
     # KruskalsMaze(debug=True, width=99, height=45)
 
 if __name__ == "__main__":
