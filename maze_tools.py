@@ -52,53 +52,59 @@ class Maze:
         return self.maze
 
     def is_path(self, x, y):
+        """Returns if space defined by x and y is a path"""
         return self.maze[x][y]
 
     def is_path_exist_check(self, x, y):
+        """Returns True if space defined by x and y is a path or is non-existent, False otherwise."""
         if self.exist_test(x, y):
             return self.maze[x][y]
         else:
-            return 1
+            return True  # space is non-existent
 
     def make_path(self, x, y):
+        """Makes the space defined by x and y a path."""
         self.maze[x][y] = 1
 
     def make_wall(self, x, y):
+        """Makes the space defined by x and y a wall"""
         self.maze[x][y] = 0
 
     @staticmethod
     def find_touching(x, y, dist=1):
-        """Finds the spaces that touch 'space' separated by 'dist'.
+        """Finds the spaces that touch x and y separated by 'dist'.
 
-            Args:
-                space - the space to base it off of
-                dist - distance from 'space' to check
+        Args:
+            x - (int) the x coordinate of the ordered pair to check
+            y - (int) the y coordinate of the ordered pair to check
+            dist - (int) distance from 'space' to check
 
-                    ---------------------
-                    |   |   | 2 |   |   |
-                    ---------------------
-                    |   |   | 1 |   |   |
-                    ---------------------
-                    | 2 | 1 | # | 1 | 2 |
-                    ---------------------
-                    |   |   | 1 |   |   |
-                    ---------------------
-                    |   |   | 2 |   |   |
-                    ---------------------
+                ---------------------
+                |   |   | 2 |   |   |
+                ---------------------
+                |   |   | 1 |   |   |
+                ---------------------
+                | 2 | 1 | # | 1 | 2 |
+                ---------------------
+                |   |   | 1 |   |   |
+                ---------------------
+                |   |   | 2 |   |   |
+                ---------------------
 
-            Returns:
-                a list of ordered pairs of touching spaces
-            """
+        Returns:
+            (list of tuples) ordered pairs of touching spaces
+        """
         return [(x, y + dist), (x - dist, y), (x + dist, y), (x, y - dist)]
 
     def exist_test(self, x, y):
         """Checks if ordered pair exists within maze size.
 
         Args:
-            xy - the ordered pair to check: <tuple> (x, y)
+            x - (int) the x coordinate of the ordered pair to check
+            y - (int) the y coordinate of the ordered pair to check
 
         Returns:
-            boolean exists
+            (boolean) exists
         """
         exists = False
         # check that x and y are within maze bounds
@@ -108,6 +114,16 @@ class Maze:
         return exists
 
     def find_touching_path_dirs(self, x, y, dist=1):
+        """Returns the directions in which there is a path adjacent to space (x, y), separated by given distance.
+
+        Args:
+            x - (int) the x coordinate of space to use as the reference point
+            y - (int) the y coordinate of space to use as the reference point
+            dist - (int) the distance from the reference to check if the space is a path
+
+        Returns:
+            (tuple of strings) all directions in which there is an adjacent path, sep. by dist (in order N, W, E, S)
+        """
         touching = self.find_touching(x, y, dist)
         dirs = ('N', 'W', 'E', 'S')
         directions = []
@@ -121,10 +137,11 @@ class Maze:
         return directions
 
     def find_exist_touching(self, x, y, dist=1):
-        """Finds the spaces that touch 'space' separated by 'dist'.
+        """Finds the spaces that touch x and y separated by 'dist'.
 
         Args:
-            space - the space to base it off of
+            x - the x coordinate of space to base it off of
+            y - the y coordinate of space to base it off of
             dist - distance from 'space' to check
 
                 ---------------------
