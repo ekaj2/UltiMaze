@@ -217,7 +217,9 @@ class OrthogonalMaze:
         self.width = width
         self.height = height
 
-        self.maze = Maze(width, height)
+        self.maze = None
+        self.init_maze()
+
         self.cells = []
         self.loops = 0
         self.estimated_loops = int((self.width * self.height * 1.25))
@@ -232,6 +234,9 @@ class OrthogonalMaze:
             self.bldr_prog.finish()
         else:
             self.display()
+
+    def init_maze(self):
+        self.maze = Maze(self.width, self.height)
 
     def make(self):
         """Makes a maze. Only a stub."""
@@ -491,7 +496,7 @@ class KruskalsMaze(PassageCarverMaze, SetBasedMaze):
         """
 
         # create the tree and carve out the 0's
-        self.tree = Tree()
+        self.tree = Tree()  # TODO - I don't think that this needs to be here! It was already called...
         for x in range(self.width)[::2]:
             for y in range(self.height)[::2]:
                 self.tree.new_node((x, y))
@@ -609,13 +614,92 @@ class EllersMaze(PassageCarverMaze, SetBasedMaze):
                 continue
 
 
+class RecursiveDivisionMaze(OrthogonalMaze):
+    def __init__(self, **kwargs):
+        self.rooms = []
+        super().__init__(**kwargs)
+
+    def init_maze(self):
+        self.maze = Maze(self.width, self.height, False)
+
+    def make(self):
+        self.rooms.append([])
+        for column in range(0, self.width):
+            for row in range(0, self.height):
+                self.rooms[0].append((column, row))
+
+        while self.rooms:
+            print("self.rooms:")
+            for i in self.rooms:
+                print(i)
+            # decide which rooms can be bisected
+            for i, room in enumerate(self.rooms):
+                if len(room) <= 1:
+                    self.rooms.pop(i)
+
+            # randomly choose one of the rooms
+            room = random.choice(self.rooms)
+            print("room:", room)
+            self.bisect_room(room)
+            # self.loop_update()
+
+    def bisect_room(self, room):
+        # find the room's width and height
+        # widths, heights = [(a[0], a[1]) for a in room]
+        widths = [a[0] for a in room]
+        heights = [a[1] for a in room]
+        variations = {max(widths) - min(widths): 0, max(heights) - min(heights): 1}  # 0 = x; 1 = y
+        centers = {0: round((max(widths) - min(widths)) / 2) + min(widths),
+                   1: round((max(heights) - min(heights)) / 2) + min(heights)}
+        ranges = {0: (min(widths), max(widths)),
+                  1: (min(heights), max(heights))}
+
+        # decide which direction to bisect...TODO - give user control with weira
+        direction = variations[max(variations)]  # if x < y it is the shorter distance so pick x
+        print("direction:", direction)
+
+        # decide the distance from center to bisect at...TODO - give user control with weira
+        distance = 0
+
+        # choose the row or column (-, +) from distance
+        row_or_col = random.choice((centers[direction] - distance, centers[direction] + distance))
+        print("row_or_col:", row_or_col)
+
+        # make these a wall
+        start, stop = ranges[direction]
+        print("start: {}, stop: {}".format(start, stop))
+        path = random.randint(start, stop - 1)
+        path += path & 1
+        print("path:", path)
+        for i in range(start, stop + 1):
+            if i == path:  # skips one to make it a path
+                continue
+            if direction:
+                self.maze.make_wall(i, row_or_col)
+            else:
+                self.maze.make_wall(row_or_col, i)
+
+        new_room = []
+        for space in room:
+            if space[direction] > row_or_col:
+                new_room.append(space)
+        self.display(room)
+
+        for i, r in enumerate(self.rooms):
+            r = [a for a in r if a not in new_room]
+            self.rooms[i] = r
+
+        self.rooms.append(new_room)
+
+
 def main():
     # BinaryTreeMaze('NW', debug=True, width=33, height=23)
     # DepthFirstMaze(bias_direction='RANDOM', bias=.5, debug=True, width=99, height=45)
     # PrimsMaze(bias_direction='RANDOM', bias=.5, debug=True, width=99, height=45)
     # BreadthFirstMaze(bias_direction='RANDOM', bias=.5, debug=True, width=99, height=45)
-    EllersMaze(bias=0.75, debug=True, width=99, height=45)
+    # EllersMaze(bias=0.75, debug=True, width=99, height=45)
     # KruskalsMaze(debug=True, width=99, height=45)
+    RecursiveDivisionMaze(debug=True, width=10, height=10)
 
 if __name__ == "__main__":
     main()
