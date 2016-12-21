@@ -65,11 +65,23 @@ def enum_previews_from_directory(self, context):
     pcoll = preview_collections["main"]
 
     # if the pcoll directory is the same as the one specified in the UI, do nothing to change the list
-    if mg.tiles_path == pcoll.previews_dir:
+    if mg.tiles_path == pcoll.previews_dir and pcoll.tile_mode == mg.tile_mode and not pcoll.scan:
         return pcoll.previews
 
     # otherwise, begin scanning the directory
     print("Scanning directory:", mg.tiles_path)
+
+    # clear everything out
+    for pcoll in preview_collections.values():
+        previews.remove(pcoll)
+    preview_collections.clear()
+
+    pcoll = previews.new()
+    pcoll.previews_dir = ""
+    pcoll.previews = ()
+    pcoll.tile_mode = ""
+    pcoll.scan = False  # this is used to force a directory scan
+    preview_collections["main"] = pcoll
 
     if mg.tiles_path and os.path.exists(mg.tiles_path):
         # scan the directory for png files
@@ -93,6 +105,8 @@ def enum_previews_from_directory(self, context):
 
     pcoll.previews = enum_items
     pcoll.previews_dir = mg.tiles_path
+    pcoll.tile_mode = mg.tile_mode
+    pcoll.scan = False
     return pcoll.previews
 
 
@@ -207,9 +221,11 @@ class MazeTilesPanelMG(Panel):
             if mg.tile_importer:
                 sub_box.prop(mg, 'tile_importer', toggle=True, icon='TRIA_DOWN')
 
-                split = sub_box.split(0.9, True)
-                split.prop(mg, 'tiles_path', text="")
-                split.operator('maze_gen.reset_tiles_path', icon='FILE_REFRESH', text="")
+                col = sub_box.column(align=True)
+                col.prop(mg, 'tiles_path', text="")
+                row = col.row(align=True)
+                row.operator('maze_gen.rescan_tiles_directory', icon='FILE_REFRESH', text="Force Rescan")
+                row.operator('maze_gen.load_original_tiles', icon='LIBRARY_DATA_BROKEN', text="Load Original")
 
                 sub_box.label("Select Tileset:")
                 col = sub_box.column(align=True)
@@ -676,10 +692,20 @@ class ShowReadmeMG(Operator):
         return {'FINISHED'}
 
 
-class ResetTilesPath(Operator):
-    bl_label = "Reset Tiles Path"
-    bl_idname = "maze_gen.reset_tiles_path"
-    bl_description = "Resets the path to use the original add-on directory."
+class RescanTilesPath(Operator):
+    bl_label = "Reload (Scan) Tiles Path"
+    bl_idname = "maze_gen.rescan_tiles_directory"
+    bl_description = "Forces a scan on the tile path directory."
+
+    def execute(self, context):
+        preview_collections["main"].scan = True
+        return {'FINISHED'}
+
+
+class LoadOriginalTilesPath(Operator):
+    bl_label = "Load Tiles Path"
+    bl_idname = "maze_gen.load_original_tiles"
+    bl_description = "Sets the tile path to the original add-on directory."
     bl_options = {'UNDO'}
 
     def execute(self, context):
@@ -1045,7 +1071,8 @@ classes = [MazeAddonPrefsMg,
            txt_img_converter.CreateImageFromListMG,
            # Specials
            EnableLayerMG,
-           ResetTilesPath,
+           RescanTilesPath,
+           LoadOriginalTilesPath,
            # Menus
            menus.TileImportMenu,
            menus.EnableLayerMenu,
@@ -1064,6 +1091,8 @@ def register():
     pcoll = previews.new()
     pcoll.previews_dir = ""
     pcoll.previews = ()
+    pcoll.tile_mode = ""
+    pcoll.scan = False  # this is used to force a directory scan
     preview_collections["main"] = pcoll
 
 
