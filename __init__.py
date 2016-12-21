@@ -1,7 +1,7 @@
 # TODO - LEGAL
 
 """
-===== MAZE GENERATOR [PRO] V.1.2 =====
+===== MAZE GENERATOR [PRO] V.2.1 =====
 This __init__ module handles some UI and also registers all
 classes and properties.
 """
@@ -24,7 +24,7 @@ from maze_gen import menus
 bl_info = {
     "name": "UltiMaze [PRO]",
     "author": "Jake Dube",
-    "version": (2, 0),
+    "version": (2, 1),
     "blender": (2, 76, 0),
     "location": "3D View > Tools > Maze Gen",
     "description": "Generates 3-dimensional mazes.",
