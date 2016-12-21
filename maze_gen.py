@@ -12,11 +12,11 @@ from maze_gen.time_display import TimeDisplay
 
 
 def morph_dimensions():
-    scene = bpy.context.scene
-    if not scene.mg_width & 1:
-        scene.mg_width += 1
-    if not scene.mg_height & 1:
-        scene.mg_height += 1
+    mg = bpy.context.scene.mg
+    if not mg.mg_width & 1:
+        mg.mg_width += 1
+    if not mg.mg_height & 1:
+        mg.mg_height += 1
 
 
 def make_maze(context):
@@ -35,11 +35,11 @@ def make_maze(context):
 
     messages = []
     message_lvls = []
-    scene = context.scene
+    mg = context.scene.mg
     time_start = time()
 
     # check that all needed tiles and lists have been provided
-    if scene.tile_based and scene.gen_3d_maze:
+    if mg.tile_based and mg.gen_3d_maze:
         tiles_exist = prep_manager.check_tiles_exist()
         # if missing tiles: terminate operator
         if not tiles_exist:
@@ -47,7 +47,7 @@ def make_maze(context):
             message_lvls += ['ERROR']
             return messages, message_lvls, 'CANCELLED'
 
-    if scene.use_list_maze:
+    if mg.use_list_maze:
         list_exist = prep_manager.check_list_exist()
         # if missing list: terminate operator
         if not list_exist:
@@ -72,21 +72,21 @@ def make_maze(context):
         message_lvls += ['ERROR']
         return messages, message_lvls, 'CANCELLED'
 
-    if scene.gen_3d_maze or scene.write_list_maze:
+    if mg.gen_3d_maze or mg.write_list_maze:
         if addon_prefs.only_odd_sizes:
             morph_dimensions()
-        if scene.use_list_maze:
+        if mg.use_list_maze:
             maze = txt_img_converter.convert_list_maze()
         else:
             maze = auto_layout_gen.make_list_maze()
 
-        if scene.allow_loops:
+        if mg.allow_loops:
             maze = auto_layout_gen.add_loops(maze)
 
         # 3D generation
-        if scene.gen_3d_maze:
+        if mg.gen_3d_maze:
             bpy.ops.object.select_all(action='DESELECT')
-            if scene.tile_based:
+            if mg.tile_based:
                 tile_maze_gen.make_tile_maze(maze)
             else:
                 Make3DMaze(maze)
@@ -101,7 +101,7 @@ def make_maze(context):
         message_lvls += ['INFO']
 
         # write list maze if enabled
-        if scene.write_list_maze:
+        if mg.write_list_maze:
             text_block_name = txt_img_converter.str_list_maze(maze)
             messages += ["See '" + str(text_block_name) + "' in the text editor"]
             message_lvls += ['INFO']

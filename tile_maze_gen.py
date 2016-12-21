@@ -83,7 +83,7 @@ def choose_tile(maze, x, y):
     # find out how many spaces that are touching are paths
     directions = maze.find_touching_path_dirs(x, y)
 
-    tm = bpy.context.scene.tile_mode
+    tm = bpy.context.scene.mg.tile_mode
 
     if tm == "TWELVE_TILES":
 
@@ -184,6 +184,7 @@ def make_tile_maze(maze):
             [(space in maze - x, y), is path, is walkable, active path], ...]
     """
     scene = bpy.context.scene
+    mg = scene.mg
     debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
 
     bpy.ops.object.select_all(action='DESELECT')
@@ -207,7 +208,7 @@ def make_tile_maze(maze):
         if obj.get("MazeGeneratorDoNotTouch"):
             obj.select = True
 
-    if scene.apply_modifiers:
+    if mg.apply_modifiers:
         for obj in bpy.context.selected_objects:
             scene.objects.active = obj
             mod_list = obj.modifiers.values()
@@ -217,7 +218,7 @@ def make_tile_maze(maze):
     else:
         scene.objects.active = bpy.context.object
 
-    if scene.merge_objects:
+    if mg.merge_objects:
         bpy.ops.object.join()
 
         # get 3D Cursor location
@@ -238,7 +239,7 @@ def make_tile_maze(maze):
                                        scale=False)
 
         # remove doubles
-        if bpy.context.scene.remove_doubles_merge:
+        if mg.remove_doubles_merge:
             bpy.ops.object.editmode_toggle()
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.remove_doubles()

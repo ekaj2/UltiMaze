@@ -8,7 +8,7 @@ class TileImportMenu(bpy.types.Menu):
     bl_label = "Import Tile Set"
 
     def draw(self, context):
-        scene = context.scene
+        mg = context.scene.mg
         addon_prefs = context.user_preferences.addons['maze_gen'].preferences
 
         # get file names
@@ -19,9 +19,9 @@ class TileImportMenu(bpy.types.Menu):
             except FileNotFoundError:
                 print("Invalid custom tile path!")
 
-        if scene.tile_mode == "TWELVE_TILES":
+        if mg.tile_mode == "TWELVE_TILES":
             tile_blends = [a for a in files_list if a[-6:] == '.blend' and a[:-6][-1:] == "2"]
-        elif scene.tile_mode == "SIX_TILES":
+        elif mg.tile_mode == "SIX_TILES":
             tile_blends = [a for a in files_list if a[-6:] == '.blend' and a[:-6][-1:] == "6"]
         layout = self.layout
         for tileset in tile_blends:

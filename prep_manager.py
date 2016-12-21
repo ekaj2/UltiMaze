@@ -19,30 +19,30 @@ def check_tiles_exist():
         True if all tile slots are filled, otherwise, False
     """
 
-    scene = bpy.context.scene
+    mg = bpy.context.scene.mg
 
     tiles_exist = True
-    tiles_12 = [(scene.wall_4_sided, "scene.wall_4_sided"),
-               (scene.wall_3_sided, "scene.wall_3_sided"),
-               (scene.wall_2_sided, "scene.wall_2_sided"),
-               (scene.wall_1_sided, "scene.wall_1_sided"),
-               (scene.wall_0_sided, "scene.wall_0_sided"),
-               (scene.wall_corner, "scene.wall_corner"),
-               (scene.floor_4_sided, "scene.floor_4_sided"),
-               (scene.floor_3_sided, "scene.floor_3_sided"),
-               (scene.floor_2_sided, "scene.floor_2_sided"),
-               (scene.floor_1_sided, "scene.floor_1_sided"),
-               (scene.floor_0_sided, "scene.floor_0_sided"),
-               (scene.floor_corner, "scene.floor_corner")]
+    tiles_12 = [(mg.wall_4_sided, "mg.wall_4_sided"),
+               (mg.wall_3_sided, "mg.wall_3_sided"),
+               (mg.wall_2_sided, "mg.wall_2_sided"),
+               (mg.wall_1_sided, "mg.wall_1_sided"),
+               (mg.wall_0_sided, "mg.wall_0_sided"),
+               (mg.wall_corner, "mg.wall_corner"),
+               (mg.floor_4_sided, "mg.floor_4_sided"),
+               (mg.floor_3_sided, "mg.floor_3_sided"),
+               (mg.floor_2_sided, "mg.floor_2_sided"),
+               (mg.floor_1_sided, "mg.floor_1_sided"),
+               (mg.floor_0_sided, "mg.floor_0_sided"),
+               (mg.floor_corner, "mg.floor_corner")]
 
-    tiles_6 = [(scene.four_way, "scene.four_way"),
-               (scene.t_int, "scene.t_int"),
-               (scene.turn, "scene.turn"),
-               (scene.dead_end, "scene.dead_end"),
-               (scene.straight, "scene.straight"),
-               (scene.no_path, "scene.no_path")]
+    tiles_6 = [(mg.four_way, "mg.four_way"),
+               (mg.t_int, "mg.t_int"),
+               (mg.turn, "mg.turn"),
+               (mg.dead_end, "mg.dead_end"),
+               (mg.straight, "mg.straight"),
+               (mg.no_path, "mg.no_path")]
 
-    if bpy.context.scene.tile_mode == 'SIX_TILES':
+    if mg.tile_mode == 'SIX_TILES':
         for tile in tiles_6:
             try:
                 object_type = bpy.data.objects[tile[0]].type
@@ -53,7 +53,7 @@ def check_tiles_exist():
                 tiles_exist = False
                 exec(tile[1] + "= 'MISSING TILE'")
 
-    elif bpy.context.scene.tile_mode == 'TWELVE_TILES':
+    elif mg.tile_mode == 'TWELVE_TILES':
         for tile in tiles_12:
             try:
                 object_type = bpy.data.objects[tile[0]].type
@@ -76,7 +76,7 @@ def check_list_exist():
     list_exist = True
 
     try:
-        bpy.data.texts[bpy.context.scene.list_maze]
+        bpy.data.texts[bpy.context.scene.mg.list_maze]
     except KeyError:
         list_exist = False
 

@@ -1,4 +1,4 @@
-IN_BLENDER = False
+IN_BLENDER = True
 
 import random
 import logging

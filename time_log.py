@@ -31,8 +31,7 @@ def log_time(elapsed_time):
     # delete the last one that gets created because of extra ";" at end
     del log_list[len(log_list) - 1]
 
-    log_list += [str(bpy.context.scene.mg_width *
-                     bpy.context.scene.mg_height) + "," + str(elapsed_time)]
+    log_list += [str(bpy.context.scene.mg.mg_width * bpy.context.scene.mg.mg_height) + "," + str(elapsed_time)]
 
     # convert into normal list
     i = 0
@@ -95,8 +94,8 @@ class EstimateTimeMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        x_dim = context.scene.mg_width
-        y_dim = context.scene.mg_height
+        x_dim = context.scene.mg.mg_width
+        y_dim = context.scene.mg.mg_height
         estimated_loops = round((x_dim * y_dim * 1.25))
         self.report({'INFO'}, "Estimated Loops: " + str(estimated_loops) +
                     " loops")

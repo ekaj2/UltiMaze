@@ -23,7 +23,7 @@ def add_loops(maze):
     Returns:
         updated maze
     """
-    chance = bpy.context.scene.loops_chance
+    chance = bpy.context.scene.mg.loops_chance
     for row in range(maze.width):
         for column in range(maze.height):
             directions = maze.find_touching_path_dirs(row, column)
@@ -43,48 +43,49 @@ def make_list_maze():
             [(space in maze - x, y), is path], ...]
     """
     scene = bpy.context.scene
-    x_dim = scene.mg_width
-    y_dim = scene.mg_height
+    mg = scene.mg
+    x_dim = mg.mg_width
+    y_dim = mg.mg_height
     debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
 
-    if scene.algorithm == 'BREADTH_FIRST':
+    if mg.algorithm == 'BREADTH_FIRST':
         m = maze_tools.BreadthFirstMaze(debug=debug,
                                         width=x_dim,
                                         height=y_dim,
-                                        bias_direction=scene.bias_direction,
-                                        bias=scene.bias)
+                                        bias_direction=mg.bias_direction,
+                                        bias=mg.bias)
 
-    elif scene.algorithm == 'DEPTH_FIRST':
+    elif mg.algorithm == 'DEPTH_FIRST':
         m = maze_tools.DepthFirstMaze(debug=debug,
                                       width=x_dim,
                                       height=y_dim,
-                                      bias_direction=scene.bias_direction,
-                                      bias=scene.bias)
+                                      bias_direction=mg.bias_direction,
+                                      bias=mg.bias)
 
-    elif scene.algorithm == 'PRIMS':
+    elif mg.algorithm == 'PRIMS':
         m = maze_tools.PrimsMaze(debug=debug,
                                  width=x_dim,
                                  height=y_dim,
-                                 bias_direction=scene.bias_direction,
-                                 bias=scene.bias)
+                                 bias_direction=mg.bias_direction,
+                                 bias=mg.bias)
 
-    elif scene.algorithm == 'BINARY_TREE':
+    elif mg.algorithm == 'BINARY_TREE':
         m = maze_tools.BinaryTreeMaze(debug=debug,
                                       width=x_dim,
                                       height=y_dim,
-                                      directions=scene.binary_dir,
-                                      tileable=scene.tileable)
+                                      directions=mg.binary_dir,
+                                      tileable=mg.tileable)
 
-    elif scene.algorithm == 'KRUSKALS':
+    elif mg.algorithm == 'KRUSKALS':
         m = maze_tools.KruskalsMaze(debug=debug,
                                     width=x_dim,
                                     height=y_dim)
 
-    elif scene.algorithm == 'ELLERS':
+    elif mg.algorithm == 'ELLERS':
         m = maze_tools.EllersMaze(debug=debug,
                                   width=x_dim,
                                   height=y_dim,
-                                  bias=scene.bias)
+                                  bias=mg.bias)
 
     maze = m.get()
 
