@@ -12,7 +12,7 @@ import subprocess
 import bpy
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty, PointerProperty
 from bpy.types import Operator, Panel, Scene, AddonPreferences, PropertyGroup
-from bpy.utils import register_class, unregister_class
+from bpy.utils import register_class, unregister_class, previews
 
 from maze_gen import maze_gen
 from maze_gen import batch_gen
@@ -50,6 +50,42 @@ def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
     for obj in data_to.objects:
         if obj is not None:
             scene.objects.link(obj)
+
+
+def enum_previews_from_directory(self, context):
+    """EnumProperty callback for building a list of enum items"""
+    enum_items = []
+    mg = context.scene.mg
+
+    # return an empty list if there is no context
+    if context is None:
+        return enum_items
+
+    # get the preview collection...defined in register()
+    pcoll = preview_collections["main"]
+
+    # if the pcoll directory is the same as the one specified in the UI, do nothing to change the list
+    if mg.tiles_path == pcoll.previews_dir:
+        return pcoll.previews
+
+    # otherwise, begin scanning the directory
+    print("Scanning directory:", mg.tiles_path)
+
+    if mg.tiles_path and os.path.exists(mg.tiles_path):
+        # scan the directory for png files
+        i = 0
+        for filename in os.listdir(mg.tiles_path):
+            if filename.lower().endswith(".png"):
+                name = filename[:-4]
+                # generates a thumbnail preview for a file
+                filepath = os.path.join(mg.tiles_path, filename)
+                thumb = pcoll.load(name, filepath, 'IMAGE')
+                enum_items.append((name, name, "", thumb.icon_id, i))
+                i += 1
+
+    pcoll.previews = enum_items
+    pcoll.previews_dir = mg.tiles_path
+    return pcoll.previews
 
 
 # UI Classes
@@ -158,6 +194,17 @@ class MazeTilesPanelMG(Panel):
 
             # generate demo tiles
             sub_box = box.box()
+
+            row = sub_box.row()
+            row.prop(mg, "show_icon_name")
+            row.prop(mg, "icon_scale")
+
+            sub_box.prop(mg, 'tiles_path')
+
+            col = sub_box.column(align=True)
+            col.template_icon_view(mg, 'tiles', mg.show_icon_name, mg.icon_scale)
+            col.prop(mg, 'tiles', text="")
+
             sub_box.menu('maze_gen.tile_import_menu', text="Import Tile Set")
 
             sub_box = box.box()
@@ -815,6 +862,16 @@ class MazeGenPropertyGroup(PropertyGroup):
         name="apply_modifiers",
         default=True)
 
+    tiles_path = StringProperty(
+        name="Tiles Folder",
+        subtype='DIR_PATH',
+        default=os.path.join(os.path.dirname(__file__), "Tiles"))
+
+    tiles = EnumProperty(name="Tile", items=enum_previews_from_directory)
+
+    show_icon_name = BoolProperty(name="Show Names", default=False)
+    icon_scale = FloatProperty(name="Icon Scale", min=1, max=10, default=5.0)
+
     # ----------------------- List Settings ---------------------------
 
     list_maze = StringProperty(
@@ -976,6 +1033,8 @@ classes = [MazeAddonPrefsMg,
            menus.EnableLayerMenu,
            menus.SaveUserPrefsMenu]
 
+preview_collections = {}
+
 
 def register():
     for i in classes:
@@ -984,12 +1043,21 @@ def register():
 
     Scene.mg = PointerProperty(type=MazeGenPropertyGroup)
 
+    pcoll = previews.new()
+    pcoll.previews_dir = ""
+    pcoll.previews = ()
+    preview_collections["main"] = pcoll
+
 
 def unregister():
     for i in classes:
         unregister_class(i)
 
     del Scene.mg
+
+    for pcoll in preview_collections.values():
+        previews.remove(pcoll)
+    preview_collections.clear()
 
 
 if __name__ == "__main__":
