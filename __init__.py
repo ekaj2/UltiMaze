@@ -76,8 +76,15 @@ def enum_previews_from_directory(self, context):
         i = 0
         filenames = os.listdir(mg.tiles_path)
         for filename in filenames:
+            # this would be changing "demo.png" to "demo"
             name = filename[:-4]
             if filename.lower().endswith(".png") and any([a == name + ".blend" for a in filenames]):
+                # skip anything without 2 ending for 12 tiles, anything without 6 ending for 6 tiles
+                if mg.tile_mode == "TWELVE_TILES" and not name.endswith("2"):
+                    continue
+                elif mg.tile_mode == "SIX_TILES" and not name.endswith("6"):
+                    continue
+
                 # generates a thumbnail preview for a file
                 filepath = os.path.join(mg.tiles_path, filename)
                 thumb = pcoll.load(name, filepath, 'IMAGE')
@@ -199,9 +206,6 @@ class MazeTilesPanelMG(Panel):
 
             if mg.tile_importer:
                 sub_box.prop(mg, 'tile_importer', toggle=True, icon='TRIA_DOWN')
-                row = sub_box.row()
-                row.prop(mg, "show_icon_name")
-                row.prop(mg, "icon_scale")
 
                 split = sub_box.split(0.9, True)
                 split.prop(mg, 'tiles_path', text="")
