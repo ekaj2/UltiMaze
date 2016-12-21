@@ -1,7 +1,7 @@
 # TODO - LEGAL
 
 """
-===== MAZE GENERATOR [PRO] V.2.0 =====
+===== MAZE GENERATOR [PRO] V.2.1 =====
 This __init__ module handles some UI and also registers all
 classes and properties.
 """
@@ -24,7 +24,7 @@ from maze_gen import menus
 bl_info = {
     "name": "UltiMaze [PRO]",
     "author": "Jake Dube",
-    "version": (2, 0),
+    "version": (2, 1),
     "blender": (2, 76, 0),
     "location": "3D View > Tools > Maze Gen",
     "description": "Generates 3-dimensional mazes.",
@@ -158,9 +158,9 @@ class MazeTilesPanelMG(Panel):
             sub_box.menu('maze_gen.tile_import_menu', text="Import Tile Set")
 
             sub_box = box.box()
+            sub_box.prop(scene, 'apply_modifiers', text="Apply Modifiers")
             sub_box.prop(scene, 'merge_objects', text="Merge Objects")
             if scene.merge_objects:
-                sub_box.prop(scene, 'apply_modifiers', text="Apply Modifiers")
                 sub_box.prop(scene, 'remove_doubles_merge', text="Remove Doubles")
 
             row = layout.row()
@@ -535,6 +535,7 @@ class MazeAddonPrefsMg(AddonPreferences):
             row.prop(self, 'only_odd_sizes')
             row.prop(self, 'debug_mode', text="Debug")
 
+
 # Text Editor
 class MazeGeneratorTextToolsPanelMG(Panel):
     bl_label = "Maze Generator Tools"
@@ -600,14 +601,12 @@ class ShowReadmeMG(Operator):
     def execute(self, context):
         addon_prefs = context.user_preferences.addons['maze_gen'].preferences
 
-        my_directory = os.path.join(os.path.dirname(__file__), "help")
-        my_filepath = os.path.join(my_directory, "Readme.txt")
-
+        readme_path = os.path.join(os.path.dirname(__file__), "help", "Readme.txt")
         if not addon_prefs.open_help_outbldr:
-            bpy.ops.text.open(filepath=my_filepath)  # TODO - Open in new blender window with readme
+            bpy.ops.text.open(filepath=readme_path)
             self.report({'INFO'}, "See readme in the text editor")
         else:
-            open_file(my_filepath)
+            open_file(readme_path)
         
         return {'FINISHED'}
 
@@ -624,17 +623,16 @@ class DemoTilesImportMG(Operator):
     def execute(self, context):
         addon_prefs = context.user_preferences.addons['maze_gen'].preferences
 
-        my_tiles_dir = os.path.join(os.path.dirname(__file__), "tiles")
-        my_filepath = os.path.join(my_tiles_dir, self.filename)
-        if not os.access(my_filepath, os.R_OK) and addon_prefs.use_custom_tile_path:
-            my_filepath = os.path.join(
-                addon_prefs.custom_tile_path,
-                self.filename)
-            if not os.access(my_filepath, os.R_OK):
+        # first try to find the file in the default location (in the addon's folder)
+        tiles_path = os.path.join(os.path.dirname(__file__), "tiles", self.filename)
+        if not os.access(tiles_path, os.R_OK) and addon_prefs.use_custom_tile_path:
+            # otherwise try to find it in the custom tile path
+            tiles_path = os.path.join(addon_prefs.custom_tile_path, self.filename)
+            if not os.access(tiles_path, os.R_OK):
                 self.report({'ERROR'}, "The selected tile set could not be imported! Most likely your custom tile path is not set to a valid path.")
                 return {'CANCELLED'}
 
-        append_objs(my_filepath)
+        append_objs(tiles_path)
 
         bpy.ops.object.select_all(action='DESELECT')
 
