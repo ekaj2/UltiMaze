@@ -74,9 +74,10 @@ def enum_previews_from_directory(self, context):
     if mg.tiles_path and os.path.exists(mg.tiles_path):
         # scan the directory for png files
         i = 0
-        for filename in os.listdir(mg.tiles_path):
-            if filename.lower().endswith(".png"):
-                name = filename[:-4]
+        filenames = os.listdir(mg.tiles_path)
+        for filename in filenames:
+            name = filename[:-4]
+            if filename.lower().endswith(".png") and any([a == name + ".blend" for a in filenames]):
                 # generates a thumbnail preview for a file
                 filepath = os.path.join(mg.tiles_path, filename)
                 thumb = pcoll.load(name, filepath, 'IMAGE')
@@ -181,6 +182,7 @@ class MazeTilesPanelMG(Panel):
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
         scene = context.scene
         mg = scene.mg
         layout = self.layout
@@ -195,17 +197,26 @@ class MazeTilesPanelMG(Panel):
             # generate demo tiles
             sub_box = box.box()
 
-            row = sub_box.row()
-            row.prop(mg, "show_icon_name")
-            row.prop(mg, "icon_scale")
+            if mg.tile_importer:
+                sub_box.prop(mg, 'tile_importer', toggle=True, icon='TRIA_DOWN')
+                row = sub_box.row()
+                row.prop(mg, "show_icon_name")
+                row.prop(mg, "icon_scale")
 
-            sub_box.prop(mg, 'tiles_path')
+                split = sub_box.split(0.9, True)
+                split.prop(mg, 'tiles_path', text="")
+                split.operator('maze_gen.reset_tiles_path', icon='FILE_REFRESH', text="")
 
-            col = sub_box.column(align=True)
-            col.template_icon_view(mg, 'tiles', mg.show_icon_name, mg.icon_scale)
-            col.prop(mg, 'tiles', text="")
+                sub_box.label("Select Tileset:")
+                col = sub_box.column(align=True)
+                if addon_prefs.use_large_menus:
+                    col.template_icon_view(mg, 'tiles', addon_prefs.show_icon_name, addon_prefs.icon_scale)
+                else:
+                    col.prop(mg, 'tiles', text="")
 
-            sub_box.menu('maze_gen.tile_import_menu', text="Import Tile Set")
+                sub_box.operator('maze_gen.import_tileset')
+            else:
+                sub_box.prop(mg, 'tile_importer', toggle=True, icon='TRIA_RIGHT')
 
             sub_box = box.box()
             sub_box.prop(mg, 'apply_modifiers', text="Apply Modifiers")
@@ -444,7 +455,7 @@ class MazeAddonPrefsMg(AddonPreferences):
     bl_idname = __name__
 
     open_help_outbldr = BoolProperty(
-        name="open_help_outbldr",
+        name="Open Help Outside Blender",
         default=True,
         description="Open help files outside of Blender instead of in Blender's text editor and image editor. Will open all help files as if you double clicked them in an explorer window (only available on Windows)."
     )
@@ -454,31 +465,20 @@ class MazeAddonPrefsMg(AddonPreferences):
         default=False,
         description="Only for development! Do not touch!")
 
-    use_custom_tile_path = BoolProperty(
-        name="use_custom_tile_path",
-        default=False,
-        description="Use custom tile path")
-
-    custom_tile_path = StringProperty(
-        name="custom_tile_path",
-        default=os.getcwd(),
-        description="Custom tile path",
-        subtype='FILE_PATH')
-
     always_save_prior = BoolProperty(
-        name="always_save_prior",
+        name="Save .blend File",
         default=True,
         description="Always save .blend file before executing" +
                     "time-consuming operations")
 
     save_all_images = BoolProperty(
-        name="save_all_images",
+        name="Save Images",
         default=True,
         description="Always save images before executing" +
                     "time-consuming operations")
 
     save_all_texts = BoolProperty(
-        name="save_all_texts",
+        name="Save Texts",
         default=True,
         description="Always save texts before executing" +
                     "time-consuming operations")
@@ -500,23 +500,31 @@ class MazeAddonPrefsMg(AddonPreferences):
         description="WARNING: Only for advanced users! Don't go in here!"
     )
 
+    use_large_menus = BoolProperty(
+        name="Use Large Menus Where Applicable",
+        default=True,
+        description="Some menus support loading large icons; enabling this will show this in the UI where possible."
+    )
+
+    show_icon_name = BoolProperty(name="Still Show Names In Menus", default=False)
+    icon_scale = FloatProperty(name="Icon Size", min=1, max=10, default=5.0)
+
     def draw(self, context):
         layout = self.layout
 
-        col = layout.column()
-        row = col.row()
-        row.prop(self, 'open_help_outbldr', text="Open Help Outside Blender")
-        col.row()
-        box = col.box()
-        box.prop(self, 'use_custom_tile_path', text="Use Custom Path")
-        row = box.row()
-        row.prop(self, 'custom_tile_path', text="")
-        col.row()
-        col.prop(self, 'always_save_prior', text="Save .blend File")
-        col = layout.row()
-        col.prop(self, 'save_all_images', text="Save Images")
-        col = layout.row()
-        col.prop(self, 'save_all_texts', text="Save Texts")
+        layout.prop(self, 'open_help_outbldr')
+        layout.separator()
+
+        box = layout.box()
+        box.prop(self, 'always_save_prior')
+        box.prop(self, 'save_all_images')
+        box.prop(self, 'save_all_texts')
+
+        box = layout.box()
+        box.prop(self, 'use_large_menus')
+        if self.use_large_menus:
+            box.prop(self, 'show_icon_name')
+            box.prop(self, 'icon_scale', slider=True)
 
         layout.row()
         # quick help box
@@ -664,32 +672,38 @@ class ShowReadmeMG(Operator):
         return {'FINISHED'}
 
 
+class ResetTilesPath(Operator):
+    bl_label = "Reset Tiles Path"
+    bl_idname = "maze_gen.reset_tiles_path"
+    bl_description = "Resets the path to use the original add-on directory."
+    bl_options = {'UNDO'}
+
+    def execute(self, context):
+        mg = context.scene.mg
+        mg.tiles_path = os.path.join(os.path.dirname(__file__), "tiles")
+        return {'FINISHED'}
+
+
 # demo tile objects generation
 class DemoTilesImportMG(Operator):
-    bl_label = "Generate Tiles"
+    bl_label = "Import Tileset"
     bl_idname = "maze_gen.import_tileset"
     bl_description = "Imports tiles."
     bl_options = {'UNDO'}
 
-    filename = StringProperty(name="File Name")
-
     def execute(self, context):
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+        mg = context.scene.mg
 
-        # first try to find the file in the default location (in the addon's folder)
-        tiles_path = os.path.join(os.path.dirname(__file__), "tiles", self.filename)
-        if not os.access(tiles_path, os.R_OK) and addon_prefs.use_custom_tile_path:
-            # otherwise try to find it in the custom tile path
-            tiles_path = os.path.join(addon_prefs.custom_tile_path, self.filename)
-            if not os.access(tiles_path, os.R_OK):
-                self.report({'ERROR'}, "The selected tile set could not be imported! Most likely your custom tile path is not set to a valid path.")
-                return {'CANCELLED'}
+        path = os.path.join(mg.tiles_path, mg.tiles + ".blend")
 
-        append_objs(tiles_path)
+        if os.access(path, os.R_OK):
+            append_objs(path)
+            bpy.ops.object.select_all(action='DESELECT')
+            return {'FINISHED'}
 
-        bpy.ops.object.select_all(action='DESELECT')
-
-        return {'FINISHED'}
+        else:
+            self.report({'ERROR'}, "The selected tile set could not be imported! \nPlease send a bug report; this should never happen.")
+            return {'CANCELLED'}
 
 
 class EnableLayerMG(Operator):
@@ -865,12 +879,11 @@ class MazeGenPropertyGroup(PropertyGroup):
     tiles_path = StringProperty(
         name="Tiles Folder",
         subtype='DIR_PATH',
-        default=os.path.join(os.path.dirname(__file__), "Tiles"))
+        default=os.path.join(os.path.dirname(__file__), "tiles"))
 
     tiles = EnumProperty(name="Tile", items=enum_previews_from_directory)
 
-    show_icon_name = BoolProperty(name="Show Names", default=False)
-    icon_scale = FloatProperty(name="Icon Scale", min=1, max=10, default=5.0)
+    tile_importer = BoolProperty(name="Tile Importer", default=False)
 
     # ----------------------- List Settings ---------------------------
 
@@ -1028,6 +1041,7 @@ classes = [MazeAddonPrefsMg,
            txt_img_converter.CreateImageFromListMG,
            # Specials
            EnableLayerMG,
+           ResetTilesPath,
            # Menus
            menus.TileImportMenu,
            menus.EnableLayerMenu,
