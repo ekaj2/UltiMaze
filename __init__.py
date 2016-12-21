@@ -1,7 +1,7 @@
 # TODO - LEGAL
 
 """
-===== MAZE GENERATOR [PRO] V.1.2 =====
+===== MAZE GENERATOR [PRO] V.2.0 =====
 This __init__ module handles some UI and also registers all
 classes and properties.
 """
