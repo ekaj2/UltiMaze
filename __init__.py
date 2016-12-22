@@ -52,6 +52,22 @@ def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
             scene.objects.link(obj)
 
 
+def clear_preview_collections(pcs):
+    # clear everything out
+    for pcoll in pcs.values():
+        previews.remove(pcoll)
+    pcs.clear()
+
+
+def set_main_pcoll(pcs):
+    pcoll = previews.new()
+    pcoll.previews_dir = ""
+    pcoll.previews = ()
+    pcoll.tile_mode = ""
+    pcoll.scan = False  # this is used to force a directory scan
+    pcs["main"] = pcoll
+
+
 def enum_previews_from_directory(self, context):
     """EnumProperty callback for building a list of enum items"""
     enum_items = []
@@ -71,17 +87,8 @@ def enum_previews_from_directory(self, context):
     # otherwise, begin scanning the directory
     print("Scanning directory:", mg.tiles_path)
 
-    # clear everything out
-    for pcoll in preview_collections.values():
-        previews.remove(pcoll)
-    preview_collections.clear()
-
-    pcoll = previews.new()
-    pcoll.previews_dir = ""
-    pcoll.previews = ()
-    pcoll.tile_mode = ""
-    pcoll.scan = False  # this is used to force a directory scan
-    preview_collections["main"] = pcoll
+    clear_preview_collections(preview_collections)
+    set_main_pcoll(preview_collections)
 
     if mg.tiles_path and os.path.exists(mg.tiles_path):
         # scan the directory for png files
@@ -1088,12 +1095,7 @@ def register():
 
     Scene.mg = PointerProperty(type=MazeGenPropertyGroup)
 
-    pcoll = previews.new()
-    pcoll.previews_dir = ""
-    pcoll.previews = ()
-    pcoll.tile_mode = ""
-    pcoll.scan = False  # this is used to force a directory scan
-    preview_collections["main"] = pcoll
+    set_main_pcoll(preview_collections)
 
 
 def unregister():
@@ -1102,9 +1104,7 @@ def unregister():
 
     del Scene.mg
 
-    for pcoll in preview_collections.values():
-        previews.remove(pcoll)
-    preview_collections.clear()
+    clear_preview_collections(preview_collections)
 
 
 if __name__ == "__main__":
