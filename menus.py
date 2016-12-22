@@ -3,29 +3,30 @@ import os
 import bpy
 
 
-class TileImportMenu(bpy.types.Menu):
-    bl_idname = "maze_gen.tile_import_menu"
-    bl_label = "Import Tile Set"
+class TileRenderMenu(bpy.types.Menu):
+    bl_idname = "maze_gen.tile_render_menu"
+    bl_label = "Render Previews"
 
     def draw(self, context):
         mg = context.scene.mg
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
 
-        # get file names
-        files_list = os.listdir(os.path.join(os.path.dirname(__file__), "tiles"))
-        if addon_prefs.use_custom_tile_path:
-            try:
-                files_list += os.listdir(addon_prefs.custom_tile_path)
-            except FileNotFoundError:
-                print("Invalid custom tile path!")
+        # get tile blend file names
+        files_list = os.listdir(mg.tiles_path)
+        tile_blends = [a[:-6] for a in files_list if a.endswith('.blend') and a[-7] in ("2", "6")]
+        tile_pngs = [a[:-4] for a in files_list if a.endswith('.png') and a[:-4] in tile_blends]
 
-        if mg.tile_mode == "TWELVE_TILES":
-            tile_blends = [a for a in files_list if a[-6:] == '.blend' and a[:-6][-1:] == "2"]
-        elif mg.tile_mode == "SIX_TILES":
-            tile_blends = [a for a in files_list if a[-6:] == '.blend' and a[:-6][-1:] == "6"]
+        # user interface
         layout = self.layout
+
         for tileset in tile_blends:
-            layout.operator("maze_gen.import_tileset", text=tileset[:-7]).filename = tileset
+            has_png = True
+            t = tileset
+            if tileset not in tile_pngs:
+                t = "* " + t  # show an asterisk if the file doesn't have a corresponding png
+                has_png = False
+            button = layout.operator("maze_gen.render_tileset", text=t)
+            button.filename = os.path.join(mg.tiles_path, tileset + ".blend")
+            button.has_png = has_png
 
 
 class EnableLayerMenu(bpy.types.Menu):

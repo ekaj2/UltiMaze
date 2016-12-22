@@ -20,6 +20,7 @@ from maze_gen import text_tools
 from maze_gen import time_log
 from maze_gen import txt_img_converter
 from maze_gen import menus
+from maze_gen import render_kit
 
 bl_info = {
     "name": "UltiMaze [PRO]",
@@ -233,6 +234,7 @@ class MazeTilesPanelMG(Panel):
                 row = col.row(align=True)
                 row.operator('maze_gen.rescan_tiles_directory', icon='FILE_REFRESH', text="Force Rescan")
                 row.operator('maze_gen.load_original_tiles', icon='LIBRARY_DATA_BROKEN', text="Load Original")
+                row.menu('maze_gen.tile_render_menu')
 
                 sub_box.label("Select Tileset:")
                 col = sub_box.column(align=True)
@@ -1053,6 +1055,7 @@ classes = [MazeAddonPrefsMg,
            ShowHelpDiagramMG,
            ShowReadmeMG,
            MazeGenPropertyGroup,
+           render_kit.RenderTileSet,
            # Batch Generation
            batch_gen.BatchGenerateMazeMG,
            batch_gen.StoreBatchMazeMG,
@@ -1081,7 +1084,7 @@ classes = [MazeAddonPrefsMg,
            RescanTilesPath,
            LoadOriginalTilesPath,
            # Menus
-           menus.TileImportMenu,
+           menus.TileRenderMenu,
            menus.EnableLayerMenu,
            menus.SaveUserPrefsMenu]
 
