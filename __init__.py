@@ -21,6 +21,7 @@ from maze_gen import time_log
 from maze_gen import txt_img_converter
 from maze_gen import menus
 from maze_gen import render_kit
+from maze_gen import utils
 
 bl_info = {
     "name": "UltiMaze [PRO]",
@@ -34,23 +35,6 @@ bl_info = {
     "wiki_url": "",
     "category": "3D View",
 }
-
-
-def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
-    """Appends all objects into scene from .blend if they meet argument criteria."""
-
-    scene = bpy.context.scene
-
-    with bpy.data.libraries.load(path) as (data_from, data_to):
-        if not case_sens:
-            data_to.objects = [name for name in data_from.objects if
-                               name.lower().startswith(prefix.lower()) and name.lower().endswith(suffix.lower()) and ignore.upper() not in name.upper()]
-        else:
-            data_to.objects = [name for name in data_from.objects if name.startswith(prefix) and name.endswith(suffix) and ignore.upper() not in name.upper()]
-
-    for obj in data_to.objects:
-        if obj is not None:
-            scene.objects.link(obj)
 
 
 def clear_preview_collections(pcs):
@@ -234,7 +218,7 @@ class MazeTilesPanelMG(Panel):
                 row = col.row(align=True)
                 row.operator('maze_gen.rescan_tiles_directory', icon='FILE_REFRESH', text="Force Rescan")
                 row.operator('maze_gen.load_original_tiles', icon='LIBRARY_DATA_BROKEN', text="Load Original")
-                row.menu('maze_gen.tile_render_menu')
+                col.menu('maze_gen.tile_render_menu')
 
                 sub_box.label("Select Tileset:")
                 col = sub_box.column(align=True)
@@ -243,7 +227,9 @@ class MazeTilesPanelMG(Panel):
                 else:
                     col.prop(mg, 'tiles', text="")
 
-                sub_box.operator('maze_gen.import_tileset')
+                row = sub_box.row()
+                row.scale_y = 1.5
+                row.operator('maze_gen.import_tileset', icon='UV_FACESEL')
             else:
                 sub_box.prop(mg, 'tile_importer', toggle=True, icon='TRIA_RIGHT')
 
@@ -717,6 +703,9 @@ class LoadOriginalTilesPath(Operator):
     bl_description = "Sets the tile path to the original add-on directory."
     bl_options = {'UNDO'}
 
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
     def execute(self, context):
         mg = context.scene.mg
         mg.tiles_path = os.path.join(os.path.dirname(__file__), "tiles")
@@ -736,7 +725,7 @@ class DemoTilesImportMG(Operator):
         path = os.path.join(mg.tiles_path, mg.tiles + ".blend")
 
         if os.access(path, os.R_OK):
-            append_objs(path)
+            utils.append_objs(path)
             bpy.ops.object.select_all(action='DESELECT')
             return {'FINISHED'}
 
