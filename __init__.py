@@ -218,7 +218,9 @@ class MazeTilesPanelMG(Panel):
                 row = col.row(align=True)
                 row.operator('maze_gen.rescan_tiles_directory', icon='FILE_REFRESH', text="Force Rescan")
                 row.operator('maze_gen.load_original_tiles', icon='LIBRARY_DATA_BROKEN', text="Load Original")
-                col.menu('maze_gen.tile_render_menu')
+                row = col.row(align=True)
+                row.menu('maze_gen.tile_render_menu')
+                row.prop(mg, 'preview_samples')
 
                 sub_box.label("Select Tileset:")
                 col = sub_box.column(align=True)
@@ -908,6 +910,8 @@ class MazeGenPropertyGroup(PropertyGroup):
         name="Tiles Folder",
         subtype='DIR_PATH',
         default=os.path.join(os.path.dirname(__file__), "tiles"))
+
+    preview_samples = IntProperty(name="Samples", default=50, min=1, max=1000)
 
     tiles = EnumProperty(name="Tile", items=enum_previews_from_directory)
 

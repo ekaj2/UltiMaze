@@ -15,6 +15,7 @@ def render_and_leave(dummy):
         reload_file = f.readline().strip()
         append_file = f.readline().strip()
         tiles_path = f.readline().strip()
+        samples = int(f.readline().strip())
 
     # import the one with a suffix?
     print("Importing:", append_file)
@@ -54,6 +55,7 @@ def render_and_leave(dummy):
         bpy.data.objects['_ORIGINAL_Text'].hide_render = False
 
     print("Rendering:", bpy.data.filepath)
+    bpy.context.scene.cycles.samples = samples
     bpy.context.scene.render.filepath = os.path.join(tiles_path, append_file[:-6] + ".png")
     bpy.ops.render.render(write_still=True)
 
@@ -85,7 +87,7 @@ class RenderTileSet(Operator):
 
         # save data to a text file to reference in the called function
         with open(os.path.join(os.path.dirname(__file__), "tile_renderer_data.txt"), 'w') as f:
-            print(bpy.data.filepath, self.filename, mg.tiles_path, file=f, sep='\n', flush=True)
+            print(bpy.data.filepath, self.filename, mg.tiles_path, mg.preview_samples, file=f, sep='\n', flush=True)
 
         # open the TileRenderer file, render, then reopen this file
         bpy.ops.wm.open_mainfile(filepath=os.path.join(os.path.dirname(__file__), 'helper_blends', 'TileRenderer.blend'))
