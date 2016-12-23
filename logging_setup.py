@@ -21,3 +21,4 @@ def setup_logger(name):
     # finalize the logger by adding the handler and setting the logging level
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
+    logger.propagate = False
