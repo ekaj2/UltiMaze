@@ -754,6 +754,7 @@ class EnableLayerMG(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        logging.getLogger(__name__).warning("Enabling the first layer...this shouldn't be a problem, but also not spectacularly awesome either!")
         context.scene.layers[0] = True
         return {'FINISHED'}
 
