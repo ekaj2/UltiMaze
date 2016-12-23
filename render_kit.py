@@ -12,6 +12,7 @@ from maze_gen.logging_setup import setup_logger
 
 setup_logger(__name__)
 
+
 @persistent
 def render_and_leave(dummy):
     logger = logging.getLogger(__name__)
