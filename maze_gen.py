@@ -43,7 +43,7 @@ def make_maze(context):
         tiles_exist = prep_manager.check_tiles_exist()
         # if missing tiles: terminate operator
         if not tiles_exist:
-            messages += ["One or more tile objects is missing " + "or is not a mesh! Please assign a valid object or " + "disable 'Use Modeled Tiles'."]
+            messages += ["One or more tile objects is missing or is not a mesh! Please assign a valid object or disable 'Use Modeled Tiles'."]
             message_lvls += ['ERROR']
             return messages, message_lvls, 'CANCELLED'
 
@@ -51,24 +51,24 @@ def make_maze(context):
         list_exist = prep_manager.check_list_exist()
         # if missing list: terminate operator
         if not list_exist:
-            messages += ["List missing! Please assign a valid " + "text data block or disable 'Generate Maze From List'."]
+            messages += ["List missing! Please assign a valid text data block or disable 'Generate Maze From List'."]
             message_lvls += ['ERROR']
             return messages, message_lvls, 'CANCELLED'
 
     # save files
     save_return, bad_file = prep_manager.always_save()
     if save_return == "BLEND_ERROR":
-        messages += ["Save file or disable always save " + "in user prefs."]
+        messages += ["Save file or disable always save in user prefs."]
         message_lvls += ['ERROR']
         return messages, message_lvls, 'CANCELLED'
 
     elif save_return == "IMAGE_ERROR":
-        messages += ["Image '" + bad_file.name + "' does not have a valid file path (for saving). Assign " + "a valid path, pack image, or disable save images in " + "user prefs"]
+        messages += ["Image '" + bad_file.name + "' does not have a valid file path (for saving). Assign a valid path, pack image, or disable save images in user prefs"]
         message_lvls += ['ERROR']
         return messages, message_lvls, 'CANCELLED'
 
     elif save_return == "TEXT_ERROR":
-        messages += ["Text '" + bad_file.name + "' does not have a valid file path (for saving). " + "Assign a valid path or disable save texts in user prefs"]
+        messages += ["Text '" + bad_file.name + "' does not have a valid file path (for saving). Assign a valid path or disable save texts in user prefs"]
         message_lvls += ['ERROR']
         return messages, message_lvls, 'CANCELLED'
 

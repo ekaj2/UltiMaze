@@ -8,6 +8,7 @@ classes and properties.
 import os
 import sys
 import subprocess
+import logging
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty, PointerProperty
@@ -22,6 +23,7 @@ from maze_gen import txt_img_converter
 from maze_gen import menus
 from maze_gen import render_kit
 from maze_gen import utils
+from maze_gen.logging_setup import setup_logger
 
 bl_info = {
     "name": "UltiMaze [PRO]",
@@ -35,6 +37,8 @@ bl_info = {
     "wiki_url": "",
     "category": "3D View",
 }
+
+setup_logger(__name__)
 
 
 def clear_preview_collections(pcs):
@@ -55,11 +59,15 @@ def set_main_pcoll(pcs):
 
 def enum_previews_from_directory(self, context):
     """EnumProperty callback for building a list of enum items"""
+    logger = logging.getLogger(__name__)
+    logger.debug("beginning to build the enum_previews_from_directory")
+
     enum_items = []
     mg = context.scene.mg
 
     # return an empty list if there is no context
     if context is None:
+        logger.warning("in enum_previews_from_directory...context is None...this is potentially normal")
         return enum_items
 
     # get the preview collection...defined in register()
@@ -67,10 +75,11 @@ def enum_previews_from_directory(self, context):
 
     # if the pcoll directory is the same as the one specified in the UI, do nothing to change the list
     if mg.tiles_path == pcoll.previews_dir and pcoll.tile_mode == mg.tile_mode and not pcoll.scan:
+        logger.debug("not doing anything...returning pcoll.previews without modifications")
         return pcoll.previews
 
     # otherwise, begin scanning the directory
-    print("Scanning directory:", mg.tiles_path)
+    logger.debug("Scanning directory:", mg.tiles_path)
 
     clear_preview_collections(preview_collections)
     set_main_pcoll(preview_collections)
@@ -91,6 +100,7 @@ def enum_previews_from_directory(self, context):
 
                 # generates a thumbnail preview for a file
                 filepath = os.path.join(mg.tiles_path, filename)
+                logger.debug("loading the thumbnail:", filepath)
                 thumb = pcoll.load(name, filepath, 'IMAGE')
                 enum_items.append((name, name, "", thumb.icon_id, i))
                 i += 1
@@ -99,6 +109,7 @@ def enum_previews_from_directory(self, context):
     pcoll.previews_dir = mg.tiles_path
     pcoll.tile_mode = mg.tile_mode
     pcoll.scan = False
+    logger.debug("Returning pcoll.previews")
     return pcoll.previews
 
 
