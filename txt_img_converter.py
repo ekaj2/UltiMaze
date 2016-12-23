@@ -123,10 +123,11 @@ def convert_list_maze():
                 if str_maze[index] == "1":
                     maze.make_path(x, y)
             except IndexError:
-                logger = logging.getLogger(__name__)
-                logger.warning("IndexError when trying to access a text file's string for converting "
-                               "to a list maze...index={}, maze.width={}, maze.height={}".format(
-                                                                                index, maze.width, maze.height))
+                logging.getLogger(__name__).warning("IndexError when trying to access a text file's string for "
+                                                    "converting to a list maze..."
+                                                    "index={}, maze.width={}, maze.height={}".format(index,
+                                                                                                     maze.width,
+                                                                                                     maze.height))
 
     return maze
 
@@ -139,27 +140,32 @@ class ConvertMazeImageMG(bpy.types.Operator):
 
     def execute(self, context):
         mg = context.scene.mg
+        logger = logging.getLogger(__name__)
 
         # check if image is assigned
         if not mg.maze_image:
-            self.report({'ERROR'}, "Image missing! Please assign a " +
-                        "valid image data block.")
+            logger.debug("Image missing! Please assign a valid image data block.")
+            self.report({'ERROR'}, "Image missing! Please assign a valid image data block.")
             return {'CANCELLED'}
 
         # save files
         save_return, bad_file = prep_manager.always_save()
         if save_return == "BLEND_ERROR":
-            self.report({'ERROR'}, "Save file or disable always save " +
-                        "in user prefs.")
+            logger.debug("Save file or disable always save in user prefs.")
+            self.report({'ERROR'}, "Save file or disable always save in user prefs.")
             return {'CANCELLED'}
 
         elif save_return == "IMAGE_ERROR":
+            logger.debug("Image:", bad_file.name, "does not have a valid file path (for saving). Assign a valid path, "
+                                                  "pack img, or disable save images in user prefs")
             self.report({'ERROR'}, "Image '" + bad_file.name +
-                        "' does not have a valid file path (for saving). Assign a " +
+                        "' does not have a valid file path (for saving). Assign a "
                         "valid path, pack image, or disable save images in user prefs")
             return {'CANCELLED'}
 
         elif save_return == "TEXT_ERROR":
+            logger.debug("Text:", bad_file.name, "does not have a valid file path (for saving). Assign a valid path,"
+                                                 "or disable save texts in user prefs")
             self.report({'ERROR'}, "Text '" + bad_file.name +
                         "' does not have a valid file path (for saving). Assign a " +
                         "valid path or disable save texts in user prefs")
