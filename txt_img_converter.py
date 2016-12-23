@@ -156,16 +156,16 @@ class ConvertMazeImageMG(bpy.types.Operator):
             return {'CANCELLED'}
 
         elif save_return == "IMAGE_ERROR":
-            logger.debug("Image:", bad_file.name, "does not have a valid file path (for saving). Assign a valid path, "
-                                                  "pack img, or disable save images in user prefs")
+            logger.debug("Image: {} does not have a valid file path (for saving). Assign a valid path, "
+                         "pack img, or disable save images in user prefs".format(bad_file.name))
             self.report({'ERROR'}, "Image '" + bad_file.name +
                         "' does not have a valid file path (for saving). Assign a "
                         "valid path, pack image, or disable save images in user prefs")
             return {'CANCELLED'}
 
         elif save_return == "TEXT_ERROR":
-            logger.debug("Text:", bad_file.name, "does not have a valid file path (for saving). Assign a valid path,"
-                                                 "or disable save texts in user prefs")
+            logger.debug("Text: {} does not have a valid file path (for saving). Assign a valid path,"
+                         "or disable save texts in user prefs".format(bad_file.name))
             self.report({'ERROR'}, "Text '" + bad_file.name +
                         "' does not have a valid file path (for saving). Assign a " +
                         "valid path or disable save texts in user prefs")

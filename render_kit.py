@@ -26,7 +26,7 @@ def render_and_leave(dummy):
         samples = int(f.readline().strip())
 
     # import the one with a suffix?
-    logger.debug("Importing:", append_file)
+    logger.debug("Importing:{}".format(append_file))
     utils.append_objs(append_file, suffix="_", ignore="NEVER IGNORE ANYTHING HERE!123@#$%^&*()_!")
 
     # there may have been more than 1, so remove them if so
@@ -62,7 +62,7 @@ def render_and_leave(dummy):
     else:
         bpy.data.objects['_ORIGINAL_Text'].hide_render = False
 
-    logger.debug("Rendering:", bpy.data.filepath)
+    logger.debug("Rendering:{}".format(bpy.data.filepath))
     bpy.context.scene.cycles.samples = samples
     bpy.context.scene.render.filepath = os.path.join(tiles_path, append_file[:-6] + ".png")
     bpy.ops.render.render(write_still=True)
@@ -71,7 +71,7 @@ def render_and_leave(dummy):
     logger.debug("Removing the handler")
     bpy.app.handlers.load_post.remove(render_and_leave)
 
-    logger.debug("Loading the original file:", reload_file)
+    logger.debug("Loading the original file:{}".format(reload_file))
     bpy.ops.wm.open_mainfile(filepath=reload_file)
 
 
@@ -91,7 +91,7 @@ class RenderTileSet(Operator):
         logger = logging.getLogger(__name__)
 
         mg = context.scene.mg
-        logger.debug("Rendering:", self.filename)
+        logger.debug("Rendering:{}".format(self.filename))
         bpy.ops.wm.save_mainfile()
 
         # tell blender what to do when the file is loaded

@@ -79,7 +79,7 @@ def enum_previews_from_directory(self, context):
         return pcoll.previews
 
     # otherwise, begin scanning the directory
-    logger.debug("Scanning directory:", mg.tiles_path)
+    logger.debug("Scanning directory:{}".format(mg.tiles_path))
 
     clear_preview_collections(preview_collections)
     set_main_pcoll(preview_collections)
@@ -100,7 +100,7 @@ def enum_previews_from_directory(self, context):
 
                 # generates a thumbnail preview for a file
                 filepath = os.path.join(mg.tiles_path, filename)
-                logger.debug("loading the thumbnail:", filepath)
+                logger.debug("loading the thumbnail:{}".format(filepath))
                 thumb = pcoll.load(name, filepath, 'IMAGE')
                 enum_items.append((name, name, "", thumb.icon_id, i))
                 i += 1
