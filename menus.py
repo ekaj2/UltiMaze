@@ -36,21 +36,3 @@ class EnableLayerMenu(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator("maze_gen.enable_layer")
-
-
-# TODO - Remove this menu (bug should be fixed)
-class SaveUserPrefsMenu(bpy.types.Menu):
-    bl_idname = "maze_gen.save_user_prefs_menu"
-    bl_label = "Save user settings."
-
-    def draw(self, context):
-        layout = self.layout
-
-        row = layout.row()
-        row.label(text="Sorry, your OS doesn't support")
-        row = layout.row()
-        row.label(text="opening files outside of Blender.")
-        row = layout.row()
-        row.label(text="Please save user settings.")
-
-        layout.operator("wm.save_userpref", text="Save User Prefs")

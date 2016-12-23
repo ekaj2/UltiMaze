@@ -1078,8 +1078,7 @@ classes = [MazeAddonPrefsMg,
            LoadOriginalTilesPath,
            # Menus
            menus.TileRenderMenu,
-           menus.EnableLayerMenu,
-           menus.SaveUserPrefsMenu]
+           menus.EnableLayerMenu]
 
 preview_collections = {}
 
