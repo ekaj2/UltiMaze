@@ -82,7 +82,7 @@ def enum_previews_from_directory(self, context):
         return pcoll.previews
 
     # otherwise, begin scanning the directory
-    logger.debug("Scanning directory:{}".format(mg.tiles_path))
+    logger.debug("Scanning directory:{}".format(addon_prefs.tiles_path))
 
     clear_preview_collections(preview_collections)
     set_main_pcoll(preview_collections)
