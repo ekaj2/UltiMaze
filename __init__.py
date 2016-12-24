@@ -490,20 +490,17 @@ class MazeAddonPrefsMg(AddonPreferences):
     always_save_prior = BoolProperty(
         name="Save .blend File",
         default=True,
-        description="Always save .blend file before executing" +
-                    "time-consuming operations")
+        description="Always save .blend file before executing time-consuming operations")
 
     save_all_images = BoolProperty(
         name="Save Images",
         default=True,
-        description="Always save images before executing" +
-                    "time-consuming operations")
+        description="Always save images before executing time-consuming operations")
 
     save_all_texts = BoolProperty(
         name="Save Texts",
         default=True,
-        description="Always save texts before executing" +
-                    "time-consuming operations")
+        description="Always save texts before executing time-consuming operations")
 
     show_quickhelp = BoolProperty(
         name="Quick Help",
