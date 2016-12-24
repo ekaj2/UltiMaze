@@ -9,6 +9,8 @@ import os
 import sys
 import subprocess
 import logging
+import string
+import random
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty, PointerProperty
@@ -473,14 +475,32 @@ class HelpPanelMG(Panel):
             row.label("2. Hit convert to image")
 
 
+def clear_password(self, context):
+    addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+    # password property cannot be accessed with the dot operator or this would have infinite recursion
+    addon_prefs.access = addon_prefs['password'] == 'password!123'
+    pw_len = len(addon_prefs['password'])
+    # write over the password string many times ;-)
+    for i in range(500):
+        random_string = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(pw_len + 512))
+        addon_prefs['password'] = random_string
+    addon_prefs['password'] = ''  # clear password for user satisfaction
+
+
+def logout(self, context):
+    addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+    addon_prefs['access'] = False
+
+
 class MazeAddonPrefsMg(AddonPreferences):
     bl_idname = __name__
 
     open_help_outbldr = BoolProperty(
         name="Open Help Outside Blender",
         default=True,
-        description="Open help files outside of Blender instead of in Blender's text editor and image editor. Will open all help files as if you double clicked them in an explorer window (only available on Windows)."
-    )
+        description="Open help files outside of Blender instead of in Blender's text editor and image editor. Will "
+                    "open all help files as if you double clicked them in an explorer window (only available "
+                    "on Windows).")
 
     debug_mode = BoolProperty(
         name="debug_mode",
@@ -510,20 +530,17 @@ class MazeAddonPrefsMg(AddonPreferences):
     only_odd_sizes = BoolProperty(
         name="Only Odd Maze Sizes",
         default=True,
-        description="Convert all even sizes to odd upon generation"
-    )
+        description="Convert all even sizes to odd upon generation")
 
     show_advanced_settings = BoolProperty(
         name="Show Advanced Settings",
         default=False,
-        description="WARNING: Only for advanced users! Don't go in here!"
-    )
+        description="WARNING: Only for advanced users! Don't go in here!")
 
     use_large_menus = BoolProperty(
         name="Use Large Menus Where Applicable",
         default=True,
-        description="Some menus support loading large icons; enabling this will show this in the UI where possible."
-    )
+        description="Some menus support loading large icons; enabling this will show this in the UI where possible.")
 
     show_icon_name = BoolProperty(name="Still Show Names In Menus", default=False)
     icon_scale = FloatProperty(name="Icon Size", min=1, max=10, default=5.0)
@@ -536,8 +553,19 @@ class MazeAddonPrefsMg(AddonPreferences):
 
     preview_samples = IntProperty(name="Samples", default=50, min=1, max=1000)
 
+    username = StringProperty(name="Username")
+    password = StringProperty(name="Password", subtype='PASSWORD', update=clear_password)
+    access = BoolProperty(default=False, update=logout)  # never gets displayed in the UI
+
     def draw(self, context):
         layout = self.layout
+
+        # box = layout.box()
+        # box.prop(self, 'username')
+        # if self.access:
+        #     box.prop(self, 'password', icon='UNLOCKED')
+        # else:
+        #     box.prop(self, 'password', icon='LOCKED')
 
         layout.prop(self, 'open_help_outbldr')
         layout.separator()
