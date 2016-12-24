@@ -133,14 +133,12 @@ def always_save():
     # save all images
     if addon_prefs.save_all_images:
         for image in bpy.data.images:
-            if image.has_data:
-                if not image.packed_file:
-                    if not image.filepath:
-                        if image.name != 'Render Result' and image.name != 'Viewer Node':
-                            logger.debug("Image {} could not be saved".format(image.name))
-                            return "IMAGE_ERROR", image
-                    else:
-                        image.save()
+            if image.has_data and image.is_dirty and not image.packed_file:
+                if image.filepath:
+                    image.save()
+                elif image.name != 'Render Result' and image.name != 'Viewer Node':
+                    logger.debug("Image {} could not be saved".format(image.name))
+                    return "IMAGE_ERROR", image
 
     # save all texts
     if addon_prefs.save_all_texts:
