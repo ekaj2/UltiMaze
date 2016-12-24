@@ -59,6 +59,8 @@ def set_main_pcoll(pcs):
 
 def enum_previews_from_directory(self, context):
     """EnumProperty callback for building a list of enum items"""
+    addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+
     logger = logging.getLogger(__name__)
     logger.debug("beginning to build the enum_previews_from_directory")
 
@@ -74,7 +76,7 @@ def enum_previews_from_directory(self, context):
     pcoll = preview_collections["main"]
 
     # if the pcoll directory is the same as the one specified in the UI, do nothing to change the list
-    if mg.tiles_path == pcoll.previews_dir and pcoll.tile_mode == mg.tile_mode and not pcoll.scan:
+    if addon_prefs.tiles_path == pcoll.previews_dir and pcoll.tile_mode == mg.tile_mode and not pcoll.scan:
         logger.debug("not doing anything...returning pcoll.previews without modifications")
         return pcoll.previews
 
@@ -84,7 +86,7 @@ def enum_previews_from_directory(self, context):
     clear_preview_collections(preview_collections)
     set_main_pcoll(preview_collections)
 
-    if mg.tiles_path and os.path.exists(mg.tiles_path):
+    if addon_prefs.tiles_path and os.path.exists(addon_prefs.tiles_path):
         # scan the directory for png files
         i = 0
         filenames = os.listdir(mg.tiles_path)
@@ -99,14 +101,14 @@ def enum_previews_from_directory(self, context):
                     continue
 
                 # generates a thumbnail preview for a file
-                filepath = os.path.join(mg.tiles_path, filename)
+                filepath = os.path.join(addon_prefs.tiles_path, filename)
                 logger.debug("loading the thumbnail:{}".format(filepath))
                 thumb = pcoll.load(name, filepath, 'IMAGE')
                 enum_items.append((name, name, "", thumb.icon_id, i))
                 i += 1
 
     pcoll.previews = enum_items
-    pcoll.previews_dir = mg.tiles_path
+    pcoll.previews_dir = addon_prefs.tiles_path
     pcoll.tile_mode = mg.tile_mode
     pcoll.scan = False
     logger.debug("Returning pcoll.previews")
@@ -223,15 +225,6 @@ class MazeTilesPanelMG(Panel):
 
             if mg.tile_importer:
                 sub_box.prop(mg, 'tile_importer', toggle=True, icon='TRIA_DOWN')
-
-                col = sub_box.column(align=True)
-                col.prop(mg, 'tiles_path', text="")
-                row = col.row(align=True)
-                row.operator('maze_gen.rescan_tiles_directory', icon='FILE_REFRESH', text="Force Rescan")
-                row.operator('maze_gen.load_original_tiles', icon='LIBRARY_DATA_BROKEN', text="Load Original")
-                row = col.row(align=True)
-                row.menu('maze_gen.tile_render_menu')
-                row.prop(mg, 'preview_samples')
 
                 sub_box.label("Select Tileset:")
                 col = sub_box.column(align=True)
@@ -537,6 +530,14 @@ class MazeAddonPrefsMg(AddonPreferences):
     show_icon_name = BoolProperty(name="Still Show Names In Menus", default=False)
     icon_scale = FloatProperty(name="Icon Size", min=1, max=10, default=5.0)
 
+    tiles_path = StringProperty(
+        name="Tiles Folder",
+        subtype='DIR_PATH',
+        default=os.path.join(os.path.dirname(__file__), "tiles"),
+        update=lambda self, context: utils.make_absolute('tiles_path'))
+
+    preview_samples = IntProperty(name="Samples", default=50, min=1, max=1000)
+
     def draw(self, context):
         layout = self.layout
 
@@ -553,6 +554,15 @@ class MazeAddonPrefsMg(AddonPreferences):
         if self.use_large_menus:
             box.prop(self, 'show_icon_name')
             box.prop(self, 'icon_scale', slider=True)
+
+        col = box.column(align=True)
+        col.prop(self, 'tiles_path', text="")
+        row = col.row(align=True)
+        row.operator('maze_gen.rescan_tiles_directory', icon='FILE_REFRESH', text="Force Rescan")
+        row.operator('maze_gen.load_original_tiles', icon='LIBRARY_DATA_BROKEN', text="Load Original")
+        row = col.row(align=True)
+        row.menu('maze_gen.tile_render_menu')
+        row.prop(self, 'preview_samples')
 
         layout.row()
         # quick help box
@@ -733,9 +743,10 @@ class DemoTilesImportMG(Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
         mg = context.scene.mg
 
-        path = os.path.join(mg.tiles_path, mg.tiles + ".blend")
+        path = os.path.join(addon_prefs.tiles_path, mg.tiles + ".blend")
 
         if os.access(path, os.R_OK):
             utils.append_objs(path)
@@ -917,13 +928,6 @@ class MazeGenPropertyGroup(PropertyGroup):
     apply_modifiers = BoolProperty(
         name="apply_modifiers",
         default=True)
-
-    tiles_path = StringProperty(
-        name="Tiles Folder",
-        subtype='DIR_PATH',
-        default=os.path.join(os.path.dirname(__file__), "tiles"))
-
-    preview_samples = IntProperty(name="Samples", default=50, min=1, max=1000)
 
     tiles = EnumProperty(name="Tile", items=enum_previews_from_directory)
 

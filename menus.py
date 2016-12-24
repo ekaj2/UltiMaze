@@ -9,9 +9,10 @@ class TileRenderMenu(bpy.types.Menu):
 
     def draw(self, context):
         mg = context.scene.mg
+        addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
 
         # get tile blend file names
-        files_list = os.listdir(mg.tiles_path)
+        files_list = os.listdir(addon_prefs.tiles_path)
         tile_blends = [a[:-6] for a in files_list if a.endswith('.blend') and a[-7] in ("2", "6")]
         tile_pngs = [a[:-4] for a in files_list if a.endswith('.png') and a[:-4] in tile_blends]
 
@@ -25,7 +26,7 @@ class TileRenderMenu(bpy.types.Menu):
                 t = "* " + t  # show an asterisk if the file doesn't have a corresponding png
                 has_png = False
             button = layout.operator("maze_gen.render_tileset", text=t)
-            button.filename = os.path.join(mg.tiles_path, tileset + ".blend")
+            button.filename = os.path.join(addon_prefs.tiles_path, tileset + ".blend")
             button.has_png = has_png
 
 

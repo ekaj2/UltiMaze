@@ -1,4 +1,5 @@
 import bpy
+import os
 
 
 def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
@@ -16,3 +17,10 @@ def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
     for obj in data_to.objects:
         if obj is not None:
             scene.objects.link(obj)
+
+
+def make_absolute(key):
+    addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
+    if key in addon_prefs and addon_prefs[key].startswith('//'):
+        # must use a[x] notation instead of a.x so it doesn't trigger update callbacks infinitely
+        addon_prefs[key] = os.path.abspath(bpy.path.abspath(addon_prefs[key]))

@@ -88,6 +88,7 @@ class RenderTileSet(Operator):
         return context.window_manager.invoke_confirm(self, event)
 
     def execute(self, context):
+        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
         logger = logging.getLogger(__name__)
 
         mg = context.scene.mg
@@ -101,7 +102,7 @@ class RenderTileSet(Operator):
         # save data to a text file to reference in the called function
         with open(os.path.join(os.path.dirname(__file__), "tile_renderer_data.txt"), 'w') as f:
             logger.debug("Writing to tile_renderer_data.txt")
-            print(bpy.data.filepath, self.filename, mg.tiles_path, mg.preview_samples, file=f, sep='\n', flush=True)
+            print(bpy.data.filepath, self.filename, addon_prefs.tiles_path, addon_prefs.preview_samples, file=f, sep='\n', flush=True)
 
         # open the TileRenderer file which will trigger the handler to execute the render_and_leave function
         logger.debug("Opening the TileRenderer.blend file. TODO - add a try/except here for if the file exists")
