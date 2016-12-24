@@ -475,23 +475,6 @@ class HelpPanelMG(Panel):
             row.label("2. Hit convert to image")
 
 
-def clear_password(self, context):
-    addon_prefs = context.user_preferences.addons['maze_gen'].preferences
-    # password property cannot be accessed with the dot operator or this would have infinite recursion
-    addon_prefs.access = addon_prefs['password'] == 'password!123'
-    pw_len = len(addon_prefs['password'])
-    # write over the password string many times ;-)
-    for i in range(500):
-        random_string = ''.join(random.choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(pw_len + 512))
-        addon_prefs['password'] = random_string
-    addon_prefs['password'] = ''  # clear password for user satisfaction
-
-
-def logout(self, context):
-    addon_prefs = context.user_preferences.addons['maze_gen'].preferences
-    addon_prefs['access'] = False
-
-
 class MazeAddonPrefsMg(AddonPreferences):
     bl_idname = __name__
 
@@ -553,19 +536,8 @@ class MazeAddonPrefsMg(AddonPreferences):
 
     preview_samples = IntProperty(name="Samples", default=50, min=1, max=1000)
 
-    username = StringProperty(name="Username")
-    password = StringProperty(name="Password", subtype='PASSWORD', update=clear_password)
-    access = BoolProperty(default=False, update=logout)  # never gets displayed in the UI
-
     def draw(self, context):
         layout = self.layout
-
-        # box = layout.box()
-        # box.prop(self, 'username')
-        # if self.access:
-        #     box.prop(self, 'password', icon='UNLOCKED')
-        # else:
-        #     box.prop(self, 'password', icon='LOCKED')
 
         layout.prop(self, 'open_help_outbldr')
         layout.separator()
