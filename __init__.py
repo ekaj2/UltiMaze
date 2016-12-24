@@ -90,7 +90,7 @@ def enum_previews_from_directory(self, context):
     if addon_prefs.tiles_path and os.path.exists(addon_prefs.tiles_path):
         # scan the directory for png files
         i = 0
-        filenames = os.listdir(mg.tiles_path)
+        filenames = os.listdir(addon_prefs.tiles_path)
         for filename in filenames:
             # this would be changing "demo.png" to "demo"
             name = filename[:-4]
@@ -746,6 +746,18 @@ class DemoTilesImportMG(Operator):
     def execute(self, context):
         addon_prefs = context.user_preferences.addons['maze_gen'].preferences
         mg = context.scene.mg
+
+        if not mg.tiles:
+            self.report({'ERROR'}, "There are no available tiles. Please go to the user prefs "
+                                   "\nto see if you are just missing the preview images. For tiles "
+                                   "\nto show up here, there must be a .blend file and a .png file "
+                                   "\nwith the same name other than the file extension. Once you "
+                                   "\nhave built a tileset (the .blend file), you can use the tool "
+                                   "\nin the add-on preferences for UltiMaze to automatically render "
+                                   "\nout and save a nice preview image.")
+
+            logging.getLogger(__name__).warning("There are no available blends linked w/ pngs for importing!")
+            return {'CANCELLED'}
 
         path = os.path.join(addon_prefs.tiles_path, mg.tiles + ".blend")
 
