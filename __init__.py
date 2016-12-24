@@ -24,6 +24,7 @@ from maze_gen import menus
 from maze_gen import render_kit
 from maze_gen import utils
 from maze_gen.logging_setup import setup_logger
+from maze_gen import ascii_logo
 
 bl_info = {
     "name": "UltiMaze [PRO]",
@@ -1100,6 +1101,8 @@ preview_collections = {}
 
 
 def register():
+    ascii_logo.display_ascii_logo()
+
     for i in classes:
         register_class(i)
 
