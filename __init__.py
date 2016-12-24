@@ -1101,7 +1101,6 @@ preview_collections = {}
 
 def register():
     for i in classes:
-        print(i)
         register_class(i)
 
     Scene.mg = PointerProperty(type=MazeGenPropertyGroup)

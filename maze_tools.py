@@ -287,7 +287,7 @@ class OrthogonalMaze:
         try:
             return a[direction]
         except KeyError:
-            print("Error! Invalid direction!")
+            logging.getLogger(__name__).error("Error! Invalid direction!")
 
     def loop_update(self, sleep_time=0.0):
         """Updates progress reports."""

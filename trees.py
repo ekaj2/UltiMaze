@@ -182,7 +182,7 @@ class Tree:
                 try:
                     self.nodes[parent]['children'].remove(leaf_node)
                 except KeyError:
-                    print("Removing root from its parent's children list failed: roots don't have parents!")
+                    logging.getLogger(__name__).warning("Removing root from its parent's children list failed: roots don't have parents!")
                 del self.nodes[leaf_node]
 
     def prune_roots(self, iterations):

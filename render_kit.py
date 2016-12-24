@@ -32,7 +32,7 @@ def render_and_leave(dummy):
     # there may have been more than 1, so remove them if so
     i = 0
     chosen = None
-    print([a for a in bpy.context.scene.objects])
+    logger.debug("TileRenderer.blend has the following objects after appending: {}".format([a.name for a in bpy.context.scene.objects]))
     for obj in bpy.context.scene.objects:
         if obj.name.endswith("_"):
             i += 1

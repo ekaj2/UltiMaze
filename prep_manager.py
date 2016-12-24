@@ -7,7 +7,14 @@ Available functions:
     - always_save: Saves .blend file and referenced images/texts.
 """
 
+import logging
+
 import bpy
+
+from maze_gen.logging_setup import setup_logger
+
+
+setup_logger(__name__)
 
 
 def check_tiles_exist():
@@ -95,6 +102,7 @@ def save_text(text):
     # write to file
     with open(text_path, "w") as d:
         d.write(str(text_as_string))
+        logging.getLogger(__name__).debug("Wrote {} to file {}".format(text.name, text.filepath))
 
 
 def always_save():
@@ -110,14 +118,16 @@ def always_save():
 
     addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
     debug = addon_prefs.debug_mode
+    logger = logging.getLogger(__name__)
 
     # save file
     if addon_prefs.always_save_prior:
         if bpy.data.is_saved:
             bpy.ops.wm.save_mainfile()
             if not debug:
-                print("File saved...")
+                logger.debug("Blend file {} saved".format(bpy.data.filepath))
         else:
+            logger.debug("Blend file {} could not be saved".format(bpy.data.filepath))
             return "BLEND_ERROR", None
 
     # save all images
@@ -127,6 +137,7 @@ def always_save():
                 if not image.packed_file:
                     if not image.filepath:
                         if image.name != 'Render Result' and image.name != 'Viewer Node':
+                            logger.debug("Image {} could not be saved".format(image.name))
                             return "IMAGE_ERROR", image
                     else:
                         image.save()
