@@ -1,4 +1,4 @@
-IN_BLENDER = False
+IN_BLENDER = True
 
 import logging
 
@@ -130,8 +130,7 @@ class Tree:
             self.nodes[parent]['children'].remove(child)
             self.nodes[child]['parent'] = None
         else:
-            logger = logging.getLogger(__name__)
-            logger.warning("Node {} is a root! Cannot unparent root!".format(child))
+            logging.getLogger(__name__).warning("Node {} is a root! Cannot unparent root!".format(child))
 
     def insert_parent(self, parent, child):
         print("Only a stub")
@@ -152,8 +151,7 @@ class Tree:
             self.nodes[parent]['children'].remove(node)
             self.nodes[node]['parent'] = None
         else:
-            logger = logging.getLogger(__name__)
-            logger.info("Node {} is a root already".format(node))
+            logging.getLogger(__name__).info("Node {} is a root already".format(node))
 
     def replacement_child_shift_detach(self, node):
         children = self.nodes[node]['children']
@@ -184,7 +182,7 @@ class Tree:
                 try:
                     self.nodes[parent]['children'].remove(leaf_node)
                 except KeyError:
-                    print("Removing root from its parent's children list failed: roots don't have parents!")
+                    logging.getLogger(__name__).warning("Removing root from its parent's children list failed: roots don't have parents!")
                 del self.nodes[leaf_node]
 
     def prune_roots(self, iterations):
