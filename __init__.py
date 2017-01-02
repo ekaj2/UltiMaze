@@ -44,6 +44,7 @@ from . import utils
 from .logging_setup import setup_logger
 from . import ascii_logo
 from .addon_name import save_addon_name, get_addon_name
+from . import addon_updater_ops
 
 bl_info = {
     "name": "UltiMaze [PRO]",
@@ -147,6 +148,8 @@ class MazeGeneratorPanelMG(Panel):
     bl_category = 'Maze Gen'
 
     def draw(self, context):
+        addon_updater_ops.check_for_update_background(context)
+
         scene = context.scene
         mg = scene.mg
         layout = self.layout
@@ -192,6 +195,8 @@ class MazeGeneratorPanelMG(Panel):
         # write list maze box
         box = layout.box()
         box.prop(mg, 'write_list_maze', text="Write Maze List")
+
+        addon_updater_ops.update_notice_box_ui(self, context)
 
 
 class ImageConverterPanelMG(Panel):
@@ -554,8 +559,44 @@ class MazeAddonPrefsMg(AddonPreferences):
 
     preview_samples = IntProperty(name="Samples", default=50, min=1, max=1000)
 
+    # addon updater preferences
+    auto_check_update = bpy.props.BoolProperty(
+        name="Auto-check for Update",
+        description="If enabled, auto-check for updates using an interval",
+        default=False,
+    )
+
+    updater_intrval_months = bpy.props.IntProperty(
+        name='Months',
+        description="Number of months between checking for updates",
+        default=0,
+        min=0
+    )
+    updater_intrval_days = bpy.props.IntProperty(
+        name='Days',
+        description="Number of days between checking for updates",
+        default=7,
+        min=0,
+    )
+    updater_intrval_hours = bpy.props.IntProperty(
+        name='Hours',
+        description="Number of hours between checking for updates",
+        default=0,
+        min=0,
+        max=23
+    )
+    updater_intrval_minutes = bpy.props.IntProperty(
+        name='Minutes',
+        description="Number of minutes between checking for updates",
+        default=0,
+        min=0,
+        max=59
+    )
+
     def draw(self, context):
         layout = self.layout
+
+        addon_updater_ops.update_settings_ui(self, context)
 
         layout.prop(self, 'open_help_outbldr')
         layout.separator()
@@ -1128,6 +1169,9 @@ preview_collections = {}
 
 
 def register():
+    # third-party add-on updater
+    addon_updater_ops.register(bl_info)
+
     save_addon_name(basename(dirname(__file__)))
 
     ascii_logo.display_ascii_logo()
