@@ -17,6 +17,7 @@
 # along with UltiMaze.  If not, see <http://www.gnu.org/licenses/>.
 # ##### END GPL LICENSE BLOCK #####
 
+
 def display_ascii_logo():
     ascii_logo = """\n
   _   _  _  _    _                              __  ____              __

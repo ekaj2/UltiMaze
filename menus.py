@@ -21,6 +21,8 @@ import os
 
 import bpy
 
+from .addon_name import get_addon_name
+
 
 class TileRenderMenu(bpy.types.Menu):
     bl_idname = "maze_gen.tile_render_menu"
@@ -28,7 +30,7 @@ class TileRenderMenu(bpy.types.Menu):
 
     def draw(self, context):
         mg = context.scene.mg
-        addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
+        addon_prefs = bpy.context.user_preferences.addons[get_addon_name()].preferences
 
         # get tile blend file names
         files_list = os.listdir(addon_prefs.tiles_path)

@@ -21,13 +21,14 @@ from time import time
 
 import bpy
 
-from maze_gen import prep_manager
-from maze_gen import txt_img_converter
-from maze_gen import auto_layout_gen
-from maze_gen import tile_maze_gen
-from maze_gen import time_log
-from maze_gen.bmesh_maze_gen import Make3DMaze
-from maze_gen.time_display import TimeDisplay
+from . import prep_manager
+from . import txt_img_converter
+from . import auto_layout_gen
+from . import tile_maze_gen
+from . import time_log
+from .bmesh_maze_gen import Make3DMaze
+from .time_display import TimeDisplay
+from .addon_name import get_addon_name
 
 
 def morph_dimensions():
@@ -50,7 +51,7 @@ def make_maze(context):
         message_lvl: level to print message as, 'INFO', 'WARNING', 'ERROR'
         status: whether operator is 'FINISHED', 'CANCELLED', or other status
     """
-    addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
+    addon_prefs = bpy.context.user_preferences.addons[get_addon_name()].preferences
 
     messages = []
     message_lvls = []

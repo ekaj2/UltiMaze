@@ -22,7 +22,7 @@ IN_BLENDER = True
 import logging
 
 if IN_BLENDER:
-    from maze_gen.logging_setup import setup_logger
+    from .logging_setup import setup_logger
 else:
     from logging_setup import setup_logger
 

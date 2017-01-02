@@ -20,7 +20,6 @@
 """WEIghted RAndom Number Generator aka WeiRa"""
 
 
-import random
 from random import random
 
 

@@ -30,7 +30,8 @@ import logging
 
 import bpy
 
-from maze_gen.logging_setup import setup_logger
+from .logging_setup import setup_logger
+from .addon_name import get_addon_name
 
 
 setup_logger(__name__)
@@ -135,7 +136,7 @@ def always_save():
         "SUCCESS", None: IF saved all required types correctly
     """
 
-    addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
+    addon_prefs = bpy.context.user_preferences.addons[get_addon_name()].preferences
     debug = addon_prefs.debug_mode
     logger = logging.getLogger(__name__)
 

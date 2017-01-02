@@ -29,7 +29,9 @@ Available Functions:
 import math
 
 import bpy
-from maze_gen.progress_display import BlenderProgress
+
+from .progress_display import BlenderProgress
+from .addon_name import get_addon_name
 
 
 def add_tile(tile, x_location, y_location, rotation):
@@ -204,7 +206,7 @@ def make_tile_maze(maze):
     """
     scene = bpy.context.scene
     mg = scene.mg
-    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+    debug = bpy.context.user_preferences.addons[get_addon_name()].preferences.debug_mode
 
     bpy.ops.object.select_all(action='DESELECT')
 

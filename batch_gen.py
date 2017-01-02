@@ -28,8 +28,8 @@ import os
 
 import bpy
 
-from maze_gen import maze_gen
-from maze_gen import menus
+from . import maze_gen
+from . import menus
 
 
 def refresh_batch_max():

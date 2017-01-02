@@ -23,10 +23,10 @@ import random
 import logging
 
 if IN_BLENDER:
-    from maze_gen import weira
-    from maze_gen.trees import Tree
-    from maze_gen.progress_display import BlenderProgress
-    from maze_gen.logging_setup import setup_logger
+    from . import weira
+    from .trees import Tree
+    from .progress_display import BlenderProgress
+    from .logging_setup import setup_logger
 else:
     import weira
     from trees import Tree

@@ -20,6 +20,8 @@
 import bpy
 import os
 
+from .addon_name import get_addon_name
+
 
 def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
     """Appends all objects into scene from .blend if they meet argument criteria."""
@@ -39,7 +41,7 @@ def append_objs(path, prefix="", suffix="", case_sens=False, ignore="IGNORE"):
 
 
 def make_absolute(key):
-    addon_prefs = bpy.context.user_preferences.addons['maze_gen'].preferences
+    addon_prefs = bpy.context.user_preferences.addons[get_addon_name()].preferences
     if key in addon_prefs and addon_prefs[key].startswith('//'):
         # must use a[x] notation instead of a.x so it doesn't trigger update callbacks infinitely
         addon_prefs[key] = os.path.abspath(bpy.path.abspath(addon_prefs[key]))

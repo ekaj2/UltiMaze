@@ -20,7 +20,8 @@
 import bpy
 import bmesh
 
-from maze_gen.progress_display import BlenderProgress
+from .progress_display import BlenderProgress
+from .addon_name import get_addon_name
 
 
 def quad_mesh_builder(verts, faces):
@@ -66,7 +67,7 @@ class Make3DMaze:
     def make_3dmaze(self, maze):
         """Makes basic 3D maze from python list."""
 
-        debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+        debug = bpy.context.user_preferences.addons[get_addon_name()].preferences.debug_mode
 
         bldr_prog = BlenderProgress("3D Maze Gen", debug)
         bldr_prog.start()

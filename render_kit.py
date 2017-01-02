@@ -25,8 +25,9 @@ from bpy.types import Operator
 from bpy.props import StringProperty, BoolProperty
 from bpy.app.handlers import persistent
 
-from maze_gen import utils
-from maze_gen.logging_setup import setup_logger
+from . import utils
+from .logging_setup import setup_logger
+from .addon_name import get_addon_name
 
 
 setup_logger(__name__)
@@ -107,7 +108,7 @@ class RenderTileSet(Operator):
         return context.window_manager.invoke_confirm(self, event)
 
     def execute(self, context):
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+        addon_prefs = context.user_preferences.addons[get_addon_name()].preferences
         logger = logging.getLogger(__name__)
 
         mg = context.scene.mg

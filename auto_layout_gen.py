@@ -28,7 +28,8 @@ Available Functions:
 import random
 
 import bpy
-from maze_gen import maze_tools
+from . import maze_tools
+from .addon_name import get_addon_name
 
 
 def add_loops(maze):
@@ -65,7 +66,7 @@ def make_list_maze():
     mg = scene.mg
     x_dim = mg.mg_width
     y_dim = mg.mg_height
-    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+    debug = bpy.context.user_preferences.addons[get_addon_name()].preferences.debug_mode
 
     if mg.algorithm == 'BREADTH_FIRST':
         m = maze_tools.BreadthFirstMaze(debug=debug,

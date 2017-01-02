@@ -17,8 +17,6 @@
 # along with UltiMaze.  If not, see <http://www.gnu.org/licenses/>.
 # ##### END GPL LICENSE BLOCK #####
 
-# TODO - LEGAL
-
 """
 ===== MAZE GENERATOR [PRO] V.2.1 =====
 This __init__ module handles some UI and also registers all
@@ -28,24 +26,24 @@ import os
 import sys
 import subprocess
 import logging
-import string
-import random
+from os.path import basename, dirname
 
 import bpy
 from bpy.props import StringProperty, BoolProperty, IntProperty, FloatProperty, EnumProperty, PointerProperty
 from bpy.types import Operator, Panel, Scene, AddonPreferences, PropertyGroup
 from bpy.utils import register_class, unregister_class, previews
 
-from maze_gen import maze_gen
-from maze_gen import batch_gen
-from maze_gen import text_tools
-from maze_gen import time_log
-from maze_gen import txt_img_converter
-from maze_gen import menus
-from maze_gen import render_kit
-from maze_gen import utils
-from maze_gen.logging_setup import setup_logger
-from maze_gen import ascii_logo
+from . import maze_gen
+from . import batch_gen
+from . import text_tools
+from . import time_log
+from . import txt_img_converter
+from . import menus
+from . import render_kit
+from . import utils
+from .logging_setup import setup_logger
+from . import ascii_logo
+from .addon_name import save_addon_name, get_addon_name
 
 bl_info = {
     "name": "UltiMaze [PRO]",
@@ -81,7 +79,7 @@ def set_main_pcoll(pcs):
 
 def enum_previews_from_directory(self, context):
     """EnumProperty callback for building a list of enum items"""
-    addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+    addon_prefs = context.user_preferences.addons[get_addon_name()].preferences
 
     logger = logging.getLogger(__name__)
     logger.debug("beginning to build the enum_previews_from_directory")
@@ -230,7 +228,7 @@ class MazeTilesPanelMG(Panel):
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+        addon_prefs = context.user_preferences.addons[get_addon_name()].preferences
         scene = context.scene
         mg = scene.mg
         layout = self.layout
@@ -495,7 +493,7 @@ class HelpPanelMG(Panel):
 
 
 class MazeAddonPrefsMg(AddonPreferences):
-    bl_idname = __name__
+    bl_idname = basename(dirname(__file__))
 
     open_help_outbldr = BoolProperty(
         name="Open Help Outside Blender",
@@ -690,7 +688,7 @@ class ShowHelpDiagramMG(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+        addon_prefs = context.user_preferences.addons[get_addon_name()].preferences
 
         my_directory = os.path.join(os.path.dirname(__file__), "help")
         image_filepath = os.path.join(my_directory, "Workflow Diagram.png")
@@ -715,7 +713,7 @@ class ShowReadmeMG(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+        addon_prefs = context.user_preferences.addons[get_addon_name()].preferences
 
         readme_path = os.path.join(os.path.dirname(__file__), "help", "Readme.txt")
         if not addon_prefs.open_help_outbldr:
@@ -760,7 +758,7 @@ class DemoTilesImportMG(Operator):
     bl_options = {'UNDO'}
 
     def execute(self, context):
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+        addon_prefs = context.user_preferences.addons[get_addon_name()].preferences
         mg = context.scene.mg
 
         if not mg.tiles:
@@ -1129,6 +1127,8 @@ preview_collections = {}
 
 
 def register():
+    save_addon_name(basename(dirname(__file__)))
+
     ascii_logo.display_ascii_logo()
 
     for i in classes:

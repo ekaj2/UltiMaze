@@ -22,7 +22,7 @@ from time import time
 
 import bpy
 
-from maze_gen.time_display import TimeDisplay
+from .time_display import TimeDisplay
 
 
 def console_prog(job, progress, total_time="?"):

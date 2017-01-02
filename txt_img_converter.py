@@ -33,11 +33,12 @@ import logging
 
 import bpy
 
-from maze_gen import prep_manager
-from maze_gen.maze_tools import Maze
-from maze_gen.progress_display import BlenderProgress
-from maze_gen.time_display import TimeDisplay
-from maze_gen.logging_setup import setup_logger
+from . import prep_manager
+from .maze_tools import Maze
+from .progress_display import BlenderProgress
+from .time_display import TimeDisplay
+from .logging_setup import setup_logger
+from .addon_name import get_addon_name
 
 setup_logger(__name__)
 
@@ -235,7 +236,7 @@ class CreateImageFromListMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+        debug = bpy.context.user_preferences.addons[get_addon_name()].preferences.debug_mode
         mg = context.scene.mg
 
         if not mg.list_maze:
