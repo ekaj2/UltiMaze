@@ -1,3 +1,22 @@
+# Copyright 2017 Integrity Software and Games, LLC
+#
+# ##### BEGIN GPL LICENSE BLOCK ######
+# This file is part of UltiMaze.
+#
+# UltiMaze is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# UltiMaze is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with UltiMaze.  If not, see <http://www.gnu.org/licenses/>.
+# ##### END GPL LICENSE BLOCK #####
+
 """
 Generates maze layout.
 
@@ -9,7 +28,8 @@ Available Functions:
 import random
 
 import bpy
-from maze_gen import maze_tools
+from . import maze_tools
+from .addon_name import get_addon_name
 
 
 def add_loops(maze):
@@ -23,7 +43,7 @@ def add_loops(maze):
     Returns:
         updated maze
     """
-    chance = bpy.context.scene.loops_chance
+    chance = bpy.context.scene.mg.loops_chance
     for row in range(maze.width):
         for column in range(maze.height):
             directions = maze.find_touching_path_dirs(row, column)
@@ -43,48 +63,49 @@ def make_list_maze():
             [(space in maze - x, y), is path], ...]
     """
     scene = bpy.context.scene
-    x_dim = scene.mg_width
-    y_dim = scene.mg_height
-    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+    mg = scene.mg
+    x_dim = mg.mg_width
+    y_dim = mg.mg_height
+    debug = bpy.context.user_preferences.addons[get_addon_name()].preferences.debug_mode
 
-    if scene.algorithm == 'BREADTH_FIRST':
+    if mg.algorithm == 'BREADTH_FIRST':
         m = maze_tools.BreadthFirstMaze(debug=debug,
                                         width=x_dim,
                                         height=y_dim,
-                                        bias_direction=scene.bias_direction,
-                                        bias=scene.bias)
+                                        bias_direction=mg.bias_direction,
+                                        bias=mg.bias)
 
-    elif scene.algorithm == 'DEPTH_FIRST':
+    elif mg.algorithm == 'DEPTH_FIRST':
         m = maze_tools.DepthFirstMaze(debug=debug,
                                       width=x_dim,
                                       height=y_dim,
-                                      bias_direction=scene.bias_direction,
-                                      bias=scene.bias)
+                                      bias_direction=mg.bias_direction,
+                                      bias=mg.bias)
 
-    elif scene.algorithm == 'PRIMS':
+    elif mg.algorithm == 'PRIMS':
         m = maze_tools.PrimsMaze(debug=debug,
                                  width=x_dim,
                                  height=y_dim,
-                                 bias_direction=scene.bias_direction,
-                                 bias=scene.bias)
+                                 bias_direction=mg.bias_direction,
+                                 bias=mg.bias)
 
-    elif scene.algorithm == 'BINARY_TREE':
+    elif mg.algorithm == 'BINARY_TREE':
         m = maze_tools.BinaryTreeMaze(debug=debug,
                                       width=x_dim,
                                       height=y_dim,
-                                      directions=scene.binary_dir,
-                                      tileable=scene.tileable)
+                                      directions=mg.binary_dir,
+                                      tileable=mg.tileable)
 
-    elif scene.algorithm == 'KRUSKALS':
+    elif mg.algorithm == 'KRUSKALS':
         m = maze_tools.KruskalsMaze(debug=debug,
                                     width=x_dim,
                                     height=y_dim)
 
-    elif scene.algorithm == 'ELLERS':
+    elif mg.algorithm == 'ELLERS':
         m = maze_tools.EllersMaze(debug=debug,
                                   width=x_dim,
                                   height=y_dim,
-                                  bias=scene.bias)
+                                  bias=mg.bias)
 
     maze = m.get()
 

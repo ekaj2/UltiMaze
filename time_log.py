@@ -1,3 +1,22 @@
+# Copyright 2017 Integrity Software and Games, LLC
+#
+# ##### BEGIN GPL LICENSE BLOCK ######
+# This file is part of UltiMaze.
+#
+# UltiMaze is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# UltiMaze is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with UltiMaze.  If not, see <http://www.gnu.org/licenses/>.
+# ##### END GPL LICENSE BLOCK #####
+
 """
 Module for logging time to file for use by the time estimator.
 
@@ -31,8 +50,7 @@ def log_time(elapsed_time):
     # delete the last one that gets created because of extra ";" at end
     del log_list[len(log_list) - 1]
 
-    log_list += [str(bpy.context.scene.mg_width *
-                     bpy.context.scene.mg_height) + "," + str(elapsed_time)]
+    log_list += [str(bpy.context.scene.mg.mg_width * bpy.context.scene.mg.mg_height) + "," + str(elapsed_time)]
 
     # convert into normal list
     i = 0
@@ -95,8 +113,8 @@ class EstimateTimeMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        x_dim = context.scene.mg_width
-        y_dim = context.scene.mg_height
+        x_dim = context.scene.mg.mg_width
+        y_dim = context.scene.mg.mg_height
         estimated_loops = round((x_dim * y_dim * 1.25))
         self.report({'INFO'}, "Estimated Loops: " + str(estimated_loops) +
                     " loops")

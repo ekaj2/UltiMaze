@@ -1,9 +1,28 @@
-IN_BLENDER = False
+# Copyright 2017 Integrity Software and Games, LLC
+#
+# ##### BEGIN GPL LICENSE BLOCK ######
+# This file is part of UltiMaze.
+#
+# UltiMaze is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# UltiMaze is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with UltiMaze.  If not, see <http://www.gnu.org/licenses/>.
+# ##### END GPL LICENSE BLOCK #####
+
+IN_BLENDER = True
 
 import logging
 
 if IN_BLENDER:
-    from maze_gen.logging_setup import setup_logger
+    from .logging_setup import setup_logger
 else:
     from logging_setup import setup_logger
 
@@ -130,8 +149,7 @@ class Tree:
             self.nodes[parent]['children'].remove(child)
             self.nodes[child]['parent'] = None
         else:
-            logger = logging.getLogger(__name__)
-            logger.warning("Node {} is a root! Cannot unparent root!".format(child))
+            logging.getLogger(__name__).warning("Node {} is a root! Cannot unparent root!".format(child))
 
     def insert_parent(self, parent, child):
         print("Only a stub")
@@ -152,8 +170,7 @@ class Tree:
             self.nodes[parent]['children'].remove(node)
             self.nodes[node]['parent'] = None
         else:
-            logger = logging.getLogger(__name__)
-            logger.info("Node {} is a root already".format(node))
+            logging.getLogger(__name__).info("Node {} is a root already".format(node))
 
     def replacement_child_shift_detach(self, node):
         children = self.nodes[node]['children']
@@ -184,7 +201,7 @@ class Tree:
                 try:
                     self.nodes[parent]['children'].remove(leaf_node)
                 except KeyError:
-                    print("Removing root from its parent's children list failed: roots don't have parents!")
+                    logging.getLogger(__name__).warning("Removing root from its parent's children list failed: roots don't have parents!")
                 del self.nodes[leaf_node]
 
     def prune_roots(self, iterations):

@@ -1,3 +1,22 @@
+# Copyright 2017 Integrity Software and Games, LLC
+#
+# ##### BEGIN GPL LICENSE BLOCK ######
+# This file is part of UltiMaze.
+#
+# UltiMaze is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# UltiMaze is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with UltiMaze.  If not, see <http://www.gnu.org/licenses/>.
+# ##### END GPL LICENSE BLOCK #####
+
 """
 Tile-based maze generation.
 
@@ -10,7 +29,9 @@ Available Functions:
 import math
 
 import bpy
-from maze_gen.progress_display import BlenderProgress
+
+from .progress_display import BlenderProgress
+from .addon_name import get_addon_name
 
 
 def add_tile(tile, x_location, y_location, rotation):
@@ -83,7 +104,7 @@ def choose_tile(maze, x, y):
     # find out how many spaces that are touching are paths
     directions = maze.find_touching_path_dirs(x, y)
 
-    tm = bpy.context.scene.tile_mode
+    tm = bpy.context.scene.mg.tile_mode
 
     if tm == "TWELVE_TILES":
 
@@ -184,7 +205,8 @@ def make_tile_maze(maze):
             [(space in maze - x, y), is path, is walkable, active path], ...]
     """
     scene = bpy.context.scene
-    debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+    mg = scene.mg
+    debug = bpy.context.user_preferences.addons[get_addon_name()].preferences.debug_mode
 
     bpy.ops.object.select_all(action='DESELECT')
 
@@ -207,7 +229,7 @@ def make_tile_maze(maze):
         if obj.get("MazeGeneratorDoNotTouch"):
             obj.select = True
 
-    if scene.apply_modifiers:
+    if mg.apply_modifiers:
         for obj in bpy.context.selected_objects:
             scene.objects.active = obj
             mod_list = obj.modifiers.values()
@@ -217,7 +239,7 @@ def make_tile_maze(maze):
     else:
         scene.objects.active = bpy.context.object
 
-    if scene.merge_objects:
+    if mg.merge_objects:
         bpy.ops.object.join()
 
         # get 3D Cursor location
@@ -238,7 +260,7 @@ def make_tile_maze(maze):
                                        scale=False)
 
         # remove doubles
-        if bpy.context.scene.remove_doubles_merge:
+        if mg.remove_doubles_merge:
             bpy.ops.object.editmode_toggle()
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.remove_doubles()

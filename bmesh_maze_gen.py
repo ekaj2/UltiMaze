@@ -1,7 +1,27 @@
+# Copyright 2017 Integrity Software and Games, LLC
+#
+# ##### BEGIN GPL LICENSE BLOCK ######
+# This file is part of UltiMaze.
+#
+# UltiMaze is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# UltiMaze is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with UltiMaze.  If not, see <http://www.gnu.org/licenses/>.
+# ##### END GPL LICENSE BLOCK #####
+
 import bpy
 import bmesh
 
-from maze_gen.progress_display import BlenderProgress
+from .progress_display import BlenderProgress
+from .addon_name import get_addon_name
 
 
 def quad_mesh_builder(verts, faces):
@@ -47,7 +67,7 @@ class Make3DMaze:
     def make_3dmaze(self, maze):
         """Makes basic 3D maze from python list."""
 
-        debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
+        debug = bpy.context.user_preferences.addons[get_addon_name()].preferences.debug_mode
 
         bldr_prog = BlenderProgress("3D Maze Gen", debug)
         bldr_prog.start()

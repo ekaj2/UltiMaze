@@ -1,13 +1,32 @@
-IN_BLENDER = False
+# Copyright 2017 Integrity Software and Games, LLC
+#
+# ##### BEGIN GPL LICENSE BLOCK ######
+# This file is part of UltiMaze.
+#
+# UltiMaze is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# UltiMaze is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with UltiMaze.  If not, see <http://www.gnu.org/licenses/>.
+# ##### END GPL LICENSE BLOCK #####
+
+IN_BLENDER = True
 
 import random
 import logging
 
 if IN_BLENDER:
-    from maze_gen import weira
-    from maze_gen.trees import Tree
-    from maze_gen.progress_display import BlenderProgress
-    from maze_gen.logging_setup import setup_logger
+    from . import weira
+    from .trees import Tree
+    from .progress_display import BlenderProgress
+    from .logging_setup import setup_logger
 else:
     import weira
     from trees import Tree
@@ -287,7 +306,7 @@ class OrthogonalMaze:
         try:
             return a[direction]
         except KeyError:
-            print("Error! Invalid direction!")
+            logging.getLogger(__name__).error("Error! Invalid direction!")
 
     def loop_update(self, sleep_time=0.0):
         """Updates progress reports."""

@@ -1,3 +1,22 @@
+# Copyright 2017 Integrity Software and Games, LLC
+#
+# ##### BEGIN GPL LICENSE BLOCK ######
+# This file is part of UltiMaze.
+#
+# UltiMaze is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# UltiMaze is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with UltiMaze.  If not, see <http://www.gnu.org/licenses/>.
+# ##### END GPL LICENSE BLOCK #####
+
 """
 Converts back and forth between image and text mazes.
 
@@ -14,11 +33,12 @@ import logging
 
 import bpy
 
-from maze_gen import prep_manager
-from maze_gen.maze_tools import Maze
-from maze_gen.progress_display import BlenderProgress
-from maze_gen.time_display import TimeDisplay
-from maze_gen.logging_setup import setup_logger
+from . import prep_manager
+from .maze_tools import Maze
+from .progress_display import BlenderProgress
+from .time_display import TimeDisplay
+from .logging_setup import setup_logger
+from .addon_name import get_addon_name
 
 setup_logger(__name__)
 
@@ -32,8 +52,8 @@ def write_to_text(text):
     Returns:
         actual name of text block it wrote to
     """
-    width = bpy.context.scene.mg_width
-    height = bpy.context.scene.mg_height
+    width = bpy.context.scene.mg.mg_width
+    height = bpy.context.scene.mg.mg_height
 
     attempted_name = (str(width) + "x" + str(height) + "_maze_list")
 
@@ -105,14 +125,15 @@ def convert_list_maze():
             [(space in maze - x, y), is path, is walkable, active path], ...]
     """
 
-    list_maze = bpy.context.scene.list_maze
+    mg = bpy.context.scene.mg
+    list_maze = mg.list_maze
     str_maze = bpy.data.texts[list_maze].as_string()
 
     # replace "\n" with ""
     str_maze = str_maze.replace("\n", "")
 
-    x_dim = bpy.context.scene.mg_width
-    y_dim = bpy.context.scene.mg_height
+    x_dim = mg.mg_width
+    y_dim = mg.mg_height
 
     maze = Maze(x_dim, y_dim)
     for y in range(maze.height):
@@ -122,10 +143,11 @@ def convert_list_maze():
                 if str_maze[index] == "1":
                     maze.make_path(x, y)
             except IndexError:
-                logger = logging.getLogger(__name__)
-                logger.warning("IndexError when trying to access a text file's string for converting "
-                               "to a list maze...index={}, maze.width={}, maze.height={}".format(
-                                                                                index, maze.width, maze.height))
+                logging.getLogger(__name__).warning("IndexError when trying to access a text file's string for "
+                                                    "converting to a list maze..."
+                                                    "index={}, maze.width={}, maze.height={}".format(index,
+                                                                                                     maze.width,
+                                                                                                     maze.height))
 
     return maze
 
@@ -137,43 +159,48 @@ class ConvertMazeImageMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        scene = context.scene
+        mg = context.scene.mg
+        logger = logging.getLogger(__name__)
 
         # check if image is assigned
-        if not scene.maze_image:
-            self.report({'ERROR'}, "Image missing! Please assign a " +
-                        "valid image data block.")
+        if not mg.maze_image:
+            logger.debug("Image missing! Please assign a valid image data block.")
+            self.report({'ERROR'}, "Image missing! Please assign a valid image data block.")
             return {'CANCELLED'}
 
         # save files
         save_return, bad_file = prep_manager.always_save()
         if save_return == "BLEND_ERROR":
-            self.report({'ERROR'}, "Save file or disable always save " +
-                        "in user prefs.")
+            logger.debug("Save file or disable always save in user prefs.")
+            self.report({'ERROR'}, "Save file or disable always save in user prefs.")
             return {'CANCELLED'}
 
         elif save_return == "IMAGE_ERROR":
+            logger.debug("Image: {} does not have a valid file path (for saving). Assign a valid path, "
+                         "pack img, or disable save images in user prefs".format(bad_file.name))
             self.report({'ERROR'}, "Image '" + bad_file.name +
-                        "' does not have a valid file path (for saving). Assign a " +
+                        "' does not have a valid file path (for saving). Assign a "
                         "valid path, pack image, or disable save images in user prefs")
             return {'CANCELLED'}
 
         elif save_return == "TEXT_ERROR":
+            logger.debug("Text: {} does not have a valid file path (for saving). Assign a valid path,"
+                         "or disable save texts in user prefs".format(bad_file.name))
             self.report({'ERROR'}, "Text '" + bad_file.name +
                         "' does not have a valid file path (for saving). Assign a " +
                         "valid path or disable save texts in user prefs")
             return {'CANCELLED'}
 
-        x_dim = bpy.data.images[scene.maze_image].size[0]
-        y_dim = bpy.data.images[scene.maze_image].size[1]
+        x_dim = bpy.data.images[mg.maze_image].size[0]
+        y_dim = bpy.data.images[mg.maze_image].size[1]
 
         maze = ""
 
         count = 0
-        while count < len(bpy.data.images[scene.maze_image].pixels):
+        while count < len(bpy.data.images[mg.maze_image].pixels):
 
             # if value is white, its a path, otherwise a wall
-            if bpy.data.images[scene.maze_image].pixels[count] > 0.5:
+            if bpy.data.images[mg.maze_image].pixels[count] > 0.5:
                 maze += "1"
             else:
                 maze += "0"
@@ -209,10 +236,10 @@ class CreateImageFromListMG(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        debug = bpy.context.user_preferences.addons['maze_gen'].preferences.debug_mode
-        scene = context.scene
+        debug = bpy.context.user_preferences.addons[get_addon_name()].preferences.debug_mode
+        mg = context.scene.mg
 
-        if not scene.list_maze:
+        if not mg.list_maze:
             self.report({'ERROR'}, "List missing! Please assign a " +
                         "valid text data block.")
             return {'CANCELLED'}
@@ -240,10 +267,10 @@ class CreateImageFromListMG(bpy.types.Operator):
         bldr_prog.start()
 
         # get list maze as string
-        str_list_maze = bpy.data.texts[scene.list_maze].as_string()
+        str_list_maze = bpy.data.texts[mg.list_maze].as_string()
 
         # settings check before execution
-        area = scene.mg_width * scene.mg_height
+        area = mg.mg_width * mg.mg_height
         if len(str_list_maze) != area:
             self.report({'ERROR'}, "Width and Height settings don't match " +
                         "selected textblock! Width x Height should equal the number " +
@@ -253,26 +280,26 @@ class CreateImageFromListMG(bpy.types.Operator):
         # create image
         image_maze = bpy.data.images.new(
             name="Maze",
-            width=scene.mg_width,
-            height=scene.mg_height)
+            width=mg.mg_width,
+            height=mg.mg_height)
 
-        image_row = scene.mg_height - 1
+        image_row = mg.mg_height - 1
         count = 0
         while image_row >= 0:
             image_col = 0
-            while image_col < scene.mg_width:
+            while image_col < mg.mg_width:
                 if str_list_maze[count] == "1":
                     # Red Channel
-                    image_maze.pixels[(image_row * scene.mg_width * 4 +
+                    image_maze.pixels[(image_row * mg.mg_width * 4 +
                                        image_col * 4 + 0)] = 1
                     # Green Channel
-                    image_maze.pixels[(image_row * scene.mg_width * 4 +
+                    image_maze.pixels[(image_row * mg.mg_width * 4 +
                                        image_col * 4 + 1)] = 1
                     # Blue Channel
-                    image_maze.pixels[(image_row * scene.mg_width * 4 +
+                    image_maze.pixels[(image_row * mg.mg_width * 4 +
                                        image_col * 4 + 2)] = 1
                     # Alpha Channel
-                    image_maze.pixels[(image_row * scene.mg_width * 4 +
+                    image_maze.pixels[(image_row * mg.mg_width * 4 +
                                        image_col * 4 + 3)] = 1
 
                 # report progress if changed

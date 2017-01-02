@@ -1,31 +1,54 @@
+# Copyright 2017 Integrity Software and Games, LLC
+#
+# ##### BEGIN GPL LICENSE BLOCK ######
+# This file is part of UltiMaze.
+#
+# UltiMaze is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# UltiMaze is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with UltiMaze.  If not, see <http://www.gnu.org/licenses/>.
+# ##### END GPL LICENSE BLOCK #####
+
 import os
 
 import bpy
 
+from .addon_name import get_addon_name
 
-class TileImportMenu(bpy.types.Menu):
-    bl_idname = "maze_gen.tile_import_menu"
-    bl_label = "Import Tile Set"
+
+class TileRenderMenu(bpy.types.Menu):
+    bl_idname = "maze_gen.tile_render_menu"
+    bl_label = "Render Previews"
 
     def draw(self, context):
-        scene = context.scene
-        addon_prefs = context.user_preferences.addons['maze_gen'].preferences
+        mg = context.scene.mg
+        addon_prefs = bpy.context.user_preferences.addons[get_addon_name()].preferences
 
-        # get file names
-        files_list = os.listdir(os.path.join(os.path.dirname(__file__), "tiles"))
-        if addon_prefs.use_custom_tile_path:
-            try:
-                files_list += os.listdir(addon_prefs.custom_tile_path)
-            except FileNotFoundError:
-                print("Invalid custom tile path!")
+        # get tile blend file names
+        files_list = os.listdir(addon_prefs.tiles_path)
+        tile_blends = [a[:-6] for a in files_list if a.endswith('.blend') and a[-7] in ("2", "6")]
+        tile_pngs = [a[:-4] for a in files_list if a.endswith('.png') and a[:-4] in tile_blends]
 
-        if scene.tile_mode == "TWELVE_TILES":
-            tile_blends = [a for a in files_list if a[-6:] == '.blend' and a[:-6][-1:] == "2"]
-        elif scene.tile_mode == "SIX_TILES":
-            tile_blends = [a for a in files_list if a[-6:] == '.blend' and a[:-6][-1:] == "6"]
+        # user interface
         layout = self.layout
+
         for tileset in tile_blends:
-            layout.operator("maze_gen.import_tileset", text=tileset[:-7]).filename = tileset
+            has_png = True
+            t = tileset
+            if tileset not in tile_pngs:
+                t = "* " + t  # show an asterisk if the file doesn't have a corresponding png
+                has_png = False
+            button = layout.operator("maze_gen.render_tileset", text=t)
+            button.filename = os.path.join(addon_prefs.tiles_path, tileset + ".blend")
+            button.has_png = has_png
 
 
 class EnableLayerMenu(bpy.types.Menu):
@@ -35,21 +58,3 @@ class EnableLayerMenu(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator("maze_gen.enable_layer")
-
-
-# TODO - Remove this menu (bug should be fixed)
-class SaveUserPrefsMenu(bpy.types.Menu):
-    bl_idname = "maze_gen.save_user_prefs_menu"
-    bl_label = "Save user settings."
-
-    def draw(self, context):
-        layout = self.layout
-
-        row = layout.row()
-        row.label(text="Sorry, your OS doesn't support")
-        row = layout.row()
-        row.label(text="opening files outside of Blender.")
-        row = layout.row()
-        row.label(text="Please save user settings.")
-
-        layout.operator("wm.save_userpref", text="Save User Prefs")
