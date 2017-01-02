@@ -56,6 +56,7 @@ bl_info = {
                "see quick help below.",
     "wiki_url": "",
     "category": "3D View",
+    "support": "COMMUNITY",
 }
 
 setup_logger(__name__)
