@@ -494,7 +494,7 @@ class HelpPanelMG(Panel):
 
 
 class MazeAddonPrefsMg(AddonPreferences):
-    bl_idname = basename(dirname(__file__))
+    bl_idname = ''.join([i for i in basename(dirname(__file__)) if i.isalnum()])
 
     open_help_outbldr = BoolProperty(
         name="Open Help Outside Blender",
@@ -1128,7 +1128,7 @@ preview_collections = {}
 
 
 def register():
-    save_addon_name(basename(dirname(__file__)))
+    save_addon_name(''.join([i for i in basename(dirname(__file__)) if i.isalnum()]))
 
     ascii_logo.display_ascii_logo()
 
