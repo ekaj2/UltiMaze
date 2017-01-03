@@ -45,6 +45,7 @@ from .logging_setup import setup_logger
 from . import ascii_logo
 from .addon_name import save_addon_name, get_addon_name
 from . import addon_updater_ops
+from . import bug_reporter
 
 bl_info = {
     "name": "UltiMaze [PRO]",
@@ -56,6 +57,7 @@ bl_info = {
     "warning": "May take a long time to generate maze: "
                "see quick help below.",
     "wiki_url": "",
+    "tracker_url": "https://github.com/ekaj2/UltiMaze/issues",
     "category": "3D View",
     "support": "COMMUNITY",
 }
@@ -366,6 +368,10 @@ class InfoPanelMG(Panel):
         col = box.column()
         col.operator("maze_gen.estimate_time_mg", icon="QUESTION")
 
+        box = layout.box()
+        box.scale_y = 2
+        box.operator('maze_gen.report_bug', icon="HELP")
+
 
 class HelpPanelMG(Panel):
     bl_label = "Help"
@@ -595,6 +601,10 @@ class MazeAddonPrefsMg(AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
+
+        row = layout.row()
+        row.scale_y = 2
+        row.operator('maze_gen.report_bug', icon="HELP")
 
         addon_updater_ops.update_settings_ui(self, context)
 
@@ -1161,6 +1171,7 @@ classes = [MazeAddonPrefsMg,
            EnableLayerMG,
            RescanTilesPath,
            LoadOriginalTilesPath,
+           bug_reporter.ReportABug,
            # Menus
            menus.TileRenderMenu,
            menus.EnableLayerMenu]
