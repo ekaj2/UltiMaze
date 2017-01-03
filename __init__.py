@@ -50,7 +50,7 @@ from . import bug_reporter
 bl_info = {
     "name": "UltiMaze [PRO]",
     "author": "Jake Dube",
-    "version": (2, 3),
+    "version": (2, 3, 1),
     "blender": (2, 76, 0),
     "location": "3D View > Tools > Maze Gen",
     "description": "Generates 3-dimensional mazes.",
