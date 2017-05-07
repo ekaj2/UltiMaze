@@ -20,7 +20,6 @@
 IN_BLENDER = True
 
 import random
-import logging
 
 if IN_BLENDER:
     from . import weira
@@ -33,7 +32,7 @@ else:
     from time import sleep
     from logging_setup import setup_logger
 
-setup_logger(__name__)
+logger = setup_logger(__name__)
 
 
 def round_avg(x1, x2):
@@ -229,7 +228,6 @@ class OrthogonalMaze:
         self.IN_BLENDER = IN_BLENDER
 
         if not width & 1 or not height & 1:
-            logger = logging.getLogger(__name__)
             logger.critical("Even maze dimension(s) w={}, h={}! Will likely crash!".format(width, height))
 
         self.debug = debug
@@ -306,7 +304,7 @@ class OrthogonalMaze:
         try:
             return a[direction]
         except KeyError:
-            logging.getLogger(__name__).error("Error! Invalid direction!")
+            logger.error("Error! Invalid direction!")
 
     def loop_update(self, sleep_time=0.0):
         """Updates progress reports."""
