@@ -29,7 +29,6 @@ Available Functions:
     str_list_maze - Converts a python maze into a text block
     convert_list_maze - Convert text maze into a Python list maze
 """
-import logging
 
 import bpy
 
@@ -40,7 +39,7 @@ from .time_display import TimeDisplay
 from .logging_setup import setup_logger
 from .addon_name import get_addon_name
 
-setup_logger(__name__)
+logger = setup_logger(__name__)
 
 
 def write_to_text(text):
@@ -143,7 +142,7 @@ def convert_list_maze():
                 if str_maze[index] == "1":
                     maze.make_path(x, y)
             except IndexError:
-                logging.getLogger(__name__).warning("IndexError when trying to access a text file's string for "
+                logger.warning("IndexError when trying to access a text file's string for "
                                                     "converting to a list maze..."
                                                     "index={}, maze.width={}, maze.height={}".format(index,
                                                                                                      maze.width,
@@ -160,7 +159,6 @@ class ConvertMazeImageMG(bpy.types.Operator):
 
     def execute(self, context):
         mg = context.scene.mg
-        logger = logging.getLogger(__name__)
 
         # check if image is assigned
         if not mg.maze_image:
