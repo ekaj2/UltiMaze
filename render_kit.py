@@ -18,7 +18,6 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import os
-import logging
 
 import bpy
 from bpy.types import Operator
@@ -30,12 +29,11 @@ from .logging_setup import setup_logger
 from .addon_name import get_addon_name
 
 
-setup_logger(__name__)
+logger = setup_logger(__name__)
 
 
 @persistent
 def render_and_leave(dummy):
-    logger = logging.getLogger(__name__)
 
     # get data that was transferred
     with open(os.path.join(os.path.dirname(__file__), "tile_renderer_data.txt"), 'r') as f:
@@ -109,7 +107,6 @@ class RenderTileSet(Operator):
 
     def execute(self, context):
         addon_prefs = context.user_preferences.addons[get_addon_name()].preferences
-        logger = logging.getLogger(__name__)
 
         mg = context.scene.mg
         logger.debug("Rendering:{}".format(self.filename))

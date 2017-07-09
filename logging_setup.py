@@ -41,3 +41,5 @@ def setup_logger(name):
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
+
+    return logging.getLogger(name)

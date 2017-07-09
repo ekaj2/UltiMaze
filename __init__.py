@@ -18,14 +18,13 @@
 # ##### END GPL LICENSE BLOCK #####
 
 """
-===== MAZE GENERATOR [PRO] V.2.2 =====
+===== MAZE GENERATOR [PRO] V.2.3.3 =====
 This __init__ module handles some UI and also registers all
 classes and properties.
 """
 import os
 import sys
 import subprocess
-import logging
 from os.path import basename, dirname
 
 import bpy
@@ -47,10 +46,12 @@ from .addon_name import save_addon_name, get_addon_name
 from . import addon_updater_ops
 from . import bug_reporter
 
+logger = setup_logger(__name__)
+
 bl_info = {
     "name": "UltiMaze [PRO]",
     "author": "Jake Dube",
-    "version": (2, 3, 2),
+    "version": (2, 3, 3),
     "blender": (2, 76, 0),
     "location": "3D View > Tools > Maze Gen",
     "description": "Generates 3-dimensional mazes.",
@@ -85,7 +86,6 @@ def enum_previews_from_directory(self, context):
     """EnumProperty callback for building a list of enum items"""
     addon_prefs = context.user_preferences.addons[get_addon_name()].preferences
 
-    logger = logging.getLogger(__name__)
     logger.debug("beginning to build the enum_previews_from_directory")
 
     enum_items = []
@@ -822,7 +822,7 @@ class DemoTilesImportMG(Operator):
                                    "\nin the add-on preferences for UltiMaze to automatically render "
                                    "\nout and save a nice preview image.")
 
-            logging.getLogger(__name__).warning("There are no available blends linked w/ pngs for importing!")
+            logger.warning("There are no available blends linked w/ pngs for importing!")
             return {'CANCELLED'}
 
         path = os.path.join(addon_prefs.tiles_path, mg.tiles + ".blend")
@@ -844,7 +844,7 @@ class EnableLayerMG(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        logging.getLogger(__name__).warning("Enabling the first layer...this shouldn't be a problem, but also not spectacularly awesome either!")
+        logger.warning("Enabling the first layer...this shouldn't be a problem, but also not spectacularly awesome either!")
         context.scene.layers[0] = True
         return {'FINISHED'}
 

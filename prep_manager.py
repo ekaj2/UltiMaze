@@ -26,15 +26,13 @@ Available functions:
     - always_save: Saves .blend file and referenced images/texts.
 """
 
-import logging
-
 import bpy
 
 from .logging_setup import setup_logger
 from .addon_name import get_addon_name
 
 
-setup_logger(__name__)
+logger = setup_logger(__name__)
 
 
 def check_tiles_exist():
@@ -122,7 +120,7 @@ def save_text(text):
     # write to file
     with open(text_path, "w") as d:
         d.write(str(text_as_string))
-        logging.getLogger(__name__).debug("Wrote {} to file {}".format(text.name, text.filepath))
+        logger.debug("Wrote {} to file {}".format(text.name, text.filepath))
 
 
 def always_save():
@@ -138,7 +136,6 @@ def always_save():
 
     addon_prefs = bpy.context.user_preferences.addons[get_addon_name()].preferences
     debug = addon_prefs.debug_mode
-    logger = logging.getLogger(__name__)
 
     # save file
     if addon_prefs.always_save_prior:
