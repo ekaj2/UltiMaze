@@ -69,9 +69,15 @@ def make_maze(context):
 
     if mg.use_list_maze:
         list_exist = prep_manager.check_list_exist()
-        # if missing list: terminate operator
+        good_dimensions = prep_manager.check_list_dimensions()
+
+        # if either goes wrong: terminate operator
         if not list_exist:
             messages += ["List missing! Please assign a valid text data block or disable 'Generate Maze From List'."]
+            message_lvls += ['ERROR']
+            return messages, message_lvls, 'CANCELLED'
+        elif not good_dimensions:
+            messages += ["List has wrong dimensions! Please assign a valid text data block, change maze \ndimensions to match the text block's or disable 'Generate Maze From List'."]
             message_lvls += ['ERROR']
             return messages, message_lvls, 'CANCELLED'
 
