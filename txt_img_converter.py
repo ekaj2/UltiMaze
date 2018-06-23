@@ -189,22 +189,37 @@ class ConvertMazeImageMG(bpy.types.Operator):
                         "valid path or disable save texts in user prefs")
             return {'CANCELLED'}
 
+        # size of the images in the UV/Image editor
         x_dim = bpy.data.images[mg.maze_image].size[0]
         y_dim = bpy.data.images[mg.maze_image].size[1]
+        
+        # warn the user if the image dimensions are not the same as the maze
+        maze_width = bpy.context.scene.mg.mg_width
+        maze_height = bpy.context.scene.mg.mg_height
+        if x_dim != maze_width or y_dim != maze_height:
+            self.report({'ERROR'}, "Image dimensions are not the same as your maze dimensions. \nImage dimensions are: "
+                                   "(x:{}, y:{}), while maze settings are: (x:{}, y:{}). \nThis will cause issues if you "
+                                   "try to convert the resulting text block to a maze without changing the maze layout "
+                                   "settings.".format(x_dim, 
+                                                      y_dim,
+                                                      maze_width,
+                                                      maze_height
+                                                     ))
 
         maze = ""
-
         count = 0
+        
+        # iterate over all pixels while making one long line for the maze str
         while count < len(bpy.data.images[mg.maze_image].pixels):
 
             # if value is white, its a path, otherwise a wall
+            # more specifically, if the red channel's value is > 0.5
             if bpy.data.images[mg.maze_image].pixels[count] > 0.5:
                 maze += "1"
             else:
                 maze += "0"
 
-            # if image has alpha channel...
-            # this actually seems to work without alpha channel :(
+            # factor in RGBA channels for each real pixel
             count += 4
 
         # the maze at this point is a mirror of what it should be

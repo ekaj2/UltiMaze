@@ -108,6 +108,29 @@ def check_list_exist():
     return list_exist
 
 
+def check_list_dimensions():
+    """Check if list has the same area as maze.
+
+    Returns:
+        True if list does have the same area, otherwise, False
+    """
+    
+    # TODO - also parse the text block name and check x- and y-dimensions
+
+    # get text maze
+    list_maze = bpy.context.scene.mg.list_maze
+    text = bpy.data.texts[list_maze].as_string()
+
+    # get maze settings in Blender UI
+    mg = bpy.context.scene.mg
+
+    # check if area is reasonable
+    if mg.mg_width * mg.mg_height == len(text):
+        return True
+
+    return False
+
+
 def save_text(text):
     """Saves Blender text block that is stored externally.
 
