@@ -207,18 +207,19 @@ class ConvertMazeImageMG(bpy.types.Operator):
                                                      ))
 
         maze = ""
-
         count = 0
+        
+        # iterate over all pixels while making one long line for the maze str
         while count < len(bpy.data.images[mg.maze_image].pixels):
 
             # if value is white, its a path, otherwise a wall
+            # more specifically, if the red channel's value is > 0.5
             if bpy.data.images[mg.maze_image].pixels[count] > 0.5:
                 maze += "1"
             else:
                 maze += "0"
 
-            # if image has alpha channel...
-            # this actually seems to work without alpha channel :(
+            # factor in RGBA channels for each real pixel
             count += 4
 
         # the maze at this point is a mirror of what it should be
