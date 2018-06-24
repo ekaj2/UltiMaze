@@ -18,7 +18,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 """
-===== MAZE GENERATOR [PRO] V.2.3.4 =====
+===== MAZE GENERATOR [PRO] V.2.3.5 =====
 This __init__ module handles some UI and also registers all
 classes and properties.
 """
@@ -44,6 +44,7 @@ from .logging_setup import setup_logger
 from . import ascii_logo
 from .addon_name import save_addon_name, get_addon_name
 from . import addon_updater_ops
+from .addon_updater import Updater as updater
 from . import bug_reporter
 
 logger = setup_logger(__name__)
@@ -51,7 +52,7 @@ logger = setup_logger(__name__)
 bl_info = {
     "name": "UltiMaze [PRO]",
     "author": "Jake Dube",
-    "version": (2, 3, 4),
+    "version": (2, 3, 5),
     "blender": (2, 76, 0),
     "location": "3D View > Tools > Maze Gen",
     "description": "Generates 3-dimensional mazes.",
@@ -150,7 +151,7 @@ class MazeGeneratorPanelMG(Panel):
     bl_category = 'Maze Gen'
 
     def draw(self, context):
-        addon_updater_ops.check_for_update_background(context)
+        addon_updater_ops.check_for_update_background()
 
         scene = context.scene
         mg = scene.mg
@@ -1182,6 +1183,11 @@ preview_collections = {}
 def register():
     # third-party add-on updater
     addon_updater_ops.register(bl_info)
+    updater.engine = "GitLab"
+    updater.user = ""
+    updater.repo = "6740037"
+    updater.current_version = bl_info["version"]
+    updater.version_min_update = (2, 3, 5)
 
     save_addon_name(basename(dirname(__file__)))
 
@@ -1196,6 +1202,9 @@ def register():
 
 
 def unregister():
+    # addon updater unregister
+    addon_updater_ops.unregister()
+
     for i in classes:
         unregister_class(i)
 
@@ -1206,3 +1215,4 @@ def unregister():
 
 if __name__ == "__main__":
     register()
+
