@@ -18,7 +18,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 """
-===== MAZE GENERATOR [PRO] V.2.3.4 =====
+===== MAZE GENERATOR [PRO] V.2.3.5 =====
 This __init__ module handles some UI and also registers all
 classes and properties.
 """
@@ -52,7 +52,7 @@ logger = setup_logger(__name__)
 bl_info = {
     "name": "UltiMaze [PRO]",
     "author": "Jake Dube",
-    "version": (2, 3, 4),
+    "version": (2, 3, 5),
     "blender": (2, 76, 0),
     "location": "3D View > Tools > Maze Gen",
     "description": "Generates 3-dimensional mazes.",
@@ -1187,7 +1187,7 @@ def register():
     updater.user = ""
     updater.repo = "6740037"
     updater.current_version = bl_info["version"]
-    updater.version_min_update = (2,3,4)
+    updater.version_min_update = (2, 3, 5)
 
     save_addon_name(basename(dirname(__file__)))
 
